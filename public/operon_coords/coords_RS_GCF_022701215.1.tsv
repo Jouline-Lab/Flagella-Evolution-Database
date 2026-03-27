@@ -1,0 +1,3 @@
+gene_name	gene_id	genome_id	start	stop	strand	assembly
+CsrA	NZ_CP089976.1_253	NZ_CP089976.1	256967	257215	-1	RS_GCF_022701215.1
+Transglycosylase	NZ_CP089976.1_1454	NZ_CP089976.1	1536622	1537299	-1	RS_GCF_022701215.1

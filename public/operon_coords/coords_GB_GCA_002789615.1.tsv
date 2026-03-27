@@ -1,0 +1,3 @@
+gene_name	gene_id	genome_id	start	stop	strand	assembly
+Transglycosylase	PFTO01000057.1_8	PFTO01000057.1	8607	9215	-1	GB_GCA_002789615.1
+Transglycosylase	PFTO01000087.1_23	PFTO01000087.1	27212	27937	1	GB_GCA_002789615.1

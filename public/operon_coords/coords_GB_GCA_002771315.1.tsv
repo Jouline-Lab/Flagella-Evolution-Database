@@ -1,0 +1,3 @@
+gene_name	gene_id	genome_id	start	stop	strand	assembly
+FlgP	PCSF01000028.1_1	PCSF01000028.1	115	960	1	GB_GCA_002771315.1
+Transglycosylase	PCSF01000046.1_13	PCSF01000046.1	14157	14744	1	GB_GCA_002771315.1

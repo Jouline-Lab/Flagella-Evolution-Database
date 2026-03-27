@@ -1,0 +1,3 @@
+gene_name	gene_id	genome_id	start	stop	strand	assembly
+FliH	NC_009635.1_64	NC_009635.1	68955	69566	1	RS_GCF_000017185.1
+Transglutaminase	NC_009635.1_1365	NC_009635.1	1410026	1411198	-1	RS_GCF_000017185.1

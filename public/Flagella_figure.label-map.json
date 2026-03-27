@@ -1,0 +1,430 @@
+{
+  "version": 1,
+  "input": "public/Flagella_figure.svg",
+  "output": "public/Flagella_figure.labeled.svg",
+  "threshold": 100,
+  "labelCount": 70,
+  "shapeCount": 83,
+  "matchedCount": 66,
+  "unmatchedCount": 4,
+  "mappings": [
+    {
+      "id": "flgq",
+      "label": "FlgQ",
+      "distance": 12.24,
+      "tagName": "ellipse"
+    },
+    {
+      "id": "flhf",
+      "label": "FlhF",
+      "distance": 48.43,
+      "tagName": "ellipse"
+    },
+    {
+      "id": "flit",
+      "label": "FliT",
+      "distance": 33.4,
+      "tagName": "ellipse"
+    },
+    {
+      "id": "flih",
+      "label": "FliH",
+      "distance": 35.29,
+      "tagName": "ellipse"
+    },
+    {
+      "id": "flgj",
+      "label": "FlgJ",
+      "distance": 10.98,
+      "tagName": "ellipse"
+    },
+    {
+      "id": "flgk-2",
+      "label": "FlgK",
+      "distance": 53.66,
+      "tagName": "ellipse"
+    },
+    {
+      "id": "flhe",
+      "label": "FlhE",
+      "distance": 11.09,
+      "tagName": "ellipse"
+    },
+    {
+      "id": "flgd",
+      "label": "FlgD",
+      "distance": 11.74,
+      "tagName": "rect"
+    },
+    {
+      "id": "flagellarput",
+      "label": "Flagellar_put",
+      "distance": 33.07,
+      "tagName": "rect"
+    },
+    {
+      "id": "flgf",
+      "label": "FlgF",
+      "distance": 10.4,
+      "tagName": "rect"
+    },
+    {
+      "id": "flga",
+      "label": "FlgA",
+      "distance": 11.62,
+      "tagName": "ellipse"
+    },
+    {
+      "id": "flge",
+      "label": "FlgE",
+      "distance": 25.39,
+      "tagName": "rect"
+    },
+    {
+      "id": "flip",
+      "label": "FliP",
+      "distance": 11.29,
+      "tagName": "rect"
+    },
+    {
+      "id": "flgl-2",
+      "label": "FlgL",
+      "distance": 15.37,
+      "tagName": "rect"
+    },
+    {
+      "id": "flid-2",
+      "label": "FliD",
+      "distance": 10.6,
+      "tagName": "ellipse"
+    },
+    {
+      "id": "flic-2",
+      "label": "FliC",
+      "distance": 38.72,
+      "tagName": "rect"
+    },
+    {
+      "id": "flgg",
+      "label": "FlgG",
+      "distance": 11.79,
+      "tagName": "rect"
+    },
+    {
+      "id": "flgh",
+      "label": "FlgH",
+      "distance": 28.56,
+      "tagName": "rect"
+    },
+    {
+      "id": "flgi-2",
+      "label": "FlgI",
+      "distance": 29.14,
+      "tagName": "rect"
+    },
+    {
+      "id": "flgc",
+      "label": "FlgC",
+      "distance": 10.96,
+      "tagName": "rect"
+    },
+    {
+      "id": "flgy",
+      "label": "FlgY",
+      "distance": 22.03,
+      "tagName": "rect"
+    },
+    {
+      "id": "flie",
+      "label": "FliE",
+      "distance": 15.73,
+      "tagName": "rect"
+    },
+    {
+      "id": "flif",
+      "label": "FliF",
+      "distance": 61.75,
+      "tagName": "rect"
+    },
+    {
+      "id": "flhb",
+      "label": "FlhB",
+      "distance": 39.68,
+      "tagName": "rect"
+    },
+    {
+      "id": "fliq",
+      "label": "FliQ",
+      "distance": 39.99,
+      "tagName": "rect"
+    },
+    {
+      "id": "flha",
+      "label": "FlhA",
+      "distance": 27.98,
+      "tagName": "ellipse"
+    },
+    {
+      "id": "flgb",
+      "label": "FlgB",
+      "distance": 11.98,
+      "tagName": "rect"
+    },
+    {
+      "id": "flij",
+      "label": "FliJ",
+      "distance": 15.05,
+      "tagName": "ellipse"
+    },
+    {
+      "id": "motyx",
+      "label": "MotYX",
+      "distance": 17.31,
+      "tagName": "rect"
+    },
+    {
+      "id": "flil",
+      "label": "FliL",
+      "distance": 20.69,
+      "tagName": "rect"
+    },
+    {
+      "id": "flgt",
+      "label": "FlgT",
+      "distance": 10.8,
+      "tagName": "rect"
+    },
+    {
+      "id": "flgp-2",
+      "label": "FlgP",
+      "distance": 11.37,
+      "tagName": "rect"
+    },
+    {
+      "id": "flgo",
+      "label": "FlgO",
+      "distance": 12.33,
+      "tagName": "rect"
+    },
+    {
+      "id": "flio",
+      "label": "FliO",
+      "distance": 10.67,
+      "tagName": "rect"
+    },
+    {
+      "id": "flir",
+      "label": "FliR",
+      "distance": 14.12,
+      "tagName": "rect"
+    },
+    {
+      "id": "flgk",
+      "label": "FlgK",
+      "distance": 29.56,
+      "tagName": "ellipse"
+    },
+    {
+      "id": "flis",
+      "label": "FliS",
+      "distance": 32.26,
+      "tagName": "ellipse"
+    },
+    {
+      "id": "flgn",
+      "label": "FlgN",
+      "distance": 12.07,
+      "tagName": "ellipse"
+    },
+    {
+      "id": "flgm",
+      "label": "FlgM",
+      "distance": 20.19,
+      "tagName": "ellipse"
+    },
+    {
+      "id": "flin",
+      "label": "FliN",
+      "distance": 59.85,
+      "tagName": "ellipse"
+    },
+    {
+      "id": "flhc",
+      "label": "FlhC",
+      "distance": 16.25,
+      "tagName": "ellipse"
+    },
+    {
+      "id": "flhd",
+      "label": "FlhD",
+      "distance": 38.55,
+      "tagName": "polygon"
+    },
+    {
+      "id": "flbd",
+      "label": "FlbD",
+      "distance": 28.42,
+      "tagName": "polygon"
+    },
+    {
+      "id": "pfla",
+      "label": "PflA",
+      "distance": 32.94,
+      "tagName": "rect"
+    },
+    {
+      "id": "flag",
+      "label": "FlaG",
+      "distance": 71.63,
+      "tagName": "ellipse"
+    },
+    {
+      "id": "flii",
+      "label": "FliI",
+      "distance": 17.57,
+      "tagName": "polygon"
+    },
+    {
+      "id": "flig",
+      "label": "FliG",
+      "distance": 62.11,
+      "tagName": "rect"
+    },
+    {
+      "id": "motb",
+      "label": "MotB",
+      "distance": 12.09,
+      "tagName": "rect"
+    },
+    {
+      "id": "flgi",
+      "label": "FlgI",
+      "distance": 9.53,
+      "tagName": "rect"
+    },
+    {
+      "id": "flgl",
+      "label": "FlgL",
+      "distance": 22.34,
+      "tagName": "rect"
+    },
+    {
+      "id": "flic",
+      "label": "FliC",
+      "distance": 10.03,
+      "tagName": "rect"
+    },
+    {
+      "id": "flaf",
+      "label": "FlaF",
+      "distance": 28.34,
+      "tagName": "rect"
+    },
+    {
+      "id": "ycgr",
+      "label": "YcgR",
+      "distance": 43.12,
+      "tagName": "ellipse"
+    },
+    {
+      "id": "csra",
+      "label": "CsrA",
+      "distance": 16.97,
+      "tagName": "ellipse"
+    },
+    {
+      "id": "flik",
+      "label": "FliK",
+      "distance": 25.8,
+      "tagName": "path"
+    },
+    {
+      "id": "fliw",
+      "label": "FliW",
+      "distance": 38.4,
+      "tagName": "polygon"
+    },
+    {
+      "id": "mota",
+      "label": "MotA",
+      "distance": 44.41,
+      "tagName": "ellipse"
+    },
+    {
+      "id": "pflb",
+      "label": "PflB",
+      "distance": 10.34,
+      "tagName": "rect"
+    },
+    {
+      "id": "flhg",
+      "label": "FlhG",
+      "distance": 31.61,
+      "tagName": "ellipse"
+    },
+    {
+      "id": "swrb",
+      "label": "SwrB",
+      "distance": 40.25,
+      "tagName": "ellipse"
+    },
+    {
+      "id": "flay",
+      "label": "FlaY",
+      "distance": 10.96,
+      "tagName": "rect"
+    },
+    {
+      "id": "flid",
+      "label": "FliD",
+      "distance": 30.33,
+      "tagName": "rect"
+    },
+    {
+      "id": "flim",
+      "label": "FliM",
+      "distance": 58.75,
+      "tagName": "ellipse"
+    },
+    {
+      "id": "flia",
+      "label": "FliA",
+      "distance": 36.25,
+      "tagName": "polygon"
+    },
+    {
+      "id": "flgp",
+      "label": "FlgP",
+      "distance": 11.37,
+      "tagName": "rect"
+    },
+    {
+      "id": "duf1217",
+      "label": "DUF1217",
+      "distance": 23.38,
+      "tagName": "rect"
+    }
+  ],
+  "unmatchedLabels": [
+    {
+      "label": "RNA",
+      "x": 444.75,
+      "y": 606.063
+    },
+    {
+      "label": "FlaY",
+      "x": 147.631,
+      "y": 610.672
+    },
+    {
+      "label": "FlbT",
+      "x": 125.761,
+      "y": 620.202
+    },
+    {
+      "label": "DNA",
+      "x": 254.218,
+      "y": 638.588
+    }
+  ]
+}

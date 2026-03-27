@@ -1,0 +1,3 @@
+gene_name	gene_id	genome_id	start	stop	strand	assembly
+LdtR	NZ_CP040753.1_1514	NZ_CP040753.1	1533348	1533848	-1	RS_GCF_006064855.1
+Transglycosylase	NZ_CP040753.1_932	NZ_CP040753.1	954189	954773	-1	RS_GCF_006064855.1

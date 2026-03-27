@@ -1,0 +1,3 @@
+gene_name	gene_id	genome_id	start	stop	strand	assembly
+CsrA	NZ_LVEG02000019.1_3	NZ_LVEG02000019.1	2427	2612	-1	RS_GCF_001614315.2
+Transglycosylase	NZ_LVEG02000013.1_2	NZ_LVEG02000013.1	4658	5305	-1	RS_GCF_001614315.2

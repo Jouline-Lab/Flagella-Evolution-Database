@@ -1,0 +1,3 @@
+gene_name	gene_id	genome_id	start	stop	strand	assembly
+CsrA	NC_014259.1_2690	NC_014259.1	2893194	2893448	1	RS_GCF_000196795.1
+Transglycosylase	NC_014259.1_783	NC_014259.1	872134	872994	-1	RS_GCF_000196795.1

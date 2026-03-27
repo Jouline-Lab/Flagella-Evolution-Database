@@ -1,0 +1,3 @@
+gene_name	gene_id	genome_id	start	stop	strand	assembly
+FlhG	NZ_KI421413.1_401	NZ_KI421413.1	418972	419922	1	RS_GCF_000472285.1
+Transglycosylase	NZ_KI421413.1_82	NZ_KI421413.1	79737	80318	1	RS_GCF_000472285.1

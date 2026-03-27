@@ -1,0 +1,3 @@
+gene_name	gene_id	genome_id	start	stop	strand	assembly
+FliH	NZ_CP009503.1_1610	NZ_CP009503.1	1840026	1840535	1	RS_GCF_000969965.1
+Transglutaminase	NZ_CP009503.1_615	NZ_CP009503.1	699635	700726	1	RS_GCF_000969965.1

@@ -1,0 +1,4 @@
+gene_name	gene_id	genome_id	start	stop	strand	assembly
+Transglutaminase	LVVU01000217.1_1	LVVU01000217.1	2	832	1	GB_GCA_006954465.1
+Transglutaminase	LVVU01000087.1_3	LVVU01000087.1	1569	2912	-1	GB_GCA_006954465.1
+Transglutaminase	LVVU01000217.1_2	LVVU01000217.1	829	1971	1	GB_GCA_006954465.1

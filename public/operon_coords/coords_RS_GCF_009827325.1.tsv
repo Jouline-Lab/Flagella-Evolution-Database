@@ -1,0 +1,3 @@
+gene_name	gene_id	genome_id	start	stop	strand	assembly
+Transglutaminase	NZ_WTYC01000003.1_338	NZ_WTYC01000003.1	329009	329917	-1	RS_GCF_009827325.1
+Transglycosylase	NZ_WTYC01000001.1_721	NZ_WTYC01000001.1	734134	734718	1	RS_GCF_009827325.1

@@ -1,0 +1,3 @@
+gene_name	gene_id	genome_id	start	stop	strand	assembly
+Transglutaminase	NZ_BMIG01000004.1_3	NZ_BMIG01000004.1	11369	11947	-1	RS_GCF_014641715.1
+Transglycosylase	NZ_BMIG01000010.1_108	NZ_BMIG01000010.1	112039	112923	-1	RS_GCF_014641715.1

@@ -1,0 +1,3 @@
+gene_name	gene_id	genome_id	start	stop	strand	assembly
+CsrA	PVBP01000068.1_14	PVBP01000068.1	16299	16538	-1	GB_GCA_002995625.1
+Transglycosylase	PVBP01000102.1_5	PVBP01000102.1	4866	5822	1	GB_GCA_002995625.1

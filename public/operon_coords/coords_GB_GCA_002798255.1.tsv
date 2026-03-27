@@ -1,0 +1,3 @@
+gene_name	gene_id	genome_id	start	stop	strand	assembly
+CsrA	NWQQ01000018.1_79	NWQQ01000018.1	76287	76493	-1	GB_GCA_002798255.1
+Transglycosylase	NWQQ01000013.1_9	NWQQ01000013.1	11993	12844	1	GB_GCA_002798255.1

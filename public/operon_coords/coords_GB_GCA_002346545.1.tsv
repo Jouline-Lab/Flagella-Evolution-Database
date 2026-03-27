@@ -1,0 +1,3 @@
+gene_name	gene_id	genome_id	start	stop	strand	assembly
+FliO	DEAA01000081.1_2	DEAA01000081.1	2196	2384	1	GB_GCA_002346545.1
+Transglycosylase	DEAA01000059.1_24	DEAA01000059.1	24741	25508	-1	GB_GCA_002346545.1

@@ -1,0 +1,369 @@
+/* Route-local styles used by the visualization module. */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin-custom {
+  animation: spin 1s linear infinite;
+}
+
+.loading-overlay {
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+/* Global contrast defaults scoped to visualization route UI */
+.min-h-screen {
+  --viz-text: var(--text);
+  --viz-text-muted: var(--text-soft);
+  --viz-border: var(--input-border);
+  --viz-bg: var(--dropdown-bg);
+  --viz-popover-bg: var(--dropdown-bg);
+  --viz-hover: var(--dropdown-hover);
+  --viz-surface: var(--surface);
+  --viz-surface-soft: var(--bg-soft);
+  --viz-accent-bg: color-mix(in srgb, var(--primary) 16%, transparent);
+  --viz-accent-border: color-mix(in srgb, var(--primary) 28%, transparent);
+  --viz-accent-text: var(--hero-title-color);
+  --viz-button-bg: var(--header-bg-start);
+  --viz-button-bg-hover: var(--header-bg-end);
+  --viz-button-grad-start: color-mix(in srgb, var(--header-bg-start) 78%, white 22%);
+  --viz-button-grad-end: color-mix(in srgb, var(--header-bg-end) 78%, white 22%);
+  --viz-button-grad-hover-start: color-mix(in srgb, var(--header-bg-start) 88%, white 12%);
+  --viz-button-grad-hover-end: color-mix(in srgb, var(--header-bg-end) 88%, white 12%);
+  --viz-tooltip-bg: var(--header-bg-end);
+  --viz-tooltip-text: var(--header-text);
+  --viz-domain-bg: color-mix(in srgb, var(--bg-soft) 70%, var(--surface) 30%);
+  --viz-domain-stroke: var(--table-border-color);
+  --viz-label: var(--text-soft);
+  --viz-highlight-stroke: color-mix(in srgb, var(--text) 70%, transparent);
+  --viz-status-a: color-mix(in srgb, var(--primary) 70%, #2ea44f 30%);
+  --viz-status-b: color-mix(in srgb, var(--primary) 82%, #2563eb 18%);
+  --viz-status-c: color-mix(in srgb, var(--primary) 68%, #7c3aed 32%);
+  --viz-hover-contrast-bg: color-mix(in srgb, white 90%, var(--primary) 10%);
+  --viz-hover-contrast-text: #122447;
+}
+
+.viz-theme {
+  --viz-text: var(--text);
+  --viz-text-muted: var(--text-soft);
+  --viz-border: var(--input-border);
+  --viz-bg: var(--dropdown-bg);
+  --viz-popover-bg: var(--dropdown-bg);
+  --viz-hover: var(--dropdown-hover);
+  --viz-surface: var(--surface);
+  --viz-surface-soft: var(--bg-soft);
+  --viz-accent-bg: color-mix(in srgb, var(--primary) 16%, transparent);
+  --viz-accent-border: color-mix(in srgb, var(--primary) 28%, transparent);
+  --viz-accent-text: var(--hero-title-color);
+  --viz-button-bg: var(--header-bg-start);
+  --viz-button-bg-hover: var(--header-bg-end);
+  --viz-button-grad-start: color-mix(in srgb, var(--header-bg-start) 78%, white 22%);
+  --viz-button-grad-end: color-mix(in srgb, var(--header-bg-end) 78%, white 22%);
+  --viz-button-grad-hover-start: color-mix(in srgb, var(--header-bg-start) 88%, white 12%);
+  --viz-button-grad-hover-end: color-mix(in srgb, var(--header-bg-end) 88%, white 12%);
+  --viz-tooltip-bg: var(--header-bg-end);
+  --viz-tooltip-text: var(--header-text);
+  --viz-domain-bg: color-mix(in srgb, var(--bg-soft) 70%, var(--surface) 30%);
+  --viz-domain-stroke: var(--table-border-color);
+  --viz-label: var(--text-soft);
+  --viz-highlight-stroke: color-mix(in srgb, var(--text) 70%, transparent);
+  --viz-status-a: color-mix(in srgb, var(--primary) 70%, #2ea44f 30%);
+  --viz-status-b: color-mix(in srgb, var(--primary) 82%, #2563eb 18%);
+  --viz-status-c: color-mix(in srgb, var(--primary) 68%, #7c3aed 32%);
+  --viz-hover-contrast-bg: color-mix(in srgb, white 90%, var(--primary) 10%);
+  --viz-hover-contrast-text: #122447;
+}
+
+.min-h-screen [data-slot="select-trigger"] {
+  color: var(--viz-text) !important;
+  background: var(--viz-bg) !important;
+  border-color: var(--viz-border) !important;
+}
+
+.min-h-screen [data-slot="select-trigger"][data-placeholder] {
+  color: var(--viz-text-muted) !important;
+}
+
+.min-h-screen [data-slot="select-trigger"] [data-slot="select-value"] {
+  color: var(--viz-text) !important;
+}
+
+.min-h-screen [data-slot="select-value"][data-placeholder] {
+  color: var(--viz-text-muted) !important;
+}
+
+.min-h-screen [data-slot="select-trigger"] svg {
+  color: var(--viz-text-muted) !important;
+}
+
+.min-h-screen [data-slot="select-content"] {
+  color: var(--viz-text) !important;
+  background: var(--viz-bg) !important;
+  border-color: var(--viz-border) !important;
+}
+
+.viz-theme [data-slot="select-content"] {
+  color: var(--viz-text) !important;
+  background: var(--viz-bg) !important;
+  border-color: var(--viz-border) !important;
+}
+
+/* Force opaque dropdown surfaces (no transparency bleed-through) */
+.min-h-screen [data-slot="select-content"],
+.viz-theme [data-slot="select-content"] {
+  background-color: var(--viz-popover-bg) !important;
+  opacity: 1 !important;
+}
+
+.min-h-screen [data-slot="select-content"] [data-radix-select-viewport],
+.viz-theme [data-slot="select-content"] [data-radix-select-viewport] {
+  background-color: var(--viz-popover-bg) !important;
+}
+
+.viz-theme .viz-opaque-menu {
+  background-color: var(--viz-popover-bg) !important;
+  opacity: 1 !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.min-h-screen [data-slot="select-item"] {
+  color: var(--viz-text) !important;
+}
+
+.viz-theme [data-slot="select-item"] {
+  color: var(--viz-text) !important;
+}
+
+.min-h-screen [data-slot="select-item"][data-highlighted] {
+  background: var(--viz-hover) !important;
+  color: var(--viz-text) !important;
+}
+
+.viz-theme [data-slot="select-item"][data-highlighted] {
+  background: var(--viz-hover) !important;
+  color: var(--viz-text) !important;
+}
+
+.min-h-screen [data-slot="select-label"] {
+  color: var(--viz-text-muted) !important;
+}
+
+.viz-theme [data-slot="select-label"] {
+  color: var(--viz-text-muted) !important;
+}
+
+.min-h-screen input[data-slot="input"] {
+  color: var(--viz-text) !important;
+  background: var(--viz-bg) !important;
+  border-color: var(--viz-border) !important;
+}
+
+.min-h-screen input[data-slot="input"]::placeholder {
+  color: var(--viz-text-muted) !important;
+  opacity: 1;
+}
+
+.min-h-screen .lineage-autocomplete input {
+  color: var(--viz-text) !important;
+  background: var(--viz-bg) !important;
+  border-color: var(--viz-border) !important;
+}
+
+.min-h-screen .lineage-autocomplete input::placeholder {
+  color: var(--viz-text-muted) !important;
+  opacity: 1;
+}
+
+.min-h-screen .lineage-autocomplete .fixed {
+  color: var(--viz-text) !important;
+  background: var(--viz-bg) !important;
+  border-color: var(--viz-border) !important;
+}
+
+.viz-theme .lineage-autocomplete .fixed {
+  color: var(--viz-text) !important;
+  background: var(--viz-popover-bg) !important;
+  border-color: var(--viz-border) !important;
+  opacity: 1 !important;
+}
+
+.min-h-screen [data-slot="button"]:disabled,
+.min-h-screen [data-slot="select-trigger"][data-disabled],
+.min-h-screen input[data-slot="input"]:disabled {
+  opacity: 0.85 !important;
+}
+
+.viz-theme [data-slot="button"]:disabled,
+.viz-theme [data-slot="select-trigger"][data-disabled],
+.viz-theme input[data-slot="input"]:disabled,
+.viz-theme [data-slot="checkbox"]:disabled {
+  opacity: 0.85 !important;
+}
+
+/* Route-scoped overrides for hardcoded tailwind utility colors in visualization components */
+.viz-theme .bg-gray-50 {
+  background-color: var(--viz-surface-soft) !important;
+}
+
+.viz-theme .hover\:bg-gray-50:hover,
+.viz-theme .hover\:bg-gray-100:hover {
+  background-color: var(--viz-hover-contrast-bg) !important;
+  color: var(--viz-hover-contrast-text) !important;
+}
+
+.viz-theme .hover\:bg-gray-50:hover .text-gray-900,
+.viz-theme .hover\:bg-gray-50:hover .text-gray-800,
+.viz-theme .hover\:bg-gray-50:hover .text-gray-700,
+.viz-theme .hover\:bg-gray-100:hover .text-gray-900,
+.viz-theme .hover\:bg-gray-100:hover .text-gray-800,
+.viz-theme .hover\:bg-gray-100:hover .text-gray-700 {
+  color: var(--viz-hover-contrast-text) !important;
+}
+
+.viz-theme .bg-white:not([data-slot="select-content"]):not(.viz-opaque-menu),
+.viz-theme .bg-white\/90 {
+  background-color: var(--viz-surface) !important;
+}
+
+.viz-theme .text-gray-900,
+.viz-theme .text-gray-800,
+.viz-theme .text-gray-700 {
+  color: var(--viz-text) !important;
+}
+
+.viz-theme .text-gray-600,
+.viz-theme .text-gray-500,
+.viz-theme .text-gray-400 {
+  color: var(--viz-text-muted) !important;
+}
+
+.viz-theme .border-gray-200,
+.viz-theme .border-gray-300,
+.viz-theme .border-gray-400 {
+  border-color: var(--viz-border) !important;
+}
+
+.viz-theme .bg-blue-50 {
+  background-color: var(--viz-accent-bg) !important;
+}
+
+.viz-theme .bg-blue-100,
+.viz-theme .bg-purple-100 {
+  background-color: var(--viz-accent-bg) !important;
+}
+
+.viz-theme .border-blue-200 {
+  border-color: var(--viz-accent-border) !important;
+}
+
+.viz-theme .border-purple-200 {
+  border-color: var(--viz-accent-border) !important;
+}
+
+.viz-theme .text-blue-900,
+.viz-theme .text-blue-800,
+.viz-theme .text-blue-600,
+.viz-theme .text-blue-700,
+.viz-theme .text-purple-900,
+.viz-theme .text-purple-700,
+.viz-theme .text-purple-600,
+.viz-theme .text-purple-800 {
+  color: var(--viz-accent-text) !important;
+}
+
+.viz-theme .bg-blue-600,
+.viz-theme .data-\[state\=checked\]\:bg-blue-600[data-state="checked"] {
+  background-color: var(--viz-button-bg) !important;
+  background-image: linear-gradient(
+    180deg,
+    var(--viz-button-grad-start) 0%,
+    var(--viz-button-grad-end) 100%
+  ) !important;
+}
+
+.viz-theme .hover\:bg-blue-700:hover {
+  background-color: var(--viz-button-bg-hover) !important;
+  background-image: linear-gradient(
+    180deg,
+    var(--viz-button-grad-hover-start) 0%,
+    var(--viz-button-grad-hover-end) 100%
+  ) !important;
+}
+
+.viz-theme .hover\:bg-purple-50:hover {
+  background-color: var(--viz-hover-contrast-bg) !important;
+  color: var(--viz-hover-contrast-text) !important;
+}
+
+.viz-theme .bg-gray-200 {
+  background-color: color-mix(in srgb, var(--viz-border) 52%, var(--viz-bg) 48%) !important;
+}
+
+.viz-theme .hover\:bg-gray-300:hover {
+  background-color: color-mix(in srgb, var(--viz-border) 68%, var(--viz-bg) 32%) !important;
+}
+
+.viz-theme .data-\[state\=checked\]\:border-blue-600[data-state="checked"] {
+  border-color: var(--viz-button-bg) !important;
+}
+
+.viz-theme .disabled\:bg-gray-300:disabled {
+  background-color: color-mix(in srgb, var(--viz-border) 72%, var(--viz-bg) 28%) !important;
+}
+
+.viz-theme .disabled\:text-gray-600:disabled {
+  color: var(--viz-text-muted) !important;
+}
+
+.viz-theme .bg-green-500 {
+  background-color: var(--viz-status-a) !important;
+}
+
+.viz-theme .bg-blue-500 {
+  background-color: var(--viz-status-b) !important;
+}
+
+.viz-theme .bg-purple-500 {
+  background-color: var(--viz-status-c) !important;
+}
+
+.viz-theme .viz-tooltip {
+  background-color: var(--viz-tooltip-bg) !important;
+  color: var(--viz-tooltip-text) !important;
+}
+
+/* Keep portal dropdowns/popovers fully opaque despite global bg-white overrides */
+.viz-theme [data-slot="select-content"].bg-white,
+.viz-theme .viz-opaque-menu.bg-white,
+.viz-theme .viz-opaque-menu {
+  background-color: var(--viz-popover-bg) !important;
+  opacity: 1 !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* Keep compare Add button style stable (avoid global bg-blue-* remaps) */
+.viz-theme .viz-add-button {
+  background-color: #2563eb !important;
+  background-image: none !important;
+  color: #ffffff !important;
+}
+
+.viz-theme .viz-add-button:hover {
+  background-color: #1d4ed8 !important;
+  background-image: none !important;
+}
+
+.viz-theme .viz-add-button:disabled {
+  background-color: #d1d5db !important;
+  background-image: none !important;
+  color: #4b5563 !important;
+}

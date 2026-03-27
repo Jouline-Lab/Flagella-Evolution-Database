@@ -1,0 +1,3 @@
+gene_name	gene_id	genome_id	start	stop	strand	assembly
+FlaG	NZ_CP006965.1_1891	NZ_CP006965.1	1721017	1722027	-1	RS_GCF_000517445.1
+Transglutaminase	NZ_CP006965.1_1312	NZ_CP006965.1	1193506	1194651	-1	RS_GCF_000517445.1

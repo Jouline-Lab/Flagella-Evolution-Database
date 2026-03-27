@@ -1,0 +1,3 @@
+gene_name	gene_id	genome_id	start	stop	strand	assembly
+Transglutaminase	DPJB01000027.1_107	DPJB01000027.1	106509	107099	1	GB_GCA_003543245.1
+Transglycosylase	DPJB01000026.1_49	DPJB01000026.1	49388	50086	1	GB_GCA_003543245.1

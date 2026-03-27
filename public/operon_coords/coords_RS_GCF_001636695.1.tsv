@@ -1,0 +1,3 @@
+gene_name	gene_id	genome_id	start	stop	strand	assembly
+FliE	NZ_LGEL01000008.1_13	NZ_LGEL01000008.1	12350	13444	1	RS_GCF_001636695.1
+Transglycosylase	NZ_LGEL01000391.1_1	NZ_LGEL01000391.1	2	400	1	RS_GCF_001636695.1

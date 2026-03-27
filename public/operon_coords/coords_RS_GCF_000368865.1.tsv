@@ -1,0 +1,3 @@
+gene_name	gene_id	genome_id	start	stop	strand	assembly
+CsrA	NZ_KB849727.1_670	NZ_KB849727.1	730109	730363	1	RS_GCF_000368865.1
+Transglycosylase	NZ_KB849727.1_849	NZ_KB849727.1	938292	939146	1	RS_GCF_000368865.1

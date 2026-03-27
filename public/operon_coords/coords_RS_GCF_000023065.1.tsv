@@ -1,0 +1,3 @@
+gene_name	gene_id	genome_id	start	stop	strand	assembly
+CsrA	NC_012691.1_2729	NC_012691.1	2992324	2992518	-1	RS_GCF_000023065.1
+Transglutaminase	NC_012691.1_1269	NC_012691.1	1377431	1378156	1	RS_GCF_000023065.1

@@ -1,0 +1,3 @@
+gene_name	gene_id	genome_id	start	stop	strand	assembly
+CsrA	NZ_CP051666.1_2214	NZ_CP051666.1	2322058	2322246	1	RS_GCF_012848475.1
+Transglutaminase	NZ_CP051666.1_602	NZ_CP051666.1	627609	628268	-1	RS_GCF_012848475.1

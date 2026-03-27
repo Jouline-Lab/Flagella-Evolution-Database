@@ -1,0 +1,4 @@
+gene_name	gene_id	genome_id	start	stop	strand	assembly
+Transglycosylase	NC_007722.1_787	NC_007722.1	827114	827716	-1	RS_GCF_000013005.1
+Transglycosylase	NC_007722.1_127	NC_007722.1	158949	159623	-1	RS_GCF_000013005.1
+Transglycosylase	NC_007722.1_2881	NC_007722.1	2941283	2941660	-1	RS_GCF_000013005.1

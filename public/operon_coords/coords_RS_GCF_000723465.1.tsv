@@ -1,0 +1,3 @@
+gene_name	gene_id	genome_id	start	stop	strand	assembly
+FliB	NZ_HF545616.1_403	NZ_HF545616.1	440219	441322	-1	RS_GCF_000723465.1
+Transglutaminase	NZ_HF545616.1_627	NZ_HF545616.1	700796	701629	1	RS_GCF_000723465.1

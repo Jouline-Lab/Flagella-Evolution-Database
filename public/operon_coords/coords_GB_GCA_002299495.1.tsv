@@ -1,0 +1,3 @@
+gene_name	gene_id	genome_id	start	stop	strand	assembly
+FlgO	DBNZ01000006.1_8	DBNZ01000006.1	9386	10018	1	GB_GCA_002299495.1
+Transglycosylase	DBNZ01000182.1_4	DBNZ01000182.1	2750	3391	-1	GB_GCA_002299495.1

@@ -1,0 +1,3 @@
+gene_name	gene_id	genome_id	start	stop	strand	assembly
+FliT	CP087965.1_4971	CP087965.1	3914848	3915702	1	GB_GCA_024703855.1
+Transglycosylase	CP087965.1_232	CP087965.1	191514	192374	-1	GB_GCA_024703855.1

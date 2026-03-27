@@ -1,0 +1,3 @@
+gene_name	gene_id	genome_id	start	stop	strand	assembly
+Transglutaminase	LOET01000009.1_1	LOET01000009.1	2	751	1	GB_GCA_001515985.1
+Transglycosylase	LOET01000113.1_2	LOET01000113.1	449	1033	1	GB_GCA_001515985.1

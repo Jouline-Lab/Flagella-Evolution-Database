@@ -1,0 +1,3 @@
+gene_name	gene_id	genome_id	start	stop	strand	assembly
+Transglutaminase	NZ_FOTC01000001.1_525	NZ_FOTC01000001.1	546332	547153	-1	RS_GCF_900114455.1
+Transglutaminase	NZ_FOTC01000009.1_139	NZ_FOTC01000009.1	139512	140741	1	RS_GCF_900114455.1

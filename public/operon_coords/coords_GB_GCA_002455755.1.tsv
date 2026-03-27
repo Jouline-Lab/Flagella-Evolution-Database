@@ -1,0 +1,3 @@
+gene_name	gene_id	genome_id	start	stop	strand	assembly
+CsrA	DKLL01000164.1_8	DKLL01000164.1	3909	4172	-1	GB_GCA_002455755.1
+Transglycosylase	DKLL01000004.1_11	DKLL01000004.1	13550	14293	-1	GB_GCA_002455755.1

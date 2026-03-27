@@ -1,0 +1,3 @@
+gene_name	gene_id	genome_id	start	stop	strand	assembly
+Transglycosylase	MGBV01000059.1_2	MGBV01000059.1	467	1135	1	GB_GCA_001788415.1
+Transglycosylase	MGBV01000099.1_67	MGBV01000099.1	53978	54649	-1	GB_GCA_001788415.1

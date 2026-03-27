@@ -1,0 +1,3 @@
+gene_name	gene_id	genome_id	start	stop	strand	assembly
+FlhG	NZ_CP016908.1_100	NZ_CP016908.1	109755	111359	1	RS_GCF_001931505.1
+Transglycosylase	NZ_CP016908.1_142	NZ_CP016908.1	151718	152377	1	RS_GCF_001931505.1

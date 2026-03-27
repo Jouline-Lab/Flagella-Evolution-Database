@@ -1,0 +1,3 @@
+gene_name	gene_id	genome_id	start	stop	strand	assembly
+Transglutaminase	JAAYAP010000054.1_12	JAAYAP010000054.1	8611	10104	1	GB_GCA_012719315.1
+Transglutaminase	JAAYAP010000042.1_29	JAAYAP010000042.1	23793	24755	-1	GB_GCA_012719315.1

@@ -1,0 +1,3 @@
+gene_name	gene_id	genome_id	start	stop	strand	assembly
+FlhG	DKBO01000184.1_7	DKBO01000184.1	8413	9363	-1	GB_GCA_002448975.1
+Transglycosylase	DKBO01000206.1_2	DKBO01000206.1	383	1081	1	GB_GCA_002448975.1

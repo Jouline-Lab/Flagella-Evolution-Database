@@ -1,0 +1,3 @@
+gene_name	gene_id	genome_id	start	stop	strand	assembly
+Transglycosylase	QHZD01000039.1_58	QHZD01000039.1	52788	53264	1	GB_GCA_003225315.1
+Transglycosylase	QHZD01000048.1_52	QHZD01000048.1	47184	47924	-1	GB_GCA_003225315.1

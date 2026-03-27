@@ -1,0 +1,3 @@
+gene_name	gene_id	genome_id	start	stop	strand	assembly
+FliB	FR899798.1_18	FR899798.1	25126	26025	-1	GB_GCA_000437595.1
+FliB	FR899861.1_23	FR899861.1	30274	31305	1	GB_GCA_000437595.1

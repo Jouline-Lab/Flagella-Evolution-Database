@@ -1,0 +1,3 @@
+gene_name	gene_id	genome_id	start	stop	strand	assembly
+FlgN	NZ_CP007140.1_177	NZ_CP007140.1	156165	156341	1	RS_GCF_000816105.1
+Transglutaminase	NZ_CP007140.1_772	NZ_CP007140.1	702816	704564	-1	RS_GCF_000816105.1

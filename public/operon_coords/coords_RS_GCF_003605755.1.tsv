@@ -1,0 +1,3 @@
+gene_name	gene_id	genome_id	start	stop	strand	assembly
+Transglutaminase	NZ_RAHJ01000018.1_392	NZ_RAHJ01000018.1	415141	416241	-1	RS_GCF_003605755.1
+Transglycosylase	NZ_RAHJ01000014.1_55	NZ_RAHJ01000014.1	45862	46446	1	RS_GCF_003605755.1

@@ -1,0 +1,3 @@
+gene_name	gene_id	genome_id	start	stop	strand	assembly
+Transglutaminase	JABMSC010000133.1_4	JABMSC010000133.1	4259	4765	1	GB_GCA_013204685.1
+Transglutaminase	JABMSC010000049.1_3	JABMSC010000049.1	892	1404	-1	GB_GCA_013204685.1

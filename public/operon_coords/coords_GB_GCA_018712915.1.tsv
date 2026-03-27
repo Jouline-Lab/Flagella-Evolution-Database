@@ -1,0 +1,3 @@
+gene_name	gene_id	genome_id	start	stop	strand	assembly
+FliB	DVGC01000059.1_46	DVGC01000059.1	46871	48115	1	GB_GCA_018712915.1
+Transglycosylase	DVGC01000005.1_4	DVGC01000005.1	3376	5277	-1	GB_GCA_018712915.1

@@ -1,0 +1,3 @@
+gene_name	gene_id	genome_id	start	stop	strand	assembly
+FlhC	PBZD01000020.1_72	PBZD01000020.1	62245	62850	-1	GB_GCA_002729875.1
+Transglutaminase	PBZD01000126.1_2	PBZD01000126.1	1930	2580	-1	GB_GCA_002729875.1

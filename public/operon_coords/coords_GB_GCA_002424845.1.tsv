@@ -1,0 +1,3 @@
+gene_name	gene_id	genome_id	start	stop	strand	assembly
+FlgM	DILD01000050.1_11	DILD01000050.1	9144	9383	-1	GB_GCA_002424845.1
+Transglutaminase	DILD01000004.1_11	DILD01000004.1	9997	10698	1	GB_GCA_002424845.1

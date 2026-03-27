@@ -1,0 +1,3 @@
+gene_name	gene_id	genome_id	start	stop	strand	assembly
+FlrA	SBFI01000026.1_2	SBFI01000026.1	1482	2906	-1	GB_GCA_006227875.1
+Transglycosylase	SBFI01000053.1_22	SBFI01000053.1	23130	23822	-1	GB_GCA_006227875.1

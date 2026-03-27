@@ -1,0 +1,3 @@
+gene_name	gene_id	genome_id	start	stop	strand	assembly
+Transglycosylase	NZ_SKCJ01000001.1_36	NZ_SKCJ01000001.1	38389	38991	1	RS_GCF_005434975.1
+Transglycosylase	NZ_SKCJ01000001.1_1637	NZ_SKCJ01000001.1	1649967	1651067	-1	RS_GCF_005434975.1

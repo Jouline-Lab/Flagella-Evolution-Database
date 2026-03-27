@@ -1,0 +1,3 @@
+gene_name	gene_id	genome_id	start	stop	strand	assembly
+Transglutaminase	JACUUE010000110.1_2	JACUUE010000110.1	1875	2573	-1	GB_GCA_014859475.1
+Transglycosylase	JACUUE010000161.1_6	JACUUE010000161.1	4656	5570	1	GB_GCA_014859475.1

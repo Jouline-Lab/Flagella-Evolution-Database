@@ -1,0 +1,3 @@
+gene_name	gene_id	genome_id	start	stop	strand	assembly
+Transglutaminase	CP002916.1_802	CP002916.1	762123	762902	1	GB_GCA_000350305.1
+Transglutaminase	CP002916.1_968	CP002916.1	902501	904141	-1	GB_GCA_000350305.1

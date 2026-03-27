@@ -1,0 +1,3 @@
+gene_name	gene_id	genome_id	start	stop	strand	assembly
+CsrA	DFQS01000073.1_1	DFQS01000073.1	788	1033	1	GB_GCA_002377905.1
+Transglycosylase	DFQS01000013.1_34	DFQS01000013.1	39316	40128	1	GB_GCA_002377905.1

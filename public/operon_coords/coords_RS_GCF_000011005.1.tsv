@@ -1,0 +1,3 @@
+gene_name	gene_id	genome_id	start	stop	strand	assembly
+Transglutaminase	NC_013665.1_2128	NC_013665.1	2089205	2090269	-1	RS_GCF_000011005.1
+Transglutaminase	NC_013665.1_2432	NC_013665.1	2348949	2350049	1	RS_GCF_000011005.1

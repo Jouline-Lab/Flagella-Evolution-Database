@@ -1,0 +1,3 @@
+gene_name	gene_id	genome_id	start	stop	strand	assembly
+FliJ	SOKP01000057.1_8	SOKP01000057.1	7015	7470	1	GB_GCA_004375715.1
+Transglutaminase	SOKP01000044.1_4	SOKP01000044.1	1890	3191	-1	GB_GCA_004375715.1

@@ -1,0 +1,3 @@
+gene_name	gene_id	genome_id	start	stop	strand	assembly
+Transglutaminase	NZ_QPLT01000018.1_23	NZ_QPLT01000018.1	21369	22241	-1	RS_GCF_003666015.1
+Transglutaminase	NZ_QPLT01000207.1_1	NZ_QPLT01000207.1	194	736	-1	RS_GCF_003666015.1

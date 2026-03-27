@@ -1,0 +1,3 @@
+gene_name	gene_id	genome_id	start	stop	strand	assembly
+FliS	CP009552.1_679	CP009552.1	584956	585384	-1	GB_GCA_000789255.1
+Transglutaminase	CP009552.1_1426	CP009552.1	1187634	1188722	-1	GB_GCA_000789255.1

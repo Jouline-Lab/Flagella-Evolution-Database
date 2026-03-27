@@ -1,0 +1,3 @@
+gene_name	gene_id	genome_id	start	stop	strand	assembly
+CsrA	QKEI01000178.1_2	QKEI01000178.1	512	733	-1	GB_GCA_003251795.1
+Transglycosylase	QKEI01000051.1_80	QKEI01000051.1	74763	75392	-1	GB_GCA_003251795.1

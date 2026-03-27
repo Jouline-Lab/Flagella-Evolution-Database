@@ -1,0 +1,3 @@
+gene_name	gene_id	genome_id	start	stop	strand	assembly
+FlgN	SLGN01000233.1_3	SLGN01000233.1	2887	5421	-1	GB_GCA_007123695.1
+Transglutaminase	SLGN01000572.1_9	SLGN01000572.1	7730	8929	-1	GB_GCA_007123695.1

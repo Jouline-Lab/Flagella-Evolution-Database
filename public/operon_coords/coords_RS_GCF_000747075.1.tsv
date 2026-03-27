@@ -1,0 +1,3 @@
+gene_name	gene_id	genome_id	start	stop	strand	assembly
+CsrA	NZ_AVCH01000149.1_9	NZ_AVCH01000149.1	10979	11197	-1	RS_GCF_000747075.1
+Transglycosylase	NZ_AVCH01000063.1_1	NZ_AVCH01000063.1	3	650	1	RS_GCF_000747075.1

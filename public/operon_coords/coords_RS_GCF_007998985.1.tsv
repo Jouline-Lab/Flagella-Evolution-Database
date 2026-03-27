@@ -1,0 +1,3 @@
+gene_name	gene_id	genome_id	start	stop	strand	assembly
+Transglutaminase	NZ_CP041659.1_957	NZ_CP041659.1	952578	953516	1	RS_GCF_007998985.1
+Transglutaminase	NZ_CP041659.1_1125	NZ_CP041659.1	1133237	1133998	-1	RS_GCF_007998985.1
