@@ -22,11 +22,11 @@ function parseIds(rawValue) {
     .filter((value) => value && value !== "-");
 }
 
-function buildIdPairs(gtdbIds, ncbiIds) {
-  return gtdbIds.map((gtdbId, index) => ({
-    gtdbId,
-    ncbiId: ncbiIds[index] ?? null
-  }));
+function createGeneEntry() {
+  return {
+    count: 0,
+    gtdbToNcbi: new Map()
+  };
 }
 
 function buildGeneDefs(headers) {
@@ -62,14 +62,6 @@ function buildGeneDefs(headers) {
     .sort((a, b) => a.geneName.localeCompare(b.geneName));
 }
 
-function createEmptyGeneMap(geneDefs) {
-  const genes = {};
-  for (const def of geneDefs) {
-    genes[def.geneName] = { count: 0, gtdbIds: [], ncbiIds: [], idPairs: [] };
-  }
-  return genes;
-}
-
 async function buildSpeciesFlagellaIndex() {
   if (!existsSync(TSV_PATH)) {
     throw new Error(`TSV file not found: ${TSV_PATH}`);
@@ -103,40 +95,39 @@ async function buildSpeciesFlagellaIndex() {
 
     const current =
       speciesMap.get(normalizedName) ?? {
-        name: displayName,
         matchedAssemblies: 0,
-        genes: createEmptyGeneMap(geneDefs)
+        genes: {}
       };
 
     current.matchedAssemblies += 1;
 
     for (const def of geneDefs) {
-      const geneEntry = current.genes[def.geneName];
       const count = Number(cells[def.countIdx] ?? "");
-      if (!Number.isNaN(count) && count > 0) {
+      const rowGtdbIds = def.gtdbIdx.flatMap((idx) => parseIds(cells[idx] ?? ""));
+      const rowNcbiIds = def.ncbiIdx.flatMap((idx) => parseIds(cells[idx] ?? ""));
+      const hasPositiveCount = !Number.isNaN(count) && count > 0;
+      const hasIds = rowGtdbIds.length > 0 || rowNcbiIds.length > 0;
+
+      if (!hasPositiveCount && !hasIds) {
+        continue;
+      }
+
+      const geneEntry = current.genes[def.geneName] ?? createGeneEntry();
+
+      if (hasPositiveCount) {
         geneEntry.count += count;
       }
 
-      const rowGtdbIds = def.gtdbIdx.flatMap((idx) => parseIds(cells[idx] ?? ""));
-      const rowNcbiIds = def.ncbiIdx.flatMap((idx) => parseIds(cells[idx] ?? ""));
+      for (const [index, gtdbId] of rowGtdbIds.entries()) {
+        const ncbiId = rowNcbiIds[index] ?? null;
+        const existingNcbiId = geneEntry.gtdbToNcbi.get(gtdbId);
 
-      for (const id of rowGtdbIds) {
-        if (!geneEntry.gtdbIds.includes(id)) {
-          geneEntry.gtdbIds.push(id);
+        if (existingNcbiId === undefined || (existingNcbiId === null && ncbiId !== null)) {
+          geneEntry.gtdbToNcbi.set(gtdbId, ncbiId);
         }
       }
 
-      for (const id of rowNcbiIds) {
-        if (!geneEntry.ncbiIds.includes(id)) {
-          geneEntry.ncbiIds.push(id);
-        }
-      }
-
-      for (const pair of buildIdPairs(rowGtdbIds, rowNcbiIds)) {
-        if (!geneEntry.idPairs.some((existing) => existing.gtdbId === pair.gtdbId)) {
-          geneEntry.idPairs.push(pair);
-        }
-      }
+      current.genes[def.geneName] = geneEntry;
     }
 
     speciesMap.set(normalizedName, current);
@@ -146,24 +137,43 @@ async function buildSpeciesFlagellaIndex() {
     Array.from(speciesMap.entries(), ([key, value]) => [
       key,
       {
-        ...value,
         genes: Object.fromEntries(
           Object.entries(value.genes).map(([gene, info]) => [
             gene,
-            {
-              count: info.count,
-              gtdbIds: [...info.gtdbIds].sort((a, b) => a.localeCompare(b)),
-              ncbiIds: [...info.ncbiIds].sort((a, b) => a.localeCompare(b)),
-              idPairs: [...info.idPairs].sort((a, b) => a.gtdbId.localeCompare(b.gtdbId))
-            }
+            (() => {
+              const serialized = {};
+              const gtdb = [...info.gtdbToNcbi.keys()].sort((a, b) => a.localeCompare(b));
+              const ncbi = gtdb.map((gtdbId) => info.gtdbToNcbi.get(gtdbId) ?? null);
+              const lastNonNullNcbiIndex = ncbi.reduce(
+                (lastIndex, value, index) => (value !== null ? index : lastIndex),
+                -1
+              );
+              const compactNcbi = lastNonNullNcbiIndex >= 0 ? ncbi.slice(0, lastNonNullNcbiIndex + 1) : [];
+
+              if (info.count > 0) {
+                serialized.count = info.count;
+              }
+
+              if (gtdb.length > 0) {
+                serialized.gtdb = gtdb;
+              }
+
+              if (compactNcbi.length > 0) {
+                serialized.ncbi = compactNcbi;
+              }
+
+              return serialized;
+            })()
           ])
         )
+        ,
+        matchedAssemblies: value.matchedAssemblies
       }
     ])
   );
 
   const payload = {
-    version: 1,
+    version: 3,
     sourceTsv: TSV_FILENAME,
     geneNames: geneDefs.map((def) => def.geneName),
     species

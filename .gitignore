@@ -24,4 +24,3 @@ pnpm-debug.log*
 # large files
 public/flagellar_genes_phyletic_distribution.tsv
 public/flagellar_genes_phyletic_distribution_withIDs*.tsv
-public/*-index.json

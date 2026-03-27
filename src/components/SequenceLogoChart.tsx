@@ -37,12 +37,8 @@ type SpeciesSuggestion = {
 type SelectedSpeciesEntry = {
   name: string;
   slug: string;
-  gtdbIds: string[];
-  ncbiIds: string[];
-  idPairs: Array<{
-    gtdbId: string;
-    ncbiId: string | null;
-  }>;
+  gtdb: string[];
+  ncbi: Array<string | null>;
   status: 'loading' | 'ready' | 'missing' | 'error';
   error?: string;
 };
@@ -294,14 +290,11 @@ const SequenceLogoChart: React.FC<SequenceLogoChartProps> = ({
       selectedSpecies.map((species) => ({
         ...species,
         matchedSequences: loadedSequences
-          .filter((sequence) =>
-            species.idPairs.some((pair) => pair.gtdbId === sequence.header) ||
-            species.gtdbIds.includes(sequence.header)
-          )
+          .filter((sequence) => species.gtdb.includes(sequence.header))
           .map((sequence) => {
             const rawSequence = rawSequencesByHeader.get(sequence.header)?.sequence ?? sequence.sequence;
-            const ncbiId =
-              species.idPairs.find((pair) => pair.gtdbId === sequence.header)?.ncbiId ?? null;
+            const matchIndex = species.gtdb.indexOf(sequence.header);
+            const ncbiId = matchIndex >= 0 ? species.ncbi[matchIndex] ?? null : null;
             return {
               ...sequence,
               alignmentColumns: filteredAlignment.keptColumnIndices,
@@ -455,9 +448,8 @@ const SequenceLogoChart: React.FC<SequenceLogoChartProps> = ({
         {
           name: species.name,
           slug: species.slug,
-          gtdbIds: [],
-          ncbiIds: [],
-          idPairs: [],
+          gtdb: [],
+          ncbi: [],
           status: 'loading'
         }
       ]);
@@ -485,12 +477,8 @@ const SequenceLogoChart: React.FC<SequenceLogoChartProps> = ({
           result?: {
             speciesName: string;
             geneName: string;
-            gtdbIds: string[];
-            ncbiIds: string[];
-            idPairs?: Array<{
-              gtdbId: string;
-              ncbiId: string | null;
-            }>;
+            gtdb: string[];
+            ncbi: Array<string | null>;
           } | null;
         };
 
@@ -510,9 +498,8 @@ const SequenceLogoChart: React.FC<SequenceLogoChartProps> = ({
 
             return {
               ...item,
-              gtdbIds: payload.result.gtdbIds,
-              ncbiIds: payload.result.ncbiIds,
-              idPairs: Array.isArray(payload.result.idPairs) ? payload.result.idPairs : [],
+              gtdb: payload.result.gtdb,
+              ncbi: payload.result.ncbi,
               status: 'ready',
               error: undefined
             };

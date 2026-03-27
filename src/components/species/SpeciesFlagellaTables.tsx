@@ -122,10 +122,10 @@ export default function SpeciesFlagellaTables({
                           <td>{gene.name}</td>
                           <td>{gene.count.toLocaleString()}</td>
                           <td>
-                            {gene.gtdbIds.length === 0 ? (
+                            {gene.gtdb.length === 0 ? (
                               "-"
-                            ) : gene.gtdbIds.length === 1 ? (
-                              <code>{gene.gtdbIds[0]}</code>
+                            ) : gene.gtdb.length === 1 ? (
+                              <code>{gene.gtdb[0]}</code>
                             ) : (
                               <button
                                 type="button"
@@ -134,25 +134,25 @@ export default function SpeciesFlagellaTables({
                                   setIdDialog({
                                     column: "gtdb",
                                     geneName: gene.name,
-                                    ids: gene.gtdbIds
+                                    ids: gene.gtdb
                                   })
                                 }
                               >
-                                {gene.gtdbIds.length} ID{gene.gtdbIds.length === 1 ? "" : "s"}
+                                {gene.gtdb.length} ID{gene.gtdb.length === 1 ? "" : "s"}
                               </button>
                             )}
                           </td>
                           <td>
-                            {gene.ncbiIds.length === 0 ? (
+                            {gene.ncbi.length === 0 ? (
                               "-"
-                            ) : gene.ncbiIds.length === 1 ? (
+                            ) : gene.ncbi.length === 1 ? (
                               <a
-                                href={getNcbiProteinUrl(gene.ncbiIds[0])}
+                                href={getNcbiProteinUrl(gene.ncbi[0])}
                                 target="_blank"
                                 rel="noreferrer"
                                 className="species-id-link"
                               >
-                                {gene.ncbiIds[0]}
+                                {gene.ncbi[0]}
                               </a>
                             ) : (
                               <button
@@ -162,11 +162,11 @@ export default function SpeciesFlagellaTables({
                                   setIdDialog({
                                     column: "ncbi",
                                     geneName: gene.name,
-                                    ids: gene.ncbiIds
+                                    ids: gene.ncbi
                                   })
                                 }
                               >
-                                {gene.ncbiIds.length} ID{gene.ncbiIds.length === 1 ? "" : "s"}
+                                {gene.ncbi.length} ID{gene.ncbi.length === 1 ? "" : "s"}
                               </button>
                             )}
                           </td>

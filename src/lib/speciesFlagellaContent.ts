@@ -5,13 +5,12 @@ import { formatSpeciesName, normalizeSpeciesQuery } from "@/lib/speciesNaming";
 import { classifyGene } from "@/lib/flagellaGeneClassification";
 
 type IndexedGene = {
-  count: number;
-  gtdbIds: string[];
-  ncbiIds: string[];
+  count?: number;
+  gtdb?: string[];
+  ncbi?: Array<string | null>;
 };
 
 type IndexedSpecies = {
-  name: string;
   matchedAssemblies: number;
   genes: Record<string, IndexedGene>;
 };
@@ -26,8 +25,8 @@ type SpeciesFlagellaIndex = {
 type GeneSummary = {
   name: string;
   count: number;
-  gtdbIds: string[];
-  ncbiIds: string[];
+  gtdb: string[];
+  ncbi: string[];
 };
 
 type GeneGroupSummary = {
@@ -88,20 +87,21 @@ export async function getSpeciesFlagellaContent(
   for (const geneName of index.geneNames) {
     const geneData = speciesRecord.genes[geneName] ?? {
       count: 0,
-      gtdbIds: [],
-      ncbiIds: []
+      gtdb: [],
+      ncbi: []
     };
+    const geneCount = geneData.count ?? 0;
 
-    totalGeneCount += geneData.count;
+    totalGeneCount += geneCount;
     const groupName = classifyGene(geneName);
     const group = groupsMap.get(groupName) ?? { name: groupName, totalCount: 0, genes: [] };
 
-    group.totalCount += geneData.count;
+    group.totalCount += geneCount;
     group.genes.push({
       name: geneName,
-      count: geneData.count,
-      gtdbIds: geneData.gtdbIds,
-      ncbiIds: geneData.ncbiIds
+      count: geneCount,
+      gtdb: geneData.gtdb ?? [],
+      ncbi: (geneData.ncbi ?? []).filter((id): id is string => typeof id === "string" && id.length > 0)
     });
     groupsMap.set(groupName, group);
   }

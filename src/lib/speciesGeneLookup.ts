@@ -4,17 +4,12 @@ import path from "node:path";
 import { formatSpeciesName, normalizeSpeciesQuery } from "@/lib/speciesNaming";
 
 type IndexedGene = {
-  count: number;
-  gtdbIds: string[];
-  ncbiIds: string[];
-  idPairs?: Array<{
-    gtdbId: string;
-    ncbiId: string | null;
-  }>;
+  count?: number;
+  gtdb?: string[];
+  ncbi?: Array<string | null>;
 };
 
 type IndexedSpecies = {
-  name: string;
   matchedAssemblies: number;
   genes: Record<string, IndexedGene>;
 };
@@ -57,16 +52,14 @@ export async function getSpeciesGeneIds(speciesName: string, geneName: string) {
 
   const geneRecord = speciesRecord.genes[geneName] ?? {
     count: 0,
-    gtdbIds: [],
-    ncbiIds: [],
-    idPairs: []
+    gtdb: [],
+    ncbi: []
   };
 
   return {
-    speciesName: speciesRecord.name,
+    speciesName: formatSpeciesName(speciesName),
     geneName,
-    gtdbIds: geneRecord.gtdbIds,
-    ncbiIds: geneRecord.ncbiIds,
-    idPairs: Array.isArray(geneRecord.idPairs) ? geneRecord.idPairs : []
+    gtdb: geneRecord.gtdb ?? [],
+    ncbi: geneRecord.ncbi ?? []
   };
 }
