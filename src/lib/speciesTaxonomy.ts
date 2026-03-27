@@ -179,3 +179,29 @@ export async function getSpeciesProfileBySlug(
       ]
   };
 }
+
+export async function getAllSpeciesProfiles(): Promise<SpeciesProfile[]> {
+  const rows = await loadSpeciesRows();
+
+  return Promise.all(
+    rows.map(async (row) => {
+      const curatedMatch = speciesCatalog.find(
+        (item) =>
+          normalizeSpeciesQuery(item.name) === normalizeSpeciesQuery(row.name) ||
+          item.slug === row.slug
+      );
+
+      return {
+        ...row,
+        summary:
+          curatedMatch?.summary ??
+          "Taxonomy-derived species profile generated from the phyletic matrix dataset.",
+        traits:
+          curatedMatch?.traits ?? [
+            "Comprehensive gene-level details are being added.",
+            "Taxonomic data is available from the current dataset."
+          ]
+      };
+    })
+  );
+}

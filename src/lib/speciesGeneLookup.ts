@@ -63,3 +63,29 @@ export async function getSpeciesGeneIds(speciesName: string, geneName: string) {
     ncbi: geneRecord.ncbi ?? []
   };
 }
+
+export async function getSpeciesGeneIdsByGene(geneName: string) {
+  const index = await loadIndex();
+  const result: Record<string, { gtdb: string[]; ncbi: Array<string | null> }> = {};
+
+  for (const [speciesKey, speciesRecord] of Object.entries(index.species)) {
+    const geneRecord = speciesRecord.genes[geneName];
+    if (!geneRecord) {
+      continue;
+    }
+
+    const gtdb = geneRecord.gtdb ?? [];
+    const ncbi = geneRecord.ncbi ?? [];
+
+    if (gtdb.length === 0 && ncbi.length === 0) {
+      continue;
+    }
+
+    result[speciesKey] = {
+      gtdb,
+      ncbi
+    };
+  }
+
+  return result;
+}

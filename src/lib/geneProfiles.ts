@@ -68,3 +68,7 @@ export async function getGeneProfileBySlug(slug: string): Promise<GeneProfile | 
   const bySlug = cachedGeneProfilesBySlug ?? new Map(profiles.map((item) => [item.slug, item]));
   return bySlug.get(slug) ?? null;
 }
+
+export async function getAllGeneProfiles(): Promise<GeneProfile[]> {
+  return loadGeneProfiles();
+}

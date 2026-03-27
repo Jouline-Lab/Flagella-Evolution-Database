@@ -91,8 +91,8 @@ export default function SpeciesFlagellaInteractivePanel({
 
   function fitSvgToContent() {
     const svgDoc = objectRef.current?.contentDocument;
-    const svgRoot = svgDoc?.documentElement as SVGSVGElement | null;
-    if (!svgRoot) return;
+    const svgRoot = svgDoc?.documentElement;
+    if (!(svgRoot instanceof SVGSVGElement)) return;
 
     const graphics = Array.from(
       svgRoot.querySelectorAll<SVGGraphicsElement>(

@@ -6,6 +6,7 @@ import {
   normalizeSpeciesQuery,
   speciesNameToSlug
 } from "@/lib/speciesNaming";
+import { getSpeciesSuggestionsClient } from "@/lib/browserSpecies";
 
 type SpeciesSearchProps = {
   className?: string;
@@ -49,28 +50,11 @@ export default function SpeciesSearch({
       requestSeqRef.current = requestSeq;
 
       try {
-        const response = await fetch("/api/species-suggestions", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            query,
-            limit: 20
-          })
-        });
-
-        if (!response.ok) {
-          return;
-        }
-
-        const payload = (await response.json()) as {
-          suggestions?: Array<{ name: string; slug: string }>;
-        };
-
         if (requestSeqRef.current !== requestSeq) {
           return;
         }
 
-        setSuggestions(payload.suggestions ?? []);
+        setSuggestions(await getSpeciesSuggestionsClient(query, 20));
       } catch {
         // Keep the previous suggestions when the request fails.
       }

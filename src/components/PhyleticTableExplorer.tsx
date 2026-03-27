@@ -3,6 +3,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { CheckSquare, Download, RotateCcw, Square, Table2 } from "lucide-react";
 import Link from "next/link";
+import {
+  getPhyleticHeadersClient,
+  getTaxonomySuggestionsClient,
+  queryPhyleticMatrixClient
+} from "@/lib/browserPhyletic";
 import { speciesNameToSlug } from "@/lib/speciesNaming";
 
 type PhyleticTableExplorerProps = {
@@ -117,10 +122,11 @@ function sanitizeTsvCell(value: string): string {
 export default function PhyleticTableExplorer({
   headers
 }: PhyleticTableExplorerProps) {
+  const [availableHeaders, setAvailableHeaders] = useState(headers);
   const geneColumnsByGene = useMemo<Record<string, GeneColumnSet>>(() => {
     const map: Record<string, GeneColumnSet> = {};
 
-    for (const header of headers) {
+    for (const header of availableHeaders) {
       if (header.endsWith("_count")) {
         const gene = header.slice(0, -"_count".length);
         map[gene] = { ...(map[gene] ?? {}), count: header };
@@ -140,7 +146,7 @@ export default function PhyleticTableExplorer({
     }
 
     return map;
-  }, [headers]);
+  }, [availableHeaders]);
 
   const geneOptions = useMemo(
     () => Object.keys(geneColumnsByGene).sort((a, b) => a.localeCompare(b)),
@@ -210,16 +216,16 @@ export default function PhyleticTableExplorer({
     }
 
     const taxonomyColumns = TAXONOMY_COLUMNS.filter(
-      (column) => (taxonomyEnabled[column] ?? false) && headers.includes(column)
+      (column) => (taxonomyEnabled[column] ?? false) && availableHeaders.includes(column)
     ).sort((a, b) => (TAXONOMY_ORDER.get(a) ?? 999) - (TAXONOMY_ORDER.get(b) ?? 999));
     orderedColumns.push(...taxonomyColumns);
 
-    if (groupEnabled.assembly && headers.includes("assembly")) {
+    if (groupEnabled.assembly && availableHeaders.includes("assembly")) {
       orderedColumns.push("assembly");
     }
 
     return orderedColumns;
-  }, [geneColumnsByGene, groupEnabled, headers, selectedGenes, taxonomyEnabled]);
+  }, [availableHeaders, geneColumnsByGene, groupEnabled, selectedGenes, taxonomyEnabled]);
 
   const visibleColumnMeta = useMemo<VisibleColumnMeta[]>(() => {
     return visibleColumns.map((column) => {
@@ -348,25 +354,16 @@ export default function PhyleticTableExplorer({
       taxonomyRequestSeqRef.current[rank] = requestSeq;
 
       try {
-        const response = await fetch("/api/phyletic-taxonomy-suggestions", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            rank,
-            query,
-            selectedTaxonomy: taxonomySelected
-          })
+        const suggestions = await getTaxonomySuggestionsClient({
+          rank,
+          query,
+          limit: 20,
+          selectedTaxonomy: taxonomySelected
         });
-        if (!response.ok) {
-          return;
-        }
-
-        const payload = (await response.json()) as { suggestions?: string[] };
         if (taxonomyRequestSeqRef.current[rank] !== requestSeq) {
           return;
         }
 
-        const suggestions = payload.suggestions ?? [];
         setTaxonomySuggestions((current) => ({
           ...current,
           [rank]: suggestions
@@ -397,6 +394,32 @@ export default function PhyleticTableExplorer({
       return current;
     });
   }, [geneSuggestions]);
+
+  useEffect(() => {
+    if (availableHeaders.length > 0) {
+      return;
+    }
+
+    let cancelled = false;
+
+    getPhyleticHeadersClient()
+      .then((nextHeaders) => {
+        if (!cancelled) {
+          setAvailableHeaders(nextHeaders);
+        }
+      })
+      .catch((error) => {
+        if (!cancelled) {
+          setLoadError(
+            error instanceof Error ? error.message : "Failed to load phyletic matrix headers."
+          );
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [availableHeaders.length]);
 
   useEffect(() => {
     return () => {
@@ -471,26 +494,12 @@ export default function PhyleticTableExplorer({
       setIsLoading(true);
       setLoadError(null);
 
-      const response = await fetch("/api/phyletic-matrix", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          visibleColumns,
-          taxonomyFilters: activeTaxonomyFilters,
-          countFilters: {},
-          requiredCountColumns
-        })
+      const payload = await queryPhyleticMatrixClient({
+        visibleColumns,
+        taxonomyFilters: activeTaxonomyFilters,
+        countFilters: {},
+        requiredCountColumns
       });
-
-      if (!response.ok) {
-        throw new Error(`Failed to load table rows (${response.status})`);
-      }
-
-      const payload = (await response.json()) as {
-        rows: Record<string, string>[];
-        totalRows: number;
-        matchedRows: number;
-      };
 
       setRows(payload.rows ?? []);
       setTotalRows(payload.totalRows ?? 0);

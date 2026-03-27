@@ -3,6 +3,9 @@
 import React, { useRef, useEffect, useState, useCallback, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import * as d3 from 'd3';
+import { withBasePath } from '@/lib/assetPaths';
+import { getSpeciesSuggestionsClient } from '@/lib/browserSpecies';
+import { formatSpeciesName, normalizeSpeciesQuery } from '@/lib/speciesNaming';
 
 type Sequence = {
   header: string;
@@ -25,6 +28,7 @@ type PositionLogoData = {
 type SequenceLogoChartProps = {
   geneName: string;
   alignmentPath?: string | null;
+  speciesGeneIdsByName?: Record<string, { gtdb: string[]; ncbi: Array<string | null> }>;
   onLoaded?: () => void;
   height?: number;
 };
@@ -237,6 +241,7 @@ function getNcbiProteinUrl(id: string): string {
 const SequenceLogoChart: React.FC<SequenceLogoChartProps> = ({
   geneName,
   alignmentPath,
+  speciesGeneIdsByName = {},
   onLoaded,
   height = 140
 }) => {
@@ -322,7 +327,7 @@ const SequenceLogoChart: React.FC<SequenceLogoChartProps> = ({
       return;
     }
 
-    fetch(alignmentPath)
+    fetch(withBasePath(alignmentPath))
       .then((response) => response.text())
       .then((fastaContent) => {
         setRawSequences(parseFasta(fastaContent));
@@ -345,23 +350,7 @@ const SequenceLogoChart: React.FC<SequenceLogoChartProps> = ({
 
     const timer = setTimeout(async () => {
       try {
-        const response = await fetch('/api/species-suggestions', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            query: normalizedQuery,
-            limit: 10
-          })
-        });
-
-        if (!response.ok) {
-          return;
-        }
-
-        const payload = (await response.json()) as {
-          suggestions?: SpeciesSuggestion[];
-        };
-        const nextSuggestions = payload.suggestions ?? [];
+        const nextSuggestions = await getSpeciesSuggestionsClient(normalizedQuery, 10);
         setSuggestions(nextSuggestions);
         setHighlightedSuggestionIndex(nextSuggestions.length > 0 ? 0 : -1);
       } catch {
@@ -460,27 +449,8 @@ const SequenceLogoChart: React.FC<SequenceLogoChartProps> = ({
       setIsSearchOpen(false);
 
       try {
-        const response = await fetch('/api/gene-species-ids', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            geneName,
-            speciesName: species.name
-          })
-        });
-
-        if (!response.ok) {
-          throw new Error(`Failed to load IDs (${response.status})`);
-        }
-
-        const payload = (await response.json()) as {
-          result?: {
-            speciesName: string;
-            geneName: string;
-            gtdb: string[];
-            ncbi: Array<string | null>;
-          } | null;
-        };
+        const speciesKey = normalizeSpeciesQuery(formatSpeciesName(species.name));
+        const record = speciesGeneIdsByName[speciesKey] ?? null;
 
         setSelectedSpecies((current) =>
           current.map((item) => {
@@ -488,7 +458,7 @@ const SequenceLogoChart: React.FC<SequenceLogoChartProps> = ({
               return item;
             }
 
-            if (!payload.result) {
+            if (!record) {
               return {
                 ...item,
                 status: 'missing',
@@ -498,8 +468,8 @@ const SequenceLogoChart: React.FC<SequenceLogoChartProps> = ({
 
             return {
               ...item,
-              gtdb: payload.result.gtdb,
-              ncbi: payload.result.ncbi,
+              gtdb: record.gtdb,
+              ncbi: record.ncbi,
               status: 'ready',
               error: undefined
             };
@@ -522,7 +492,7 @@ const SequenceLogoChart: React.FC<SequenceLogoChartProps> = ({
         );
       }
     },
-    [geneName, selectedSpecies]
+    [geneName, selectedSpecies, speciesGeneIdsByName]
   );
 
   const removeSpecies = useCallback((speciesName: string) => {
@@ -556,7 +526,7 @@ const SequenceLogoChart: React.FC<SequenceLogoChartProps> = ({
     }
 
     try {
-      const response = await fetch(`/tight_caps/${letter}.svg`);
+      const response = await fetch(withBasePath(`/tight_caps/${letter}.svg`));
       if (!response.ok) {
         return null;
       }

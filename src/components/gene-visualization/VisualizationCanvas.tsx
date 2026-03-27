@@ -21,7 +21,7 @@ interface VisualizationCanvasProps {
   onLineageClick: (level: TaxonomicLevel, category: string, range?: { start: number; end: number }) => void;
   onDomainClick: () => void;
   onWidthChange?: (width: number) => void;
-  getColorScale: (level: TaxonomicLevel, categories: string[]) => d3.ScaleOrdinal<string, string>;
+  getColorScale: (level: TaxonomicLevel, categories: string[]) => (value: string) => string;
   rugMode?: 'binary' | 'normalized' | 'heatmap';
   onDownloadTSV?: () => void;
   showTopTree?: boolean;
@@ -56,6 +56,12 @@ type CanvasRenderMeta = {
   containerWidth: number;
   topTreeOffset: number;
   svgHeight: number;
+};
+
+type LineageRun = {
+  cat: string;
+  start: number;
+  end: number;
 };
 
 function getRugColor(gene: string, count: number, maxCount: number, rugMode: RugMode): string {
@@ -334,7 +340,12 @@ ref
     const counts: Record<string, Map<string, number>> = {};
 
     selectedLevels.forEach(level => {
-      counts[level] = d3.rollup(data, v => v.length, d => d[level]);
+      const levelCounts = new Map<string, number>();
+      data.forEach((record) => {
+        const key = record[level];
+        levelCounts.set(key, (levelCounts.get(key) ?? 0) + 1);
+      });
+      counts[level] = levelCounts;
     });
 
     const cleanLineageName = (name: string) => name.replace(/^[a-z]__/, '');
@@ -447,7 +458,7 @@ ref
         .attr('class', 'level')
         .attr('transform', `translate(0,${y})`);
 
-      const runs: Array<{cat: string, start: number, end: number}> = [];
+      const runs: LineageRun[] = [];
       let start = 0;
       let currentCat = data[0][level];
 
@@ -465,23 +476,23 @@ ref
       g.selectAll('rect')
         .data(runs)
         .join('rect')
-        .attr('x', d => coordMap.get(assemblies[d.start]) || 0)
+        .attr('x', (d: LineageRun) => coordMap.get(assemblies[d.start]) || 0)
         .attr('y', 0)
-        .attr('width', d => {
+        .attr('width', (d: LineageRun) => {
           const startX = coordMap.get(assemblies[d.start]) || 0;
           const endX = coordMap.get(assemblies[d.end]) || 0;
           const endW = widthMap.get(assemblies[d.end]) || 0;
           return endX + endW - startX;
         })
         .attr('height', LEVEL_HEIGHT - INNER_PAD)
-        .attr('fill', d => scale(d.cat))
+        .attr('fill', (d: LineageRun) => scale(d.cat))
         .attr('stroke', 'var(--viz-surface)')
         .attr('stroke-width', 0.5)
         .style('cursor', 'pointer')
-        .on('click', (event, d) => {
+        .on('click', (_event: MouseEvent, d: LineageRun) => {
           onLineageClick(level, d.cat, { start: d.start, end: d.end });
         })
-        .on('mouseover', (e: MouseEvent, d) => {
+        .on('mouseover', (e: MouseEvent, d: LineageRun) => {
           const startX = coordMap.get(assemblies[d.start]) || 0;
           const endX = coordMap.get(assemblies[d.end]) || 0;
           const endW = widthMap.get(assemblies[d.end]) || 0;
@@ -525,7 +536,7 @@ ref
         .data(runs)
         .join('text')
         .attr('class', 'run-label')
-        .attr('x', d => {
+        .attr('x', (d: LineageRun) => {
           const startX = coordMap.get(assemblies[d.start]) || 0;
           const endX = coordMap.get(assemblies[d.end]) || 0;
           const endW = widthMap.get(assemblies[d.end]) || 0;
@@ -534,12 +545,12 @@ ref
         .attr('y', (LEVEL_HEIGHT - INNER_PAD) / 2)
         .attr('dy', '.35em')
         .attr('text-anchor', 'middle')
-        .text(d => cleanLineageName(d.cat))
+        .text((d: LineageRun) => cleanLineageName(d.cat))
         .style('font-size', '9px')
         .style('font-weight', '500')
-        .style('fill', d => textFillForBg(scale(d.cat)))
+        .style('fill', (d: LineageRun) => textFillForBg(scale(d.cat)))
         .style('pointer-events', 'none')
-        .each(function(d) {
+        .each(function(this: SVGTextElement, d: LineageRun) {
           const startX = coordMap.get(assemblies[d.start]) || 0;
           const endX = coordMap.get(assemblies[d.end]) || 0;
           const endW = widthMap.get(assemblies[d.end]) || 0;
@@ -547,7 +558,7 @@ ref
           const label = cleanLineageName(d.cat);
           const approxCharWidth = 5.5;
           const fits = w - 6 > label.length * approxCharWidth;
-          d3.select(this as SVGTextElement).style('opacity', fits ? 1 : 0);
+          d3.select(this).style('opacity', fits ? 1 : 0);
         });
 
       g.append('text')
@@ -569,7 +580,7 @@ ref
   useEffect(() => {
     if (!svgRef.current || !data.length || containerWidth <= 0) return;
     const svg = d3.select(svgRef.current);
-    const plot = svg.select<SVGGElement>('g.plot-root');
+    const plot = svg.select('g.plot-root');
     if (plot.empty()) return;
 
     const MARGINS = { top: 20 + topTreeOffset, right: 16, bottom: 24 + EXTRA_BOTTOM_PADDING, left: 100 };
@@ -588,7 +599,7 @@ ref
     setLastSvgHeight(svgHeight);
 
     const baseY = (selectedLevels.length + 1) * LEVEL_HEIGHT + BASE_GAP;
-    const rugLabels = plot.select<SVGGElement>('g.rug-labels');
+    const rugLabels = plot.select('g.rug-labels');
     rugLabels.selectAll('*').remove();
 
     if (activeGenes.length > 0) {
@@ -1177,7 +1188,7 @@ function drawTopTree({
   treeLayoutMode,
   tipExtensionMode,
 }: {
-  group: d3.Selection<SVGGElement, unknown, null, undefined>;
+  group: any;
   root: NewickNode;
   data: GTDBRecord[];
   coordMap: Map<string, number>;

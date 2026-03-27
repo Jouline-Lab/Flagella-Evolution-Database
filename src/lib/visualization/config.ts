@@ -2,19 +2,21 @@ import type { TaxonomicLevel } from "@/types/gene-visualization";
 
 export const DATASETS = [
   "GTDB214_lineage_ordered.json",
-  "flagella_phylogeny.json"
+  "flagella_phylogeny_37_genes_rooted_alpha0.8_cov0.8_NJ_rooted_for_visualization.json"
 ] as const;
 
 export const DEFAULT_DATASET = DATASETS[0];
 export const DEFAULT_TSV_FILENAME = "flagellar_genes_phyletic_distribution.tsv";
 
 export const DATASET_LABELS: Record<(typeof DATASETS)[number], string> = {
-  "flagella_phylogeny.json": "Flagella Phylogeny",
+  "flagella_phylogeny_37_genes_rooted_alpha0.8_cov0.8_NJ_rooted_for_visualization.json":
+    "Flagella Phylogeny",
   "GTDB214_lineage_ordered.json": "GTDB r214"
 };
 
 export const DATASET_TREE_FILE: Partial<Record<(typeof DATASETS)[number], string>> = {
-  "flagella_phylogeny.json": "flagella_phylogeny.tree",
+  "flagella_phylogeny_37_genes_rooted_alpha0.8_cov0.8_NJ_rooted_for_visualization.json":
+    "flagella_phylogeny_37_genes_rooted_alpha0.8_cov0.8_NJ_rooted_for_visualization.tree",
   "GTDB214_lineage_ordered.json": "bac120_r214.tree"
 };
 

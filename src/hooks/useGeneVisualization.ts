@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useEffect, useRef } from "react";
 import * as d3 from "d3";
 import LineageAutocomplete from "@/components/LineageAutocomplete";
+import { withBasePath } from "@/lib/assetPaths";
 import {
   ALL_LEVELS,
   sortGenesByCustomRowOrder,
@@ -88,7 +89,7 @@ export function useGeneVisualization() {
 
   const loadGTDBData = useCallback(async (fileName: string) => {
     try {
-      const response = await fetch(fileName.startsWith("/") ? fileName : `/${fileName}`);
+      const response = await fetch(withBasePath(fileName.startsWith("/") ? fileName : `/${fileName}`));
       const jsonData: GTDBRecord[] = await response.json();
 
       sizeFilterStateRef.current = { level: null, threshold: 0, baseline: null };
@@ -188,7 +189,9 @@ export function useGeneVisualization() {
         if (isFirstDatasetLoadRef.current && !lastTSVTextRef.current) {
           try {
             const resp = await fetch(
-              DEFAULT_TSV_FILENAME.startsWith("/") ? DEFAULT_TSV_FILENAME : `/${DEFAULT_TSV_FILENAME}`
+              withBasePath(
+                DEFAULT_TSV_FILENAME.startsWith("/") ? DEFAULT_TSV_FILENAME : `/${DEFAULT_TSV_FILENAME}`
+              )
             );
             if (resp.ok) {
               const text = await resp.text();

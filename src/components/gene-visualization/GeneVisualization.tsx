@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { useGeneVisualization } from "@/hooks/useGeneVisualization";
+import { withBasePath } from "@/lib/assetPaths";
 import { DATASET_TREE_FILE } from "@/lib/visualization/config";
 import { ControlPanel } from "./ControlPanel";
 import { GeneSelectionSidebar } from "./GeneSelectionSidebar";
@@ -134,7 +135,7 @@ export function GeneVisualization() {
       return;
     }
     let cancelled = false;
-    fetch(`/${treeFile}`)
+    fetch(withBasePath(`/${treeFile}`))
       .then((resp) => (resp.ok ? resp.text() : Promise.reject(new Error(`Failed to load ${treeFile}`))))
       .then((text) => {
         if (!cancelled) setTreeNewick(text);

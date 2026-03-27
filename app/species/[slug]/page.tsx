@@ -4,13 +4,18 @@ import SpeciesFlagellaInteractivePanel from "@/components/species/SpeciesFlagell
 import { getSpeciesFlagellaContent } from "@/lib/speciesFlagellaContent";
 import SpeciesOperonTracks from "@/components/species/SpeciesOperonTracks";
 import { getSpeciesOperonContent } from "@/lib/speciesOperonContent";
-import { getSpeciesProfileBySlug } from "@/lib/speciesTaxonomy";
+import { getAllSpeciesProfiles, getSpeciesProfileBySlug } from "@/lib/speciesTaxonomy";
 
 type SpeciesDetailsPageProps = {
   params: Promise<{
     slug: string;
   }>;
 };
+
+export async function generateStaticParams() {
+  const species = await getAllSpeciesProfiles();
+  return species.map((item) => ({ slug: item.slug }));
+}
 
 export default async function SpeciesDetailsPage({ params }: SpeciesDetailsPageProps) {
   const { slug } = await params;

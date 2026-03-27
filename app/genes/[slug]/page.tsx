@@ -2,13 +2,19 @@ import { notFound } from "next/navigation";
 import PageShell from "@/components/layout/PageShell";
 import SequenceLogoChart from "@/components/SequenceLogoChart";
 import { getAlignmentPathForGene } from "@/lib/geneAlignments";
-import { getGeneProfileBySlug } from "@/lib/geneProfiles";
+import { getAllGeneProfiles, getGeneProfileBySlug } from "@/lib/geneProfiles";
+import { getSpeciesGeneIdsByGene } from "@/lib/speciesGeneLookup";
 
 type GeneDetailsPageProps = {
   params: Promise<{
     slug: string;
   }>;
 };
+
+export async function generateStaticParams() {
+  const genes = await getAllGeneProfiles();
+  return genes.map((gene) => ({ slug: gene.slug }));
+}
 
 export default async function GeneDetailsPage({ params }: GeneDetailsPageProps) {
   const { slug } = await params;
@@ -20,6 +26,7 @@ export default async function GeneDetailsPage({ params }: GeneDetailsPageProps) 
 
   const maxNeighborCount = Math.max(...gene.topNeighbors.map((neighbor) => neighbor.count), 1);
   const alignmentPath = await getAlignmentPathForGene(gene.name);
+  const speciesGeneIdsByName = await getSpeciesGeneIdsByGene(gene.name);
 
   return (
     <PageShell>
@@ -76,6 +83,7 @@ export default async function GeneDetailsPage({ params }: GeneDetailsPageProps) 
           <SequenceLogoChart
             geneName={gene.name}
             alignmentPath={alignmentPath}
+            speciesGeneIdsByName={speciesGeneIdsByName}
           />
         </article>
       </section>
