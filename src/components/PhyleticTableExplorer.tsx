@@ -154,7 +154,7 @@ export default function PhyleticTableExplorer({
   );
 
   const [groupEnabled, setGroupEnabled] = useState({
-    count: true,
+    count: false,
     gtdb: false,
     ncbi: false,
     assembly: false
@@ -308,6 +308,18 @@ export default function PhyleticTableExplorer({
   }, [visibleColumnMeta]);
 
   const toggleGeneSelection = (gene: string, checked: boolean) => {
+    if (checked) {
+      setGroupEnabled((current) => {
+        if (current.count || current.gtdb || current.ncbi) {
+          return current;
+        }
+        return {
+          ...current,
+          count: true
+        };
+      });
+    }
+
     setSelectedGenes((current) => {
       if (checked) {
         if (current.includes(gene)) {
@@ -710,6 +722,7 @@ export default function PhyleticTableExplorer({
                   <input
                     type="checkbox"
                     checked={groupEnabled.count}
+                    disabled={selectedGenes.length === 0}
                     onChange={(event) =>
                       setGroupEnabled((current) => ({
                         ...current,
@@ -724,6 +737,7 @@ export default function PhyleticTableExplorer({
                   <input
                     type="checkbox"
                     checked={groupEnabled.gtdb}
+                    disabled={selectedGenes.length === 0}
                     onChange={(event) =>
                       setGroupEnabled((current) => ({
                         ...current,
@@ -738,6 +752,7 @@ export default function PhyleticTableExplorer({
                   <input
                     type="checkbox"
                     checked={groupEnabled.ncbi}
+                    disabled={selectedGenes.length === 0}
                     onChange={(event) =>
                       setGroupEnabled((current) => ({
                         ...current,
@@ -762,6 +777,12 @@ export default function PhyleticTableExplorer({
                   <span>Assembly</span>
                 </label>
               </div>
+              {selectedGenes.length === 0 ? (
+                <p className="control-empty">
+                  Select one or more genes to enable Count, GTDB IDs, or NCBI IDs
+                  columns.
+                </p>
+              ) : null}
             </div>
           </div>
         </section>
@@ -948,6 +969,12 @@ export default function PhyleticTableExplorer({
         </section>
 
         <section className="render-actions">
+          {selectedGenes.length === 0 ? (
+            <p className="error-note">
+              Select at least one gene before rendering. Count, GTDB ID, and NCBI ID
+              columns are gene-specific and will stay hidden until a gene is chosen.
+            </p>
+          ) : null}
           <button
             type="button"
             className="button button-secondary table-action-button"
