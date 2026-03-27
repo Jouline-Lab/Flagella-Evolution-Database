@@ -1,0 +1,7 @@
+{
+  "version": 1,
+  "alignments": {
+    "flig": "/alignments/FliG_hmm_E1000_db_FAMSA_gt0.1_treeordered_orthologs.fasta",
+    "flic": "/alignments/FliC_hmm_E1000_db_FAMSA_gt0.1_treeordered_orthologs.fasta"
+  }
+}

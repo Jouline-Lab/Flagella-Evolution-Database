@@ -73,7 +73,7 @@ function getSpeciesHref(rawSpecies: string): string | null {
   if (!formattedName || formattedName === "-") {
     return null;
   }
-  return `/species/${speciesNameToSlug(formattedName)}`;
+  return `/species?slug=${encodeURIComponent(speciesNameToSlug(formattedName))}`;
 }
 
 function classifyColumn(column: string): ColumnType {

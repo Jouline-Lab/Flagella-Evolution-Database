@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { SpeciesFlagellaContent } from "@/lib/speciesFlagellaContent";
+import type { SpeciesFlagellaContent } from "@/lib/speciesData";
 
 type IdDialogState = {
   column: "gtdb" | "ncbi";

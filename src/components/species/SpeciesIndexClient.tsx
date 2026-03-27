@@ -1,21 +1,30 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import EmptyState from "@/components/layout/EmptyState";
 import PageHeader from "@/components/layout/PageHeader";
 import PageShell from "@/components/layout/PageShell";
+import SpeciesFlagellaInteractivePanel from "@/components/species/SpeciesFlagellaInteractivePanel";
+import SpeciesOperonTracks from "@/components/species/SpeciesOperonTracks";
 import { getAllSpeciesProfilesClient } from "@/lib/browserSpecies";
-import { normalizeSpeciesQuery } from "@/lib/speciesNaming";
+import { getSpeciesFlagellaContentClient } from "@/lib/browserSpeciesFlagella";
+import { getSpeciesOperonContentClient } from "@/lib/browserSpeciesOperon";
+import type {
+  SpeciesFlagellaContent,
+  SpeciesOperonContent,
+  SpeciesProfile
+} from "@/lib/speciesData";
 
 export default function SpeciesIndexClient() {
   const searchParams = useSearchParams();
-  const query = searchParams.get("query")?.trim() ?? "";
-  const normalizedQuery = normalizeSpeciesQuery(query);
-  const [species, setSpecies] = useState<Array<{ name: string; slug: string }>>([]);
+  const slug = searchParams.get("slug")?.trim() ?? "";
+  const [species, setSpecies] = useState<SpeciesProfile[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [flagellaContent, setFlagellaContent] = useState<SpeciesFlagellaContent | null>(null);
+  const [operonContent, setOperonContent] = useState<SpeciesOperonContent | null>(null);
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [detailError, setDetailError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -26,7 +35,7 @@ export default function SpeciesIndexClient() {
           return;
         }
 
-        setSpecies(rows.map((item) => ({ name: item.name, slug: item.slug })));
+        setSpecies(rows);
         setLoadError(null);
       })
       .catch((error) => {
@@ -47,53 +56,132 @@ export default function SpeciesIndexClient() {
     };
   }, []);
 
-  const filteredSpecies = useMemo(() => {
-    const rows = normalizedQuery
-      ? species.filter((item) => normalizeSpeciesQuery(item.name).includes(normalizedQuery))
-      : species;
+  const selectedSpecies = useMemo(
+    () => species.find((item) => item.slug === slug) ?? null,
+    [slug, species]
+  );
 
-    return rows.slice(0, 120);
-  }, [normalizedQuery, species]);
+  useEffect(() => {
+    if (!selectedSpecies) {
+      setFlagellaContent(null);
+      setOperonContent(null);
+      setDetailError(slug ? "Species not found." : null);
+      setDetailLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    setDetailLoading(true);
+    setDetailError(null);
+
+    Promise.all([
+      getSpeciesFlagellaContentClient(selectedSpecies.name),
+      getSpeciesOperonContentClient(selectedSpecies.name)
+    ])
+      .then(([flagella, operon]) => {
+        if (cancelled) {
+          return;
+        }
+
+        setFlagellaContent(flagella);
+        setOperonContent(operon);
+      })
+      .catch((error) => {
+        if (!cancelled) {
+          setDetailError(
+            error instanceof Error ? error.message : "Failed to load species details."
+          );
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setDetailLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedSpecies, slug]);
 
   return (
     <PageShell>
-      <PageHeader
-        eyebrow="Species Index"
-        title="Species pages"
-        description="Browse species records and jump to each dedicated page for taxonomy and flagella-related notes."
-      />
+      {slug ? (
+        <>
+          <PageHeader
+            eyebrow="Species Profile"
+            title={selectedSpecies ? `Species: ${selectedSpecies.name}` : "Species"}
+            description="Taxonomy and flagella-related details loaded from the static dataset."
+          />
 
-      {query ? (
-        <p className="species-query-result">
-          Search: <strong>{query}</strong>
-        </p>
-      ) : null}
+          {isLoading || detailLoading ? <p>Loading species details...</p> : null}
+          {loadError ? <p>{loadError}</p> : null}
+          {detailError ? <p>{detailError}</p> : null}
 
-      {isLoading ? <p>Loading species index...</p> : null}
-      {loadError ? <p>{loadError}</p> : null}
+          {!isLoading && !detailLoading && !loadError && !detailError && selectedSpecies && flagellaContent && operonContent ? (
+            <section className="species-grid species-grid-details">
+              <article className="species-card species-card-wide">
+                <h2>Taxonomy</h2>
+                <p>{selectedSpecies.summary}</p>
+                <dl className="species-taxonomy">
+                  <div>
+                    <dt>Phylum</dt>
+                    <dd>{selectedSpecies.taxonomy.phylum}</dd>
+                  </div>
+                  <div>
+                    <dt>Class</dt>
+                    <dd>{selectedSpecies.taxonomy.className}</dd>
+                  </div>
+                  <div>
+                    <dt>Order</dt>
+                    <dd>{selectedSpecies.taxonomy.order}</dd>
+                  </div>
+                  <div>
+                    <dt>Family</dt>
+                    <dd>{selectedSpecies.taxonomy.family}</dd>
+                  </div>
+                  <div>
+                    <dt>Genus</dt>
+                    <dd>{selectedSpecies.taxonomy.genus}</dd>
+                  </div>
+                </dl>
+              </article>
 
-      {!isLoading && !loadError && filteredSpecies.length === 0 ? (
-        <EmptyState
-          title="No species found"
-          description="Try a different species name."
-          actionHref="/"
-          actionLabel="Back to homepage"
-        />
-      ) : null}
+              <article className="species-card species-card-wide">
+                <h2>Flagellar Content</h2>
+                {flagellaContent.matchedAssemblies === 0 ? (
+                  <p>
+                    No matching assemblies were found in the main phyletic table for this
+                    species.
+                  </p>
+                ) : (
+                  <>
+                    <p className="species-flagella-summary">
+                      Total flagellar gene counts:{" "}
+                      <strong>{flagellaContent.totalGeneCount.toLocaleString()}</strong>
+                    </p>
+                    <SpeciesFlagellaInteractivePanel groups={flagellaContent.groups} />
+                  </>
+                )}
+              </article>
 
-      {!isLoading && !loadError && filteredSpecies.length > 0 ? (
-        <section className="species-grid">
-          {filteredSpecies.map((item) => (
-            <article key={item.slug} className="species-card">
-              <h2>{item.name}</h2>
-              <p>Taxonomy-derived species profile from the phyletic matrix dataset.</p>
-              <Link href={`/species/${item.slug}`} className="button button-primary">
-                Navigate to species page
-              </Link>
-            </article>
-          ))}
-        </section>
-      ) : null}
+              <article className="species-card species-card-wide">
+                <h2>Operon Organization by Contig</h2>
+                <SpeciesOperonTracks content={operonContent} />
+              </article>
+            </section>
+          ) : null}
+        </>
+      ) : (
+        <>
+          <PageHeader
+            eyebrow="Species"
+            title="Species page unavailable"
+            description="The species index listing has been removed."
+          />
+          <p>Use direct species links if you still need a species detail page.</p>
+        </>
+      )}
     </PageShell>
   );
 }

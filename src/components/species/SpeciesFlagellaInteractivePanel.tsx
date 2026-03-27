@@ -2,7 +2,8 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import SpeciesFlagellaTables from "@/components/species/SpeciesFlagellaTables";
-import type { SpeciesFlagellaContent } from "@/lib/speciesFlagellaContent";
+import { withBasePath } from "@/lib/assetPaths";
+import type { SpeciesFlagellaContent } from "@/lib/speciesData";
 
 type SpeciesFlagellaInteractivePanelProps = {
   groups: SpeciesFlagellaContent["groups"];
@@ -213,7 +214,7 @@ export default function SpeciesFlagellaInteractivePanel({
       <div className="species-flagella-figure-wrap" ref={wrapRef}>
         <object
           ref={objectRef}
-          data="/Flagella_figure.labeled.svg"
+          data={withBasePath("/Flagella_figure.labeled.svg")}
           type="image/svg+xml"
           className="species-flagella-figure"
           aria-label="Interactive flagellar component map"
@@ -224,7 +225,7 @@ export default function SpeciesFlagellaInteractivePanel({
           }}
           onError={() => setSvgLoadError(true)}
         >
-          <img src="/Flagella_figure.svg" alt="Flagellar component map" />
+          <img src={withBasePath("/Flagella_figure.svg")} alt="Flagellar component map" />
         </object>
         {tooltip.visible ? (
           <div className="species-flagella-tooltip" style={{ left: tooltip.x, top: tooltip.y }}>

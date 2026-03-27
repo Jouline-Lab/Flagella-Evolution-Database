@@ -1,6 +1,7 @@
 import { speciesCatalog } from "@/data/species";
 import { formatSpeciesName, normalizeSpeciesQuery, speciesNameToSlug, stripTaxonomyPrefix } from "@/lib/speciesNaming";
 import { withBasePath } from "@/lib/assetPaths";
+import type { SpeciesProfile, SpeciesSuggestion } from "@/lib/speciesData";
 
 const TAXONOMY_RANKS = [
   "phylum",
@@ -19,22 +20,7 @@ type TaxonomyIndex = {
   rows: string[][];
 };
 
-export type SpeciesSuggestion = {
-  name: string;
-  slug: string;
-};
-
-export type SpeciesProfile = SpeciesSuggestion & {
-  taxonomy: {
-    phylum: string;
-    className: string;
-    order: string;
-    family: string;
-    genus: string;
-  };
-  summary: string;
-  traits: string[];
-};
+export type { SpeciesProfile, SpeciesSuggestion } from "@/lib/speciesData";
 
 let taxonomyIndexPromise: Promise<TaxonomyIndex> | null = null;
 let speciesProfilesPromise: Promise<SpeciesProfile[]> | null = null;

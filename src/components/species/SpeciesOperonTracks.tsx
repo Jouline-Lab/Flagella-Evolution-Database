@@ -7,7 +7,7 @@ import type {
   OperonGapItem,
   OperonGeneItem,
   SpeciesOperonContent
-} from "@/lib/speciesOperonContent";
+} from "@/lib/speciesData";
 
 type SpeciesOperonTracksProps = {
   content: SpeciesOperonContent;

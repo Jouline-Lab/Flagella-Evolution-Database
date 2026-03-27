@@ -35,7 +35,7 @@ export default function HomeHeroSearch() {
                   type="button"
                   className="hero-model-link"
                   onClick={() => {
-                    router.push(`/species/${speciesNameToSlug(name)}`);
+                    router.push(`/species?slug=${encodeURIComponent(speciesNameToSlug(name))}`);
                   }}
                 >
                   {name}

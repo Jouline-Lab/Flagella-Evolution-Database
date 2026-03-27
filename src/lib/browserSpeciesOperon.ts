@@ -1,53 +1,10 @@
-import { existsSync } from "node:fs";
-import { readFile } from "node:fs/promises";
-import path from "node:path";
+import { withBasePath } from "@/lib/assetPaths";
 import { formatSpeciesName, normalizeSpeciesQuery } from "@/lib/speciesNaming";
+import type { SpeciesOperonContent } from "@/lib/speciesData";
 
 type GtdbLineageRow = {
   assembly: string;
   species: string;
-};
-
-export type OperonGeneItem = {
-  kind: "gene";
-  id: string;
-  geneName: string;
-  geneId: string;
-  assembly: string;
-  contig: string;
-  start: number;
-  stop: number;
-  strand: 1 | -1;
-};
-
-export type OperonGapItem = {
-  kind: "gap";
-  id: string;
-  leftBp: number;
-  rightBp: number;
-};
-
-export type OperonTrack = {
-  id: string;
-  assembly: string;
-  contig: string;
-  spanStart: number;
-  spanEnd: number;
-  lineSegments: Array<{
-    id: string;
-    start: number;
-    stop: number;
-  }>;
-  items: Array<OperonGeneItem | OperonGapItem>;
-};
-
-export type SpeciesOperonContent = {
-  matchedAssemblies: number;
-  assemblyCount: number;
-  contigCount: number;
-  geneCount: number;
-  missingAssemblies: string[];
-  tracks: OperonTrack[];
 };
 
 type CoordRow = {
@@ -60,45 +17,44 @@ type CoordRow = {
   assembly: string;
 };
 
-const LINEAGE_PATH = path.join(process.cwd(), "public", "GTDB214_lineage_ordered.json");
-const COORD_DIR = path.join(process.cwd(), "public", "operon_coords");
 const SMALL_GAP_THRESHOLD_BP = 1000;
 const TRACK_FLANK_BP = 500;
 
-let cachedLineageRows: GtdbLineageRow[] | null = null;
+let lineageRowsPromise: Promise<GtdbLineageRow[]> | null = null;
 
 function normalizeSpeciesName(value: string): string {
   return normalizeSpeciesQuery(formatSpeciesName(value));
 }
 
 async function loadLineageRows(): Promise<GtdbLineageRow[]> {
-  if (cachedLineageRows) return cachedLineageRows;
-  if (!existsSync(LINEAGE_PATH)) {
-    cachedLineageRows = [];
-    return cachedLineageRows;
+  if (!lineageRowsPromise) {
+    lineageRowsPromise = fetch(withBasePath("/GTDB214_lineage_ordered.json")).then(
+      async (response) => {
+        if (!response.ok) {
+          return [];
+        }
+
+        const parsed = (await response.json()) as unknown;
+        if (!Array.isArray(parsed)) {
+          return [];
+        }
+
+        return parsed
+          .filter((item): item is GtdbLineageRow => {
+            if (!item || typeof item !== "object") return false;
+            const candidate = item as Partial<GtdbLineageRow>;
+            return typeof candidate.assembly === "string" && typeof candidate.species === "string";
+          })
+          .map((item) => ({
+            assembly: item.assembly.trim(),
+            species: item.species.trim()
+          }))
+          .filter((item) => item.assembly && item.species);
+      }
+    );
   }
 
-  const raw = await readFile(LINEAGE_PATH, "utf8");
-  const parsed = JSON.parse(raw) as unknown;
-  if (!Array.isArray(parsed)) {
-    cachedLineageRows = [];
-    return cachedLineageRows;
-  }
-
-  const rows = parsed
-    .filter((item): item is GtdbLineageRow => {
-      if (!item || typeof item !== "object") return false;
-      const candidate = item as Partial<GtdbLineageRow>;
-      return typeof candidate.assembly === "string" && typeof candidate.species === "string";
-    })
-    .map((item) => ({
-      assembly: item.assembly.trim(),
-      species: item.species.trim()
-    }))
-    .filter((item) => item.assembly && item.species);
-
-  cachedLineageRows = rows;
-  return cachedLineageRows;
+  return lineageRowsPromise;
 }
 
 function getValue(parts: string[], idx: number): string {
@@ -197,7 +153,7 @@ function mergeCoordinateDuplicates(rows: CoordRow[]): CoordRow[] {
   }));
 }
 
-function rowsToTracks(rows: CoordRow[]): OperonTrack[] {
+function rowsToTracks(rows: CoordRow[]): SpeciesOperonContent["tracks"] {
   const byContig = new Map<string, CoordRow[]>();
   for (const row of rows) {
     const key = `${row.assembly}::${row.contig}`;
@@ -206,7 +162,7 @@ function rowsToTracks(rows: CoordRow[]): OperonTrack[] {
     byContig.set(key, existing);
   }
 
-  const tracks: OperonTrack[] = [];
+  const tracks: SpeciesOperonContent["tracks"] = [];
   for (const [key, contigRows] of byContig.entries()) {
     const sorted = [...contigRows].sort(
       (a, b) => a.start - b.start || a.stop - b.stop || a.strand - b.strand
@@ -219,8 +175,8 @@ function rowsToTracks(rows: CoordRow[]): OperonTrack[] {
     const spanStart = Math.max(0, first.start - TRACK_FLANK_BP);
     const spanEnd = last.stop + TRACK_FLANK_BP;
 
-    const lineSegments: OperonTrack["lineSegments"] = [];
-    const items: OperonTrack["items"] = [];
+    const lineSegments: SpeciesOperonContent["tracks"][number]["lineSegments"] = [];
+    const items: SpeciesOperonContent["tracks"][number]["items"] = [];
     let segmentStart = mergedRows[0].start;
     let segmentStop = mergedRows[0].stop;
 
@@ -283,23 +239,13 @@ function rowsToTracks(rows: CoordRow[]): OperonTrack[] {
   }
 
   return tracks.sort(
-    (a, b) =>
-      a.assembly.localeCompare(b.assembly) || a.contig.localeCompare(b.contig)
+    (a, b) => a.assembly.localeCompare(b.assembly) || a.contig.localeCompare(b.contig)
   );
 }
 
-export async function getSpeciesOperonContent(speciesName: string): Promise<SpeciesOperonContent> {
-  if (!existsSync(COORD_DIR)) {
-    return {
-      matchedAssemblies: 0,
-      assemblyCount: 0,
-      contigCount: 0,
-      geneCount: 0,
-      missingAssemblies: [],
-      tracks: []
-    };
-  }
-
+export async function getSpeciesOperonContentClient(
+  speciesName: string
+): Promise<SpeciesOperonContent> {
   const normalized = normalizeSpeciesName(speciesName);
   const lineageRows = await loadLineageRows();
   const assemblies = Array.from(
@@ -310,28 +256,38 @@ export async function getSpeciesOperonContent(speciesName: string): Promise<Spec
     )
   );
 
-  const parsedRows: CoordRow[] = [];
-  const missingAssemblies: string[] = [];
-  for (const assembly of assemblies) {
-    const filePath = path.join(COORD_DIR, `coords_${assembly}.tsv`);
-    if (!existsSync(filePath)) {
-      missingAssemblies.push(assembly);
-      continue;
-    }
-
-    const raw = await readFile(filePath, "utf8");
-    parsedRows.push(...parseCoordFile(raw));
+  if (assemblies.length === 0) {
+    return {
+      matchedAssemblies: 0,
+      assemblyCount: 0,
+      contigCount: 0,
+      geneCount: 0,
+      missingAssemblies: [],
+      tracks: []
+    };
   }
 
+  const responses = await Promise.all(
+    assemblies.map(async (assembly) => {
+      const response = await fetch(withBasePath(`/operon_coords/coords_${assembly}.tsv`));
+      if (!response.ok) {
+        return { assembly, rows: null as CoordRow[] | null };
+      }
+
+      const raw = await response.text();
+      return { assembly, rows: parseCoordFile(raw) };
+    })
+  );
+
+  const parsedRows = responses.flatMap((item) => item.rows ?? []);
+  const missingAssemblies = responses.filter((item) => item.rows === null).map((item) => item.assembly);
   const tracks = rowsToTracks(parsedRows);
-  const contigCount = tracks.length;
-  const geneCount = parsedRows.length;
 
   return {
     matchedAssemblies: assemblies.length,
     assemblyCount: assemblies.length - missingAssemblies.length,
-    contigCount,
-    geneCount,
+    contigCount: tracks.length,
+    geneCount: parsedRows.length,
     missingAssemblies,
     tracks
   };

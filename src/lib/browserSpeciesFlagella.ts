@@ -1,8 +1,7 @@
-import { existsSync } from "node:fs";
-import { readFile } from "node:fs/promises";
-import path from "node:path";
-import { formatSpeciesName, normalizeSpeciesQuery } from "@/lib/speciesNaming";
+import { withBasePath } from "@/lib/assetPaths";
 import { classifyGene } from "@/lib/flagellaGeneClassification";
+import { formatSpeciesName, normalizeSpeciesQuery } from "@/lib/speciesNaming";
+import type { SpeciesFlagellaContent } from "@/lib/speciesData";
 
 type IndexedGene = {
   count?: number;
@@ -22,27 +21,6 @@ type SpeciesFlagellaIndex = {
   species: Record<string, IndexedSpecies>;
 };
 
-type GeneSummary = {
-  name: string;
-  count: number;
-  gtdb: string[];
-  ncbi: string[];
-};
-
-type GeneGroupSummary = {
-  name: string;
-  totalCount: number;
-  genes: GeneSummary[];
-};
-
-export type SpeciesFlagellaContent = {
-  matchedAssemblies: number;
-  totalGeneCount: number;
-  groups: GeneGroupSummary[];
-};
-
-const INDEX_PATH = path.join(process.cwd(), "public", "species-flagella-index.json");
-
 const GROUP_ORDER = [
   "Basal body & hook",
   "Motor & switch",
@@ -54,23 +32,23 @@ const GROUP_ORDER = [
   "Other flagella-associated genes"
 ] as const;
 
-let cachedIndex: SpeciesFlagellaIndex | null = null;
+let indexPromise: Promise<SpeciesFlagellaIndex> | null = null;
 
 async function loadIndex(): Promise<SpeciesFlagellaIndex> {
-  if (cachedIndex) return cachedIndex;
+  if (!indexPromise) {
+    indexPromise = fetch(withBasePath("/species-flagella-index.json")).then(async (response) => {
+      if (!response.ok) {
+        throw new Error("Failed to load species flagella index.");
+      }
 
-  if (!existsSync(INDEX_PATH)) {
-    throw new Error(
-      "species-flagella-index.json not found. Run `npm run build:species-flagella-index` once."
-    );
+      return (await response.json()) as SpeciesFlagellaIndex;
+    });
   }
 
-  const raw = await readFile(INDEX_PATH, "utf8");
-  cachedIndex = JSON.parse(raw) as SpeciesFlagellaIndex;
-  return cachedIndex;
+  return indexPromise;
 }
 
-export async function getSpeciesFlagellaContent(
+export async function getSpeciesFlagellaContentClient(
   speciesName: string
 ): Promise<SpeciesFlagellaContent> {
   const index = await loadIndex();
@@ -81,7 +59,7 @@ export async function getSpeciesFlagellaContent(
     return { matchedAssemblies: 0, totalGeneCount: 0, groups: [] };
   }
 
-  const groupsMap = new Map<string, GeneGroupSummary>();
+  const groupsMap = new Map<string, SpeciesFlagellaContent["groups"][number]>();
   let totalGeneCount = 0;
 
   for (const geneName of index.geneNames) {

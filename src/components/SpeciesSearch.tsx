@@ -75,11 +75,9 @@ export default function SpeciesSearch({
       suggestions[0];
 
     if (match) {
-      router.push(`/species/${match.slug ?? speciesNameToSlug(match.name)}`);
+      router.push(`/species?slug=${encodeURIComponent(match.slug ?? speciesNameToSlug(match.name))}`);
       return;
     }
-
-    router.push(`/species?query=${encodeURIComponent(query.trim())}`);
   };
 
   return (
@@ -140,7 +138,7 @@ export default function SpeciesSearch({
                 onMouseDown={(event) => event.preventDefault()}
                 onClick={() => {
                   setIsOpen(false);
-                  router.push(`/species/${item.slug ?? speciesNameToSlug(item.name)}`);
+                  router.push(`/species?slug=${encodeURIComponent(item.slug ?? speciesNameToSlug(item.name))}`);
                 }}
               >
                 {item.name}
