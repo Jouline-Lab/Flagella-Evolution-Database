@@ -38,6 +38,16 @@ export const ALL_LEVELS: TaxonomicLevel[] = [
 
 export const GOLDEN = 0.618033988749895;
 
+export const EXCLUDED_CORE_GENE_NAMES = new Set([
+  "flhe",
+  "flhc",
+  "flhd",
+  "flgq",
+  "flaf",
+  "flbt",
+  "flgo",
+  "flgp"
+]);
 
 export const CUSTOM_GENE_ROW_ORDER = [
   "CsrA",
