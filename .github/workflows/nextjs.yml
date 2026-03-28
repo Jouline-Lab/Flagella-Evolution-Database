@@ -75,10 +75,12 @@ jobs:
         run: ${{ steps.detect-package-manager.outputs.manager }} ${{ steps.detect-package-manager.outputs.command }}
       - name: Build with Next.js
         run: ${{ steps.detect-package-manager.outputs.runner }} next build
+      # Next.js static export with basePath nests everything under out/<repo-name>/.
+      # Upload that folder as the site root so /_next/... matches the URLs in HTML.
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: ./out
+          path: ./out/${{ github.event.repository.name }}
 
   # Deployment job
   deploy:
