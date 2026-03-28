@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
-import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import PageShell from "@/components/layout/PageShell";
 import SequenceLogoChart from "@/components/SequenceLogoChart";
 import {
@@ -11,10 +10,20 @@ import {
   getSpeciesGeneIdsByGeneClient,
   type GeneProfile
 } from "@/lib/browserGenes";
+import { PAGE_ENTITY_ID_QUERY, genePageHref } from "@/lib/pageEntityQuery";
 
 export default function GeneDetailsClient() {
+  const router = useRouter();
   const searchParams = useSearchParams();
-  const slug = searchParams.get("slug")?.trim() ?? "";
+  const idParam = searchParams.get(PAGE_ENTITY_ID_QUERY)?.trim() ?? "";
+  const legacySlugParam = searchParams.get("slug")?.trim() ?? "";
+  const entityId = idParam || legacySlugParam;
+
+  useEffect(() => {
+    if (legacySlugParam && !idParam) {
+      router.replace(genePageHref(legacySlugParam));
+    }
+  }, [idParam, legacySlugParam, router]);
   const [gene, setGene] = useState<GeneProfile | null>(null);
   const [alignmentPath, setAlignmentPath] = useState<string | null>(null);
   const [speciesGeneIdsByName, setSpeciesGeneIdsByName] = useState<
@@ -24,7 +33,7 @@ export default function GeneDetailsClient() {
   const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!slug) {
+    if (!entityId) {
       setGene(null);
       setAlignmentPath(null);
       setSpeciesGeneIdsByName({});
@@ -37,7 +46,7 @@ export default function GeneDetailsClient() {
     setIsLoading(true);
     setLoadError(null);
 
-    getGeneProfileBySlugClient(slug)
+    getGeneProfileBySlugClient(entityId)
       .then(async (profile) => {
         if (cancelled) {
           return;
@@ -79,7 +88,7 @@ export default function GeneDetailsClient() {
     return () => {
       cancelled = true;
     };
-  }, [slug]);
+  }, [entityId]);
 
   const maxNeighborCount = Math.max(...(gene?.topNeighbors ?? []).map((neighbor) => neighbor.count), 1);
 
@@ -87,13 +96,7 @@ export default function GeneDetailsClient() {
     <PageShell>
       <section className="species-grid species-grid-details">
         <article className="species-card species-card-wide">
-          <p>
-            <Link href="/" className="button button-secondary">
-              Back to homepage
-            </Link>
-          </p>
-
-          {!slug ? <p>Select a gene from a link in the site.</p> : null}
+          {!entityId ? <p>Select a gene from a link in the site.</p> : null}
           {isLoading ? <p>Loading gene details...</p> : null}
           {loadError ? <p>{loadError}</p> : null}
 

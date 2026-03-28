@@ -20,8 +20,6 @@ type OperonTooltipState = {
   geneName: string;
   coordinateLabel: string;
   strandLabel: string;
-  contig: string;
-  assembly: string;
 };
 
 type GeneLayout = {
@@ -137,9 +135,7 @@ export default function SpeciesOperonTracks({ content }: SpeciesOperonTracksProp
     y: 0,
     geneName: "",
     coordinateLabel: "",
-    strandLabel: "",
-    contig: "",
-    assembly: ""
+    strandLabel: ""
   });
 
   function showGeneTooltip(
@@ -154,9 +150,7 @@ export default function SpeciesOperonTracks({ content }: SpeciesOperonTracksProp
       y,
       geneName: gene.geneName,
       coordinateLabel: `${gene.start.toLocaleString()} - ${gene.stop.toLocaleString()} bp`,
-      strandLabel: gene.strand === 1 ? "Forward (+1)" : "Reverse (-1)",
-      contig: gene.contig,
-      assembly: gene.assembly
+      strandLabel: gene.strand === 1 ? "Forward (+1)" : "Reverse (-1)"
     });
   }
 
@@ -191,8 +185,7 @@ export default function SpeciesOperonTracks({ content }: SpeciesOperonTracksProp
   return (
     <section className="species-operon-panel">
       <p className="species-operon-summary">
-        Assemblies with coordinate files: <strong>{content.assemblyCount}</strong> /{" "}
-        {content.matchedAssemblies} | Contigs: <strong>{content.contigCount}</strong> | Genes:{" "}
+        Contigs: <strong>{content.contigCount}</strong> | Genes:{" "}
         <strong>{content.geneCount.toLocaleString()}</strong>
       </p>
 
@@ -302,12 +295,6 @@ export default function SpeciesOperonTracks({ content }: SpeciesOperonTracksProp
           </p>
           <p>
             <span className="species-operon-tooltip-key">Strand:</span> {tooltip.strandLabel}
-          </p>
-          <p>
-            <span className="species-operon-tooltip-key">Contig:</span> {tooltip.contig}
-          </p>
-          <p>
-            <span className="species-operon-tooltip-key">Assembly:</span> {tooltip.assembly}
           </p>
         </div>
       ) : null}

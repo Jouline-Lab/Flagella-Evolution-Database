@@ -1,4 +1,5 @@
 import { withBasePath } from "@/lib/assetPaths";
+import { geneNameToSlug } from "@/lib/flagellaGeneClassification";
 import { formatSpeciesName, normalizeSpeciesQuery } from "@/lib/speciesNaming";
 import type { GeneProfile } from "@/lib/geneData";
 export type { GeneProfile } from "@/lib/geneData";
@@ -108,9 +109,30 @@ async function loadSpeciesFlagellaIndex(): Promise<SpeciesFlagellaIndex> {
   return speciesFlagellaIndexPromise;
 }
 
+export async function getGeneSuggestionsClient(
+  query: string,
+  limit = 20
+): Promise<Array<{ name: string; slug: string }>> {
+  const profiles = await loadGeneProfiles();
+  const sorted = [...profiles].sort((a, b) => a.name.localeCompare(b.name));
+  const needle = query.trim().toLowerCase();
+  const filtered = needle
+    ? sorted.filter((p) => {
+        const nameLow = p.name.toLowerCase();
+        const slugLow = p.slug.toLowerCase();
+        return nameLow.includes(needle) || slugLow.includes(needle);
+      })
+    : sorted;
+  return filtered.slice(0, limit).map((p) => ({ name: p.name, slug: p.slug }));
+}
+
 export async function getGeneProfileBySlugClient(slug: string): Promise<GeneProfile | null> {
   const bySlug = await loadGeneProfilesBySlug();
-  return bySlug.get(slug) ?? null;
+  const key = geneNameToSlug(slug);
+  if (!key) {
+    return null;
+  }
+  return bySlug.get(key) ?? null;
 }
 
 export async function getAlignmentPathForGeneClient(geneName: string): Promise<string | null> {

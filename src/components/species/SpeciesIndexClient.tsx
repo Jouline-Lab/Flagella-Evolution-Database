@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import PageHeader from "@/components/layout/PageHeader";
 import PageShell from "@/components/layout/PageShell";
 import SpeciesFlagellaInteractivePanel from "@/components/species/SpeciesFlagellaInteractivePanel";
@@ -9,6 +9,7 @@ import SpeciesOperonTracks from "@/components/species/SpeciesOperonTracks";
 import { getAllSpeciesProfilesClient } from "@/lib/browserSpecies";
 import { getSpeciesFlagellaContentClient } from "@/lib/browserSpeciesFlagella";
 import { getSpeciesOperonContentClient } from "@/lib/browserSpeciesOperon";
+import { PAGE_ENTITY_ID_QUERY, speciesPageHref } from "@/lib/pageEntityQuery";
 import type {
   SpeciesFlagellaContent,
   SpeciesOperonContent,
@@ -16,8 +17,17 @@ import type {
 } from "@/lib/speciesData";
 
 export default function SpeciesIndexClient() {
+  const router = useRouter();
   const searchParams = useSearchParams();
-  const slug = searchParams.get("slug")?.trim() ?? "";
+  const idParam = searchParams.get(PAGE_ENTITY_ID_QUERY)?.trim() ?? "";
+  const legacySlugParam = searchParams.get("slug")?.trim() ?? "";
+  const entityId = idParam || legacySlugParam;
+
+  useEffect(() => {
+    if (legacySlugParam && !idParam) {
+      router.replace(speciesPageHref(legacySlugParam));
+    }
+  }, [idParam, legacySlugParam, router]);
   const [species, setSpecies] = useState<SpeciesProfile[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -57,15 +67,15 @@ export default function SpeciesIndexClient() {
   }, []);
 
   const selectedSpecies = useMemo(
-    () => species.find((item) => item.slug === slug) ?? null,
-    [slug, species]
+    () => species.find((item) => item.slug === entityId) ?? null,
+    [entityId, species]
   );
 
   useEffect(() => {
     if (!selectedSpecies) {
       setFlagellaContent(null);
       setOperonContent(null);
-      setDetailError(slug ? "Species not found." : null);
+      setDetailError(entityId ? "Species not found." : null);
       setDetailLoading(false);
       return;
     }
@@ -102,27 +112,22 @@ export default function SpeciesIndexClient() {
     return () => {
       cancelled = true;
     };
-  }, [selectedSpecies, slug]);
+  }, [selectedSpecies, entityId]);
 
   return (
     <PageShell>
-      {slug ? (
-        <>
-          <PageHeader
-            eyebrow="Species Profile"
-            title={selectedSpecies ? `Species: ${selectedSpecies.name}` : "Species"}
-            description="Taxonomy and flagella-related details loaded from the static dataset."
-          />
+      {entityId ? (
+        <section className="species-grid species-grid-details">
+          <article className="species-card species-card-wide">
+            {isLoading || detailLoading ? <p>Loading species details...</p> : null}
+            {loadError ? <p>{loadError}</p> : null}
+            {detailError ? <p>{detailError}</p> : null}
 
-          {isLoading || detailLoading ? <p>Loading species details...</p> : null}
-          {loadError ? <p>{loadError}</p> : null}
-          {detailError ? <p>{detailError}</p> : null}
-
-          {!isLoading && !detailLoading && !loadError && !detailError && selectedSpecies && flagellaContent && operonContent ? (
-            <section className="species-grid species-grid-details">
-              <article className="species-card species-card-wide">
+            {!isLoading && !detailLoading && !loadError && !detailError && selectedSpecies && flagellaContent && operonContent ? (
+              <>
+                <h1 className="species-profile-title">Species: {selectedSpecies.name}</h1>
                 <h2>Taxonomy</h2>
-                <p>{selectedSpecies.summary}</p>
+                {selectedSpecies.summary.trim() ? <p>{selectedSpecies.summary}</p> : null}
                 <dl className="species-taxonomy">
                   <div>
                     <dt>Phylum</dt>
@@ -145,8 +150,12 @@ export default function SpeciesIndexClient() {
                     <dd>{selectedSpecies.taxonomy.genus}</dd>
                   </div>
                 </dl>
-              </article>
+              </>
+            ) : null}
+          </article>
 
+          {!isLoading && !detailLoading && !loadError && !detailError && selectedSpecies && flagellaContent && operonContent ? (
+            <>
               <article className="species-card species-card-wide">
                 <h2>Flagellar Content</h2>
                 {flagellaContent.matchedAssemblies === 0 ? (
@@ -169,9 +178,9 @@ export default function SpeciesIndexClient() {
                 <h2>Operon Organization by Contig</h2>
                 <SpeciesOperonTracks content={operonContent} />
               </article>
-            </section>
+            </>
           ) : null}
-        </>
+        </section>
       ) : (
         <>
           <PageHeader

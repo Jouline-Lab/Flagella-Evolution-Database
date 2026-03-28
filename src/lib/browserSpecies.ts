@@ -1,4 +1,3 @@
-import { speciesCatalog } from "@/data/species";
 import { formatSpeciesName, normalizeSpeciesQuery, speciesNameToSlug, stripTaxonomyPrefix } from "@/lib/speciesNaming";
 import { withBasePath } from "@/lib/assetPaths";
 import type { SpeciesProfile, SpeciesSuggestion } from "@/lib/speciesData";
@@ -86,11 +85,6 @@ async function loadSpeciesProfiles(): Promise<SpeciesProfile[]> {
           continue;
         }
 
-        const curatedMatch = speciesCatalog.find(
-          (item) =>
-            normalizeSpeciesQuery(item.name) === normalizeSpeciesQuery(name) || item.slug === slug
-        );
-
         rowsBySlug.set(slug, {
           name,
           slug,
@@ -101,14 +95,8 @@ async function loadSpeciesProfiles(): Promise<SpeciesProfile[]> {
             family: cleanTaxonomyValue(row[familyRankIndex] ?? ""),
             genus: cleanTaxonomyValue(row[genusRankIndex] ?? "")
           },
-          summary:
-            curatedMatch?.summary ??
-            "Taxonomy-derived species profile generated from the phyletic matrix dataset.",
-          traits:
-            curatedMatch?.traits ?? [
-              "Comprehensive gene-level details are being added.",
-              "Taxonomic data is available from the current dataset."
-            ]
+          summary: "",
+          traits: []
         });
       }
 

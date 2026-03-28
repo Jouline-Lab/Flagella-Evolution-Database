@@ -2,49 +2,59 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import SpeciesSearch from "@/components/SpeciesSearch";
+import ScopeSearchBar, { type SearchScope } from "@/components/search/ScopeSearchBar";
+import { genePageHref, speciesPageHref } from "@/lib/pageEntityQuery";
+import { geneNameToSlug } from "@/lib/flagellaGeneClassification";
 import { speciesNameToSlug } from "@/lib/speciesNaming";
 
-const modelOrganisms = [
-  "Escherichia coli",
-  "Bacillus subtilis",
-  "Pseudomonas aeruginosa"
-];
+const modelSpecies = ["Escherichia coli", "Bacillus subtilis", "Pseudomonas aeruginosa"];
+const modelGenes = ["FliG", "FlgB", "MotA"];
 
 export default function HomeHeroSearch() {
-  const [query, setQuery] = useState("");
   const router = useRouter();
+  const [scope, setScope] = useState<SearchScope>("species");
 
   return (
     <section className="hero">
       <div className="container hero-content hero-content-search-only">
-        <p className="hero-search-title">Find Your Species</p>
-        <SpeciesSearch
-          className="hero-search"
-          inputClassName="species-search-input"
-          placeholder="Search for a species (e.g., Escherichia coli)"
-          query={query}
-          onQueryChange={setQuery}
-        />
-        <div className="hero-model-organisms" aria-label="Model organism examples">
+        <p className="hero-search-title">
+          {scope === "species" ? "Find Your Species" : "Find Your Gene"}
+        </p>
+
+        <ScopeSearchBar variant="hero" onScopeChange={setScope} />
+
+        <div className="hero-model-organisms" aria-label="Example searches">
           <span className="hero-model-label">Examples:</span>
           <span className="hero-model-list">
-            {modelOrganisms.map((name, index) => (
-              <span key={name}>
-                <button
-                  type="button"
-                  className="hero-model-link"
-                  onClick={() => {
-                    router.push(`/species?slug=${encodeURIComponent(speciesNameToSlug(name))}`);
-                  }}
-                >
-                  {name}
-                </button>
-                {index < modelOrganisms.length - 1 ? (
-                  <span className="hero-model-separator">, </span>
-                ) : null}
-              </span>
-            ))}
+            {scope === "species"
+              ? modelSpecies.map((name, index) => (
+                  <span key={name}>
+                    <button
+                      type="button"
+                      className="hero-model-link"
+                      onClick={() => router.push(speciesPageHref(speciesNameToSlug(name)))}
+                    >
+                      {name}
+                    </button>
+                    {index < modelSpecies.length - 1 ? (
+                      <span className="hero-model-separator">, </span>
+                    ) : null}
+                  </span>
+                ))
+              : modelGenes.map((name, index) => (
+                  <span key={name}>
+                    <button
+                      type="button"
+                      className="hero-model-link"
+                      onClick={() => router.push(genePageHref(geneNameToSlug(name)))}
+                    >
+                      {name}
+                    </button>
+                    {index < modelGenes.length - 1 ? (
+                      <span className="hero-model-separator">, </span>
+                    ) : null}
+                  </span>
+                ))}
           </span>
         </div>
       </div>

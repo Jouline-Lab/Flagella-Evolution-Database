@@ -1,5 +1,5 @@
 import Link from "next/link";
-import SpeciesSearch from "@/components/SpeciesSearch";
+import ScopeSearchBar from "@/components/search/ScopeSearchBar";
 import ThemeToggle from "@/components/ThemeToggle";
 
 const navItems = [
@@ -35,11 +35,7 @@ export default function SiteHeader() {
               ))}
             </ul>
           </nav>
-          <SpeciesSearch
-            className="topbar-search"
-            inputClassName="species-search-input species-search-input-compact"
-            placeholder="Search species"
-          />
+          <ScopeSearchBar variant="compact" className="topbar-search" />
           <ThemeToggle />
         </div>
       </div>

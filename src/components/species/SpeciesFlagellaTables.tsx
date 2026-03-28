@@ -1,6 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
+import { genePageHref } from "@/lib/pageEntityQuery";
+import { geneNameToSlug } from "@/lib/flagellaGeneClassification";
 import type { SpeciesFlagellaContent } from "@/lib/speciesData";
 
 type IdDialogState = {
@@ -119,7 +122,16 @@ export default function SpeciesFlagellaTables({
                           onMouseLeave={() => onGeneLeave?.()}
                           onClick={() => onGeneSelect?.(geneKey, gene.name)}
                         >
-                          <td>{gene.name}</td>
+                          <td>
+                            <Link
+                              href={genePageHref(geneNameToSlug(gene.name))}
+                              className="species-flagella-gene-link"
+                              title={`Navigate to ${gene.name} Page`}
+                              onClick={(event) => event.stopPropagation()}
+                            >
+                              {gene.name}
+                            </Link>
+                          </td>
                           <td>{gene.count.toLocaleString()}</td>
                           <td>
                             {gene.gtdb.length === 0 ? (

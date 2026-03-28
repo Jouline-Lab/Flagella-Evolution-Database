@@ -8,6 +8,8 @@ import {
   getTaxonomySuggestionsClient,
   queryPhyleticMatrixClient
 } from "@/lib/browserPhyletic";
+import { genePageHref, speciesPageHref } from "@/lib/pageEntityQuery";
+import { geneNameToSlug } from "@/lib/flagellaGeneClassification";
 import { speciesNameToSlug } from "@/lib/speciesNaming";
 
 type PhyleticTableExplorerProps = {
@@ -73,7 +75,7 @@ function getSpeciesHref(rawSpecies: string): string | null {
   if (!formattedName || formattedName === "-") {
     return null;
   }
-  return `/species?slug=${encodeURIComponent(speciesNameToSlug(formattedName))}`;
+  return speciesPageHref(speciesNameToSlug(formattedName));
 }
 
 function classifyColumn(column: string): ColumnType {
@@ -1011,15 +1013,29 @@ export default function PhyleticTableExplorer({
               <table>
                 <thead>
                   <tr>
-                    {groupedHeaderCells.map((group, index) => (
-                      <th
-                        key={`${group.label}-${index}`}
-                        className={`th-group group-tone-${index % 2}`}
-                        colSpan={group.colSpan}
-                      >
-                        <div className="th-title">{group.label}</div>
-                      </th>
-                    ))}
+                    {groupedHeaderCells.map((group, index) => {
+                      const genePage =
+                        geneColumnsByGene[group.label] != null
+                          ? genePageHref(geneNameToSlug(group.label))
+                          : null;
+                      return (
+                        <th
+                          key={`${group.label}-${index}`}
+                          className={`th-group group-tone-${index % 2}`}
+                          colSpan={group.colSpan}
+                        >
+                          <div className="th-title">
+                            {genePage ? (
+                              <Link className="th-gene-link" href={genePage} title={`Navigate to ${group.label} Page`}>
+                                {group.label}
+                              </Link>
+                            ) : (
+                              group.label
+                            )}
+                          </div>
+                        </th>
+                      );
+                    })}
                   </tr>
                   <tr>
                     {visibleColumnMeta.map((meta) => (
