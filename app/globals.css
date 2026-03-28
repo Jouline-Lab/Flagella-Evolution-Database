@@ -1203,18 +1203,24 @@ a {
 
 .species-operon-track-canvas {
   position: relative;
+  /* Fixed height so 50% is always an integer px (118/2 = 59), avoiding row-to-row blur. */
+  height: 118px;
   min-height: 118px;
+  isolation: isolate;
 }
 
 .species-operon-track-baseline {
   position: absolute;
-  top: 50%;
   left: 0;
   right: 0;
-  /* 3px: 2px often snaps to uneven device pixels at 50% + translateY(-50%), so strands look mismatched */
-  height: 3px;
-  transform: translateY(-50%);
-  background: var(--operon-baseline);
+  /* Line as border (not a filled box): more consistent across rows than background + subpixel height. */
+  top: calc(50% - 0.125rem);
+  height: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-top: 0.25rem solid var(--operon-baseline);
+  background: none;
   z-index: 1;
 }
 

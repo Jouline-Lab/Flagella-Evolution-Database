@@ -252,6 +252,7 @@ const SequenceLogoChart: React.FC<SequenceLogoChartProps> = ({
   const [rawSequences, setRawSequences] = useState<Sequence[]>([]);
   const [loadedLetterTick, setLoadedLetterTick] = useState(0);
   const [gapThreshold, setGapThreshold] = useState(30);
+  const [gapThresholdSlider, setGapThresholdSlider] = useState(30);
   const [gapThresholdInput, setGapThresholdInput] = useState('30');
   const [query, setQuery] = useState('');
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -313,12 +314,18 @@ const SequenceLogoChart: React.FC<SequenceLogoChartProps> = ({
   const logoLabelWidth = selectedSpeciesTracks.length > 0 ? LABEL_WIDTH : 92;
   const totalWidth = logoLabelWidth + chartWidth + RIGHT_MARGIN;
 
+  const commitGapThresholdValue = useCallback((value: number) => {
+    const nextValue = Math.max(0, Math.min(100, Math.round(value)));
+    setGapThreshold(nextValue);
+    setGapThresholdSlider(nextValue);
+    setGapThresholdInput(nextValue.toString());
+  }, []);
+
   const commitGapThresholdInput = useCallback(() => {
     const digitsOnly = gapThresholdInput.replace(/[^\d]/g, '');
-    const nextValue = digitsOnly === '' ? gapThreshold : Math.max(0, Math.min(100, Number(digitsOnly)));
-    setGapThreshold(nextValue);
-    setGapThresholdInput(nextValue.toString());
-  }, [gapThreshold, gapThresholdInput]);
+    const nextValue = digitsOnly === '' ? gapThreshold : Number(digitsOnly);
+    commitGapThresholdValue(nextValue);
+  }, [commitGapThresholdValue, gapThreshold, gapThresholdInput]);
 
   useEffect(() => {
     if (!alignmentPath) {
@@ -1056,12 +1063,14 @@ const SequenceLogoChart: React.FC<SequenceLogoChartProps> = ({
                   min="0"
                   max="100"
                   step="1"
-                  value={gapThreshold}
+                  value={gapThresholdSlider}
                   onChange={(event) => {
                     const nextValue = Number(event.target.value);
-                    setGapThreshold(nextValue);
+                    setGapThresholdSlider(nextValue);
                     setGapThresholdInput(nextValue.toString());
                   }}
+                  onPointerUp={() => commitGapThresholdValue(gapThresholdSlider)}
+                  onKeyUp={() => commitGapThresholdValue(gapThresholdSlider)}
                   className="flex-1"
                   style={{ accentColor: 'var(--header-bg-mid)' }}
                   aria-label="Gap filter percentage"
@@ -1093,7 +1102,7 @@ const SequenceLogoChart: React.FC<SequenceLogoChartProps> = ({
                 </div>
               </div>
               <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">
-                Show alignment columns with at most {gapThreshold}% gaps
+                Show alignment columns with at most {gapThresholdSlider}% gaps
               </p>
             </div>
           </div>
