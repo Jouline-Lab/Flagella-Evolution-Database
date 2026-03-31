@@ -1,6 +1,7 @@
 import { withBasePath } from "@/lib/assetPaths";
 import { geneNameToSlug } from "@/lib/flagellaGeneClassification";
 import { formatSpeciesName, normalizeSpeciesQuery } from "@/lib/speciesNaming";
+import type { GeneLogoPrecomputePayload } from "@/lib/sequenceLogoMath";
 import type { GeneProfile } from "@/lib/geneData";
 export type { GeneProfile } from "@/lib/geneData";
 
@@ -17,9 +18,9 @@ type GeneProfilesIndex = {
   >;
 };
 
-type AlignmentManifest = {
+type AlignmentFilesIndex = {
   version: number;
-  alignments: Record<string, string>;
+  files: string[];
 };
 
 type SpeciesFlagellaIndex = {
@@ -44,7 +45,7 @@ type SpeciesFlagellaIndex = {
 
 let geneProfilesPromise: Promise<GeneProfile[]> | null = null;
 let geneProfilesBySlugPromise: Promise<Map<string, GeneProfile>> | null = null;
-let alignmentManifestPromise: Promise<AlignmentManifest> | null = null;
+let alignmentFilenamesPromise: Promise<string[]> | null = null;
 let speciesFlagellaIndexPromise: Promise<SpeciesFlagellaIndex> | null = null;
 
 async function loadGeneProfiles(): Promise<GeneProfile[]> {
@@ -77,20 +78,20 @@ async function loadGeneProfilesBySlug(): Promise<Map<string, GeneProfile>> {
   return geneProfilesBySlugPromise;
 }
 
-async function loadAlignmentManifest(): Promise<AlignmentManifest> {
-  if (!alignmentManifestPromise) {
-    alignmentManifestPromise = fetch(withBasePath("/alignments-manifest.json")).then(
-      async (response) => {
-        if (!response.ok) {
-          return { version: 1, alignments: {} };
-        }
-
-        return (await response.json()) as AlignmentManifest;
+async function loadAlignmentFilenames(): Promise<string[]> {
+  if (!alignmentFilenamesPromise) {
+    alignmentFilenamesPromise = fetch(withBasePath("/alignments-index.json")).then(async (response) => {
+      if (!response.ok) {
+        return [];
       }
-    );
+
+      const parsed = (await response.json()) as AlignmentFilesIndex;
+      const files = Array.isArray(parsed.files) ? parsed.files : [];
+      return [...files].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }));
+    });
   }
 
-  return alignmentManifestPromise;
+  return alignmentFilenamesPromise;
 }
 
 async function loadSpeciesFlagellaIndex(): Promise<SpeciesFlagellaIndex> {
@@ -135,10 +136,93 @@ export async function getGeneProfileBySlugClient(slug: string): Promise<GeneProf
   return bySlug.get(key) ?? null;
 }
 
+const PART_SUFFIX_RE = /\.part(\d+)\.fasta$/i;
+
+function alignmentPartNumber(filename: string): number {
+  const m = filename.match(PART_SUFFIX_RE);
+  return m ? Number.parseInt(m[1], 10) : 0;
+}
+
+function stemKeyForPartFile(filename: string): string {
+  return filename.replace(PART_SUFFIX_RE, ".fasta");
+}
+
+/**
+ * Resolves one or more `/alignments/…` URLs for a gene: filenames must start with `{GeneName}_`.
+ * Chunked alignments use `basename.part001.fasta`, `basename.part002.fasta`, … (same stem); all parts are loaded in order.
+ */
+export async function getAlignmentPathsForGeneClient(geneName: string): Promise<string[]> {
+  const files = await loadAlignmentFilenames();
+  if (files.length === 0) {
+    return [];
+  }
+
+  const prefix = `${geneName.toLowerCase()}_`;
+  const matches = files.filter((filename) => filename.toLowerCase().startsWith(prefix));
+  if (matches.length === 0) {
+    return [];
+  }
+
+  const partFiles = matches.filter((f) => PART_SUFFIX_RE.test(f));
+  if (partFiles.length > 0) {
+    const byStem = new Map<string, string[]>();
+    for (const f of partFiles) {
+      const stem = stemKeyForPartFile(f);
+      const list = byStem.get(stem) ?? [];
+      list.push(f);
+      byStem.set(stem, list);
+    }
+    const stems = [...byStem.keys()].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }));
+    const chosen = stems[0];
+    const group = byStem.get(chosen) ?? [];
+    group.sort((a, b) => alignmentPartNumber(a) - alignmentPartNumber(b));
+    return group.map((f) => `/alignments/${f}`);
+  }
+
+  matches.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }));
+  return [`/alignments/${matches[0]}`];
+}
+
+/** First alignment URL only (legacy). */
 export async function getAlignmentPathForGeneClient(geneName: string): Promise<string | null> {
-  const manifest = await loadAlignmentManifest();
-  const key = geneName.toLowerCase().replace(/[^a-z0-9]/g, "");
-  return manifest.alignments[key] ?? null;
+  const paths = await getAlignmentPathsForGeneClient(geneName);
+  return paths[0] ?? null;
+}
+
+let geneLogoPrecomputeCache: Map<string, Promise<GeneLogoPrecomputePayload | null>> | null = null;
+
+function getGeneLogoPrecomputeCache() {
+  if (!geneLogoPrecomputeCache) {
+    geneLogoPrecomputeCache = new Map();
+  }
+  return geneLogoPrecomputeCache;
+}
+
+/** Optional `/precomputed-logos/{slug}.json` for server-build logo column stats. */
+export async function getGeneLogoPrecomputeClient(slug: string): Promise<GeneLogoPrecomputePayload | null> {
+  const key = slug.trim();
+  if (!key) {
+    return null;
+  }
+  const cache = getGeneLogoPrecomputeCache();
+  if (!cache.has(key)) {
+    cache.set(
+      key,
+      fetch(withBasePath(`/precomputed-logos/${encodeURIComponent(key)}.json`))
+        .then(async (response) => {
+          if (!response.ok) {
+            return null;
+          }
+          try {
+            return (await response.json()) as GeneLogoPrecomputePayload;
+          } catch {
+            return null;
+          }
+        })
+        .catch(() => null)
+    );
+  }
+  return cache.get(key)!;
 }
 
 export async function getSpeciesGeneIdsByGeneClient(geneName: string) {

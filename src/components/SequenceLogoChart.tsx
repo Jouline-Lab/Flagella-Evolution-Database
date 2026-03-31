@@ -6,10 +6,24 @@ import * as d3 from 'd3';
 import { withBasePath } from '@/lib/assetPaths';
 import { getSpeciesSuggestionsClient } from '@/lib/browserSpecies';
 import { formatSpeciesName, normalizeSpeciesQuery } from '@/lib/speciesNaming';
+import {
+  STANDARD_AMINO_ACIDS,
+  calculateLogoDataFromColumnStats,
+  calculateLogoDataFromFilteredSequences,
+  filterAlignmentByGapThreshold,
+  filterSequencesByColumnIndices,
+  getKeptColumnIndices,
+  type GeneLogoPrecomputePayload,
+  type PositionLogoData
+} from '@/lib/sequenceLogoMath';
+
+type AlignmentKind = 'famsa' | 'reptrims';
 
 type Sequence = {
   header: string;
   sequence: string;
+  matchId: string;
+  isCompleteSequence: boolean;
 };
 
 type FilteredAlignment = {
@@ -17,17 +31,14 @@ type FilteredAlignment = {
   keptColumnIndices: number[];
 };
 
-type PositionLogoData = {
-  alignmentColumn: number;
-  residueCounts: Record<string, number>;
-  totalSequences: number;
-  informationContent: number;
-  letterHeights: Record<string, number>;
-};
-
 type SequenceLogoChartProps = {
   geneName: string;
+  /** One or more alignment URLs (e.g. chunked `*.part001.fasta`, `*.part002.fasta`); fetched and merged in order. */
+  alignmentPaths?: string[];
+  /** @deprecated Prefer `alignmentPaths`; if set without paths, treated as a single URL. */
   alignmentPath?: string | null;
+  /** When present (and sequence count matches FASTA), logo stacks use precomputed column stats; FASTA still drives row sequences. */
+  precomputedLogo?: GeneLogoPrecomputePayload | null;
   speciesGeneIdsByName?: Record<string, { gtdb: string[]; ncbi: Array<string | null> }>;
   onLoaded?: () => void;
   height?: number;
@@ -62,7 +73,6 @@ type LetterSvgData = {
   transformAttr?: string;
 };
 
-const STANDARD_AMINO_ACIDS = 'ACDEFGHIKLMNPQRSTVWY';
 const LABEL_WIDTH = 220;
 const RIGHT_MARGIN = 20;
 const TOP_MARGIN = 4;
@@ -78,9 +88,9 @@ function escapeXml(value: string): string {
     .replaceAll("'", '&apos;');
 }
 
-function parseFasta(fastaText: string): Sequence[] {
+function parseFastaBasic(fastaText: string): Array<{ header: string; sequence: string }> {
   const lines = fastaText.split(/\r?\n/).filter((line) => line.trim());
-  const sequences: Sequence[] = [];
+  const sequences: Array<{ header: string; sequence: string }> = [];
   let currentHeader = '';
   let currentSequence = '';
 
@@ -110,108 +120,71 @@ function parseFasta(fastaText: string): Sequence[] {
   return sequences;
 }
 
-function filterColumnsByGapThreshold(
-  sequences: Sequence[],
-  maxGapPercentage: number
-): FilteredAlignment {
-  if (sequences.length === 0) {
-    return {
-      sequences: [],
-      keptColumnIndices: []
-    };
+function inferAlignmentKindFromPath(alignmentPath: string | null): AlignmentKind | 'unknown' {
+  if (!alignmentPath) {
+    return 'unknown';
   }
-
-  const maxLength = Math.max(...sequences.map((sequence) => sequence.sequence.length));
-  const keepPositions: number[] = [];
-
-  for (let position = 0; position < maxLength; position += 1) {
-    let gapCount = 0;
-    let residueCount = 0;
-
-    for (const sequence of sequences) {
-      const residue = sequence.sequence[position]?.toUpperCase() ?? '-';
-      if (STANDARD_AMINO_ACIDS.includes(residue)) {
-        residueCount += 1;
-      } else {
-        gapCount += 1;
-      }
-    }
-
-    const gapPercentage = (gapCount / sequences.length) * 100;
-    if (residueCount > 0 && gapPercentage <= maxGapPercentage) {
-      keepPositions.push(position);
-    }
+  const lower = alignmentPath.toLowerCase();
+  if (
+    lower.endsWith('_reptrim.fasta') ||
+    lower.includes('_reptrim.fasta') ||
+    lower.endsWith('reptrims.fasta') ||
+    /\.reptrims\.fasta$/i.test(lower)
+  ) {
+    return 'reptrims';
   }
-
-  return {
-    sequences: sequences.map((sequence) => ({
-      ...sequence,
-      sequence: keepPositions.map((position) => sequence.sequence[position] ?? '-').join('')
-    })),
-    keptColumnIndices: keepPositions
-  };
+  if (lower.endsWith('.fasta') && lower.includes('famsa')) {
+    return 'famsa';
+  }
+  return 'unknown';
 }
 
-function calculateLogoData(
-  sequences: Sequence[],
-  keptColumnIndices: number[]
-): PositionLogoData[] {
-  if (sequences.length === 0 || keptColumnIndices.length === 0) {
-    return [];
+function resolveAlignmentKind(alignmentPath: string | null, firstHeader: string | null): AlignmentKind {
+  const fromPath = inferAlignmentKindFromPath(alignmentPath);
+  if (fromPath !== 'unknown') {
+    return fromPath;
+  }
+  const header = firstHeader?.trim() ?? '';
+  if (header.includes(' # ')) {
+    return 'famsa';
+  }
+  return 'reptrims';
+}
+
+function parseAlignmentHeader(
+  fullHeader: string,
+  kind: AlignmentKind
+): { matchId: string; isCompleteSequence: boolean } {
+  const trimmed = fullHeader.trim();
+  if (kind === 'famsa') {
+    const matchId = trimmed.includes(' # ')
+      ? trimmed.split(' # ')[0].trim()
+      : (trimmed.split(/\s+/)[0] ?? trimmed);
+    return { matchId, isCompleteSequence: true };
   }
 
-  const logoData: PositionLogoData[] = [];
+  const hasCompleteStar = /\*\s*$/.test(trimmed) || /\s+\*\s/.test(trimmed);
+  const isCompleteSequence = hasCompleteStar;
+  const core = trimmed
+    .replace(/\s+\*\s*$/, '')
+    .replace(/\*\s*$/, '')
+    .trim();
+  const matchId = core.split(/\s+/)[0] ?? core;
+  return { matchId, isCompleteSequence };
+}
 
-  for (let position = 0; position < keptColumnIndices.length; position += 1) {
-    const residueCounts: Record<string, number> = {};
-    let gapCount = 0;
-
-    for (const sequence of sequences) {
-      const residue = sequence.sequence[position]?.toUpperCase() ?? '-';
-      if (STANDARD_AMINO_ACIDS.includes(residue)) {
-        residueCounts[residue] = (residueCounts[residue] || 0) + 1;
-      } else {
-        gapCount += 1;
-      }
-    }
-
-    const residuesPresent = Object.keys(residueCounts);
-    if (residuesPresent.length === 0) {
-      continue;
-    }
-
-    const totalSequences = sequences.length;
-    const frequencies: Record<string, number> = {};
-    residuesPresent.forEach((residue) => {
-      frequencies[residue] = residueCounts[residue] / totalSequences;
-    });
-    if (gapCount > 0) {
-      frequencies['-'] = gapCount / totalSequences;
-    }
-
-    let entropy = 0;
-    Object.values(frequencies).forEach((frequency) => {
-      if (frequency > 0) {
-        entropy -= frequency * Math.log2(frequency);
-      }
-    });
-
-    const informationContent = Math.max(0, Math.log2(21) - entropy);
-    const letterHeights: Record<string, number> = {};
-    residuesPresent.forEach((residue) => {
-      letterHeights[residue] = frequencies[residue] * informationContent;
-    });
-
-    logoData.push({
-      alignmentColumn: keptColumnIndices[position] + 1,
-      residueCounts,
-      totalSequences,
-      informationContent,
-      letterHeights
-    });
-  }
-
-  return logoData;
+function enrichFastaRows(
+  rows: Array<{ header: string; sequence: string }>,
+  alignmentPath: string | null,
+  kindOverride?: AlignmentKind | null
+): Sequence[] {
+  const kind =
+    kindOverride ??
+    resolveAlignmentKind(alignmentPath, rows[0]?.header ?? null);
+  return rows.map((row) => ({
+    ...row,
+    ...parseAlignmentHeader(row.header, kind)
+  }));
 }
 
 function getResidueNumberAtAlignmentColumn(
@@ -238,18 +211,167 @@ function getNcbiProteinUrl(id: string): string {
   return `https://www.ncbi.nlm.nih.gov/protein/${encodeURIComponent(id)}`;
 }
 
+/**
+ * Streams FASTA from one or more URLs and returns only records whose header matchId is in targetIds.
+ * Stops reading each URL early once all targets are found. Does not retain the full file in memory.
+ */
+async function streamFastaRecordsForGtdbIds(
+  urls: string[],
+  kindHintPath: string | null,
+  targetIds: ReadonlySet<string>,
+  signal: AbortSignal
+): Promise<{ records: Array<{ header: string; sequence: string }>; alignmentKind: AlignmentKind }> {
+  if (targetIds.size === 0 || urls.length === 0) {
+    return { records: [], alignmentKind: 'reptrims' };
+  }
+
+  const pending = new Set(targetIds);
+  const results: Array<{ header: string; sequence: string }> = [];
+  let lockedKind: AlignmentKind | null = null;
+  const pathKind = inferAlignmentKindFromPath(kindHintPath);
+
+  for (const url of urls) {
+    if (pending.size === 0) {
+      break;
+    }
+
+    const response = await fetch(withBasePath(url), { signal });
+    if (!response.ok) {
+      throw new Error(`Failed to load ${url}: ${response.status}`);
+    }
+
+    const reader = response.body?.getReader();
+    if (!reader) {
+      const text = await response.text();
+      if (signal.aborted) {
+        return { records: results, alignmentKind: lockedKind ?? 'reptrims' };
+      }
+      const basic = parseFastaBasic(text);
+      for (const row of basic) {
+        if (pending.size === 0) {
+          break;
+        }
+        const nextKind: AlignmentKind =
+          lockedKind ??
+          (pathKind !== 'unknown' ? pathKind : resolveAlignmentKind(kindHintPath, row.header));
+        if (lockedKind === null) {
+          lockedKind = nextKind;
+        }
+        const { matchId } = parseAlignmentHeader(row.header, nextKind);
+        if (pending.has(matchId)) {
+          pending.delete(matchId);
+          results.push(row);
+        }
+      }
+      continue;
+    }
+
+    const decoder = new TextDecoder();
+    let buffer = '';
+    let currentHeaderLine = '';
+    let currentSeqParts: string[] = [];
+
+    const flushRecord = () => {
+      if (!currentHeaderLine || currentSeqParts.length === 0) {
+        currentHeaderLine = '';
+        currentSeqParts = [];
+        return;
+      }
+      const header = currentHeaderLine.startsWith('>')
+        ? currentHeaderLine.slice(1)
+        : currentHeaderLine;
+      const sequence = currentSeqParts.join('');
+      const kind =
+        lockedKind ??
+        (pathKind !== 'unknown' ? pathKind : resolveAlignmentKind(kindHintPath, header));
+      if (lockedKind === null) {
+        lockedKind = kind;
+      }
+      const { matchId } = parseAlignmentHeader(header, lockedKind);
+      if (pending.has(matchId)) {
+        pending.delete(matchId);
+        results.push({ header, sequence });
+      }
+      currentHeaderLine = '';
+      currentSeqParts = [];
+    };
+
+    try {
+      outer: while (true) {
+        const { done, value } = await reader.read();
+        if (signal.aborted) {
+          await reader.cancel();
+          return { records: results, alignmentKind: lockedKind ?? 'reptrims' };
+        }
+        buffer += decoder.decode(value, { stream: !done });
+
+        let breakPos: number;
+        while ((breakPos = buffer.indexOf('\n')) >= 0) {
+          let line = buffer.slice(0, breakPos);
+          buffer = buffer.slice(breakPos + 1);
+          if (line.endsWith('\r')) {
+            line = line.slice(0, -1);
+          }
+
+          if (line.startsWith('>')) {
+            flushRecord();
+            currentHeaderLine = line;
+          } else if (currentHeaderLine) {
+            currentSeqParts.push(line.trim());
+          }
+
+          if (pending.size === 0) {
+            await reader.cancel();
+            break outer;
+          }
+        }
+
+        if (done) {
+          if (buffer.trim() && currentHeaderLine) {
+            currentSeqParts.push(buffer.trim());
+            buffer = '';
+          }
+          flushRecord();
+          break;
+        }
+      }
+    } finally {
+      reader.releaseLock();
+    }
+
+    if (pending.size === 0) {
+      break;
+    }
+  }
+
+  return { records: results, alignmentKind: lockedKind ?? 'reptrims' };
+}
+
 const SequenceLogoChart: React.FC<SequenceLogoChartProps> = ({
   geneName,
+  alignmentPaths: alignmentPathsProp,
   alignmentPath,
+  precomputedLogo = null,
   speciesGeneIdsByName = {},
   onLoaded,
   height = 140
 }) => {
+  const resolvedAlignmentPaths =
+    alignmentPathsProp && alignmentPathsProp.length > 0
+      ? alignmentPathsProp
+      : alignmentPath
+        ? [alignmentPath]
+        : [];
+  const alignmentKey = resolvedAlignmentPaths.join("\t");
+  const kindSourcePath = resolvedAlignmentPaths[0] ?? null;
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const gapInitPathRef = useRef<string | null>(null);
   const suggestionItemRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const svgPathCache = useRef<Record<string, LetterSvgData>>({});
-  const [rawSequences, setRawSequences] = useState<Sequence[]>([]);
+  const [loadedByMatchId, setLoadedByMatchId] = useState<Record<string, Sequence>>({});
+  const [isFetchingAlignmentRows, setIsFetchingAlignmentRows] = useState(false);
+  const [alignmentFetchError, setAlignmentFetchError] = useState<string | null>(null);
   const [loadedLetterTick, setLoadedLetterTick] = useState(0);
   const [gapThreshold, setGapThreshold] = useState(30);
   const [gapThresholdSlider, setGapThresholdSlider] = useState(30);
@@ -274,32 +396,92 @@ const SequenceLogoChart: React.FC<SequenceLogoChartProps> = ({
     return colors;
   });
 
-  const filteredAlignment = useMemo(
-    () => filterColumnsByGapThreshold(rawSequences, gapThreshold),
-    [rawSequences, gapThreshold]
+  const neededGtdbIds = useMemo(() => {
+    const ids = new Set<string>();
+    for (const species of selectedSpecies) {
+      if (species.status === 'ready') {
+        for (const id of species.gtdb) {
+          if (id) {
+            ids.add(id);
+          }
+        }
+      }
+    }
+    return ids;
+  }, [selectedSpecies]);
+
+  const loadedFullWidthSequences = useMemo(
+    () => Object.values(loadedByMatchId),
+    [loadedByMatchId]
   );
+
+  const keptColumnIndices = useMemo((): number[] => {
+    const pc = precomputedLogo;
+    if (pc && pc.alignmentColumns.length > 0) {
+      return getKeptColumnIndices(pc.alignmentColumns, gapThreshold);
+    }
+    if (loadedFullWidthSequences.length === 0) {
+      return [];
+    }
+    return filterAlignmentByGapThreshold(loadedFullWidthSequences, gapThreshold).keptColumnIndices;
+  }, [precomputedLogo, loadedFullWidthSequences, gapThreshold]);
+
+  const filteredAlignment = useMemo((): FilteredAlignment => {
+    if (loadedFullWidthSequences.length === 0) {
+      return { sequences: [], keptColumnIndices };
+    }
+    return {
+      sequences: filterSequencesByColumnIndices(loadedFullWidthSequences, keptColumnIndices),
+      keptColumnIndices
+    };
+  }, [loadedFullWidthSequences, keptColumnIndices]);
+
   const loadedSequences = filteredAlignment.sequences;
-  const logoData = useMemo(
-    () => calculateLogoData(filteredAlignment.sequences, filteredAlignment.keptColumnIndices),
-    [filteredAlignment]
-  );
+
+  const logoData = useMemo((): PositionLogoData[] => {
+    const pc = precomputedLogo;
+    if (pc && pc.alignmentColumns.length > 0) {
+      const kept = getKeptColumnIndices(pc.alignmentColumns, gapThreshold);
+      return calculateLogoDataFromColumnStats(pc.alignmentColumns, kept);
+    }
+    if (loadedFullWidthSequences.length === 0) {
+      return [];
+    }
+    return calculateLogoDataFromFilteredSequences(
+      filteredAlignment.sequences,
+      filteredAlignment.keptColumnIndices
+    );
+  }, [
+    precomputedLogo,
+    gapThreshold,
+    loadedFullWidthSequences.length,
+    filteredAlignment.sequences,
+    filteredAlignment.keptColumnIndices
+  ]);
   const chartHeight = height - TOP_MARGIN - BOTTOM_MARGIN;
   const chartWidth = Math.max(logoData.length * COLUMN_WIDTH, 700);
   const logoTrackWidth = chartWidth + RIGHT_MARGIN;
   const rawSequencesByHeader = useMemo(
-    () => new Map(rawSequences.map((sequence) => [sequence.header, sequence])),
-    [rawSequences]
+    () => new Map(loadedFullWidthSequences.map((sequence) => [sequence.header, sequence])),
+    [loadedFullWidthSequences]
   );
+
+  const alignmentKind = useMemo((): AlignmentKind => {
+    return resolveAlignmentKind(
+      kindSourcePath,
+      loadedFullWidthSequences[0]?.header ?? null
+    );
+  }, [kindSourcePath, loadedFullWidthSequences]);
 
   const selectedSpeciesTracks = useMemo(
     () =>
       selectedSpecies.map((species) => ({
         ...species,
         matchedSequences: loadedSequences
-          .filter((sequence) => species.gtdb.includes(sequence.header))
+          .filter((sequence) => species.gtdb.includes(sequence.matchId))
           .map((sequence) => {
             const rawSequence = rawSequencesByHeader.get(sequence.header)?.sequence ?? sequence.sequence;
-            const matchIndex = species.gtdb.indexOf(sequence.header);
+            const matchIndex = species.gtdb.indexOf(sequence.matchId);
             const ncbiId = matchIndex >= 0 ? species.ncbi[matchIndex] ?? null : null;
             return {
               ...sequence,
@@ -328,24 +510,103 @@ const SequenceLogoChart: React.FC<SequenceLogoChartProps> = ({
   }, [commitGapThresholdValue, gapThreshold, gapThresholdInput]);
 
   useEffect(() => {
-    if (!alignmentPath) {
-      setRawSequences([]);
+    setLoadedByMatchId({});
+    setAlignmentFetchError(null);
+  }, [alignmentKey]);
+
+  useEffect(() => {
+    setLoadedByMatchId((prev) => {
+      let changed = false;
+      const next = { ...prev };
+      for (const k of Object.keys(next)) {
+        if (!neededGtdbIds.has(k)) {
+          delete next[k];
+          changed = true;
+        }
+      }
+      return changed ? next : prev;
+    });
+  }, [neededGtdbIds]);
+
+  useEffect(() => {
+    if (resolvedAlignmentPaths.length === 0 || neededGtdbIds.size === 0) {
+      setIsFetchingAlignmentRows(false);
+      setAlignmentFetchError(null);
       onLoaded?.();
       return;
     }
 
-    fetch(withBasePath(alignmentPath))
-      .then((response) => response.text())
-      .then((fastaContent) => {
-        setRawSequences(parseFasta(fastaContent));
-        onLoaded?.();
+    const missing = [...neededGtdbIds].filter((id) => !loadedByMatchId[id]);
+    if (missing.length === 0) {
+      onLoaded?.();
+      return;
+    }
+
+    const ac = new AbortController();
+    setIsFetchingAlignmentRows(true);
+    setAlignmentFetchError(null);
+
+    streamFastaRecordsForGtdbIds(
+      resolvedAlignmentPaths,
+      kindSourcePath,
+      new Set(missing),
+      ac.signal
+    )
+      .then(({ records, alignmentKind }) => {
+        if (ac.signal.aborted) {
+          return;
+        }
+        const enriched = enrichFastaRows(records, kindSourcePath, alignmentKind);
+        setLoadedByMatchId((prev) => {
+          const next = { ...prev };
+          for (const row of enriched) {
+            next[row.matchId] = row;
+          }
+          return next;
+        });
       })
       .catch((error) => {
-        console.error('Error loading alignment:', error);
-        setRawSequences([]);
-        onLoaded?.();
+        if (ac.signal.aborted) {
+          return;
+        }
+        console.error("Error loading alignment rows:", error);
+        setAlignmentFetchError(
+          error instanceof Error ? error.message : "Failed to load alignment sequences."
+        );
+      })
+      .finally(() => {
+        if (!ac.signal.aborted) {
+          setIsFetchingAlignmentRows(false);
+          onLoaded?.();
+        }
       });
-  }, [alignmentPath, onLoaded]);
+
+    return () => {
+      ac.abort();
+    };
+  }, [
+    alignmentKey,
+    neededGtdbIds,
+    resolvedAlignmentPaths,
+    kindSourcePath,
+    onLoaded,
+    loadedByMatchId
+  ]);
+
+  useEffect(() => {
+    if (resolvedAlignmentPaths.length === 0) {
+      gapInitPathRef.current = null;
+      return;
+    }
+    if (gapInitPathRef.current === alignmentKey) {
+      return;
+    }
+    gapInitPathRef.current = alignmentKey;
+    const fromPath = inferAlignmentKindFromPath(kindSourcePath);
+    const kind: AlignmentKind = fromPath !== 'unknown' ? fromPath : 'reptrims';
+    const defaultGap = kind === 'reptrims' ? 55 : 30;
+    commitGapThresholdValue(defaultGap);
+  }, [alignmentKey, kindSourcePath, commitGapThresholdValue, resolvedAlignmentPaths.length]);
 
   useEffect(() => {
     const normalizedQuery = query.trim();
@@ -680,7 +941,7 @@ const SequenceLogoChart: React.FC<SequenceLogoChartProps> = ({
       `<text x="${logoLabelWidth - labelPadding}" y="${logoLabelCenterY - 6}" text-anchor="end" font-size="18" font-weight="700" fill="#000000">Sequence Logo</text>`
     );
     svgSections.push(
-      `<text x="${logoLabelWidth - labelPadding}" y="${logoLabelCenterY + 14}" text-anchor="end" font-size="12" fill="#64748b">(n=${loadedSequences.length})</text>`
+      `<text x="${logoLabelWidth - labelPadding}" y="${logoLabelCenterY + 14}" text-anchor="end" font-size="12" fill="#64748b">(n=${precomputedLogo?.totalSequences ?? loadedFullWidthSequences.length})</text>`
     );
 
     const nestedLogoSvg = serializer
@@ -888,7 +1149,7 @@ const SequenceLogoChart: React.FC<SequenceLogoChartProps> = ({
                 const frequency = positionData.residueCounts[residue] / positionData.totalSequences;
                 showTooltip(
                   event,
-                  `<strong>Alignment Column:</strong> ${positionData.alignmentColumn}<br/>` +
+                  `<strong>Alignment column:</strong> ${positionData.alignmentColumn}<br/>` +
                     `<strong>Residue:</strong> ${residue}<br/>` +
                     `<strong>Frequency:</strong> ${(frequency * 100).toFixed(1)}%<br/>` +
                     `<strong>Information:</strong> ${letterBits.toFixed(2)} bits`
@@ -909,13 +1170,24 @@ const SequenceLogoChart: React.FC<SequenceLogoChartProps> = ({
       cancelled = true;
       setTooltip((current) => ({ ...current, visible: false }));
     };
-  }, [loadedSequences, height, getResidueColor, hideTooltip, loadCustomSvgLetter, showTooltip, updateTooltipPosition]);
+  }, [
+    logoData,
+    chartWidth,
+    chartHeight,
+    logoTrackWidth,
+    height,
+    getResidueColor,
+    hideTooltip,
+    loadCustomSvgLetter,
+    showTooltip,
+    updateTooltipPosition
+  ]);
 
   return (
     <div className="rounded-lg max-w-full overflow-hidden">
       <div className="p-6 border-b border-black/10 dark:border-white/10 flex items-center justify-between gap-4">
         <h2 className="text-xl font-semibold m-0">Sequence Comparison with Sequence Logo</h2>
-        {loadedSequences.length > 0 ? (
+        {logoData.length > 0 ? (
           <button
             type="button"
             onClick={downloadSVG}
@@ -1102,7 +1374,10 @@ const SequenceLogoChart: React.FC<SequenceLogoChartProps> = ({
                 </div>
               </div>
               <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">
-                Show alignment columns with at most {gapThresholdSlider}% gaps
+                {alignmentKind === 'reptrims'
+                  ? 'Column-trimmed alignments are usually less gappy; you can often use a higher threshold before sparse columns disappear. '
+                  : 'Full alignments are often gappy at the ends; a lower threshold hides columns that are mostly gaps. '}
+                Show alignment columns with at most {gapThresholdSlider}% gaps.
               </p>
             </div>
           </div>
@@ -1126,7 +1401,13 @@ const SequenceLogoChart: React.FC<SequenceLogoChartProps> = ({
           ) : null}
         </div>
 
-        {loadedSequences.length === 0 ? (
+        {alignmentFetchError ? (
+          <p className="text-sm text-amber-700 dark:text-amber-400 mb-2" role="alert">
+            {alignmentFetchError}
+          </p>
+        ) : null}
+
+        {resolvedAlignmentPaths.length === 0 ? (
           <p className="text-sm text-slate-600 dark:text-slate-300">
             No alignment data is available for this gene yet.
           </p>
@@ -1153,14 +1434,27 @@ const SequenceLogoChart: React.FC<SequenceLogoChartProps> = ({
                           </div>
                         ) : null}
 
-                        {species.status === 'ready' && species.matchedSequences.length === 0 ? (
+                        {species.status === 'ready' &&
+                        isFetchingAlignmentRows &&
+                        species.gtdb.some((id) => id && !loadedByMatchId[id]) ? (
+                          <div className="text-sm text-slate-600 dark:text-slate-300">
+                            {species.name}: loading matching sequence(s) from the alignment…
+                          </div>
+                        ) : null}
+
+                        {species.status === 'ready' &&
+                        !isFetchingAlignmentRows &&
+                        species.matchedSequences.length === 0 ? (
                           <div className="text-sm text-slate-600 dark:text-slate-300">
                             {species.name}: no aligned sequence matched the available GTDB IDs.
                           </div>
                         ) : null}
 
                         {species.status === 'ready'
-                          ? species.matchedSequences.map((sequence, index) => (
+                          ? species.matchedSequences.map((sequence, index) => {
+                              const trimmedWarning =
+                                'This sequence is trimmed (alignment fragment). Positions in the row use alignment column indices, not full protein residue numbers.';
+                              return (
                               <div
                                 key={`${species.name}-${sequence.header}-${index}`}
                                 className="flex items-start"
@@ -1169,7 +1463,43 @@ const SequenceLogoChart: React.FC<SequenceLogoChartProps> = ({
                                   className="shrink-0 pr-3 text-right"
                                   style={{ width: `${LABEL_WIDTH}px` }}
                                 >
-                                  <p className="text-sm font-semibold m-0">{species.name}</p>
+                                  <div className="flex items-start justify-end gap-1">
+                                    <p className="text-sm font-semibold m-0">{species.name}</p>
+                                    {!sequence.isCompleteSequence ? (
+                                      <button
+                                        type="button"
+                                        className="mt-0.5 inline-flex shrink-0 rounded p-0.5 text-amber-600 hover:bg-amber-500/15 dark:text-amber-400 dark:hover:bg-amber-400/15 outline-none focus-visible:ring-2 focus-visible:ring-amber-500/60"
+                                        aria-label="Trimmed sequence"
+                                        onMouseEnter={(event) => showTooltip(event, trimmedWarning)}
+                                        onMouseMove={(event) => updateTooltipPosition(event)}
+                                        onMouseLeave={() => hideTooltip()}
+                                        onFocus={(event) => {
+                                          const r = event.currentTarget.getBoundingClientRect();
+                                          showTooltip(
+                                            { clientX: r.left + r.width / 2, clientY: r.top },
+                                            trimmedWarning
+                                          );
+                                        }}
+                                        onBlur={() => hideTooltip()}
+                                      >
+                                        <svg
+                                          width="16"
+                                          height="16"
+                                          viewBox="0 0 24 24"
+                                          fill="none"
+                                          stroke="currentColor"
+                                          strokeWidth="2"
+                                          strokeLinecap="round"
+                                          strokeLinejoin="round"
+                                          aria-hidden="true"
+                                        >
+                                          <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                                          <line x1="12" y1="9" x2="12" y2="13" />
+                                          <line x1="12" y1="17" x2="12.01" y2="17" />
+                                        </svg>
+                                      </button>
+                                    ) : null}
+                                  </div>
                                   {sequence.ncbiId ? (
                                     <a
                                       href={getNcbiProteinUrl(sequence.ncbiId)}
@@ -1180,8 +1510,11 @@ const SequenceLogoChart: React.FC<SequenceLogoChartProps> = ({
                                       {sequence.ncbiId}
                                     </a>
                                   ) : (
-                                    <p className="text-xs text-slate-600 dark:text-slate-300 m-0 break-all">
-                                      {sequence.header}
+                                    <p
+                                      className="text-xs text-slate-600 dark:text-slate-300 m-0 break-all"
+                                      title={sequence.header}
+                                    >
+                                      {sequence.matchId}
                                     </p>
                                   )}
                                 </div>
@@ -1189,27 +1522,30 @@ const SequenceLogoChart: React.FC<SequenceLogoChartProps> = ({
                                   className="flex shrink-0"
                                   style={{ width: `${chartWidth}px` }}
                                 >
-                                  {Array.from(sequence.sequence).map((residue, positionIndex) => (
-                                    renderResidueGlyph(
+                                  {Array.from(sequence.sequence).map((residue, positionIndex) => {
+                                    const alignmentCol = sequence.alignmentColumns[positionIndex] ?? 0;
+                                    const positionLine = sequence.isCompleteSequence
+                                      ? `<strong>Residue number:</strong> ${
+                                          getResidueNumberAtAlignmentColumn(
+                                            sequence.rawSequence,
+                                            alignmentCol
+                                          ) ?? 'n/a'
+                                        }`
+                                      : `<strong>Alignment column:</strong> ${alignmentCol + 1}`;
+                                    return renderResidueGlyph(
                                       residue,
                                       `${sequence.header}-${positionIndex}-${loadedLetterTick}`,
                                       residue === '-'
                                         ? undefined
-                                        : `${species.name}<br/>` +
-                                          `<strong>Residue Number:</strong> ${
-                                            getResidueNumberAtAlignmentColumn(
-                                              sequence.rawSequence,
-                                              sequence.alignmentColumns[positionIndex]
-                                            ) ?? 'n/a'
-                                          }<br/>` +
-                                          `<strong>Residue:</strong> ${residue}`,
+                                        : `${species.name}<br/>${positionLine}<br/><strong>Residue:</strong> ${residue}`,
                                       24
-                                    )
-                                  ))}
+                                    );
+                                  })}
                                 </div>
                                 <div style={{ width: `${RIGHT_MARGIN}px` }} />
                               </div>
-                            ))
+                            );
+                            })
                           : null}
                       </div>
                     ))}
@@ -1238,7 +1574,8 @@ const SequenceLogoChart: React.FC<SequenceLogoChartProps> = ({
                         Sequence Logo
                       </p>
                       <p className="text-sm text-slate-600 dark:text-slate-300 leading-tight m-0">
-                        (n={loadedSequences.length})
+                        (n=
+                        {precomputedLogo?.totalSequences ?? loadedFullWidthSequences.length})
                       </p>
                     </div>
                   </div>

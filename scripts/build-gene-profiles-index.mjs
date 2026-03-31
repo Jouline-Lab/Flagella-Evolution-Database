@@ -9,6 +9,7 @@ const OUTPUT_PATH = path.join(process.cwd(), "public", "gene-profiles.json");
 const REPRESENTATIVE_SPECIES_PATH = path.join(process.cwd(), "public", "representative-species.json");
 const OPERON_COORDS_DIR = path.join(process.cwd(), "public", "operon_coords");
 const ALIGNMENTS_DIR = path.join(process.cwd(), "public", "alignments");
+const ALIGNMENTS_INDEX_PATH = path.join(process.cwd(), "public", "alignments-index.json");
 const NEIGHBOR_DISTANCE_BP = 500;
 
 const EXCLUDED_CORE_GENE_NAMES = new Set([
@@ -59,7 +60,7 @@ function speciesNameToSlug(name) {
 }
 
 function geneNameToSlug(value) {
-  return value
+  return (value ?? "")
     .replace(/_count$/i, "")
     .trim()
     .toLowerCase()
@@ -120,18 +121,20 @@ function parseIds(rawValue) {
 function buildGeneDefs(headers) {
   const map = new Map();
 
-  headers.forEach((header, idx) => {
+  headers.forEach((rawHeader, idx) => {
+    const header = (rawHeader ?? "").trim();
+
     if (header.endsWith("_count")) {
       const geneName = header.replace(/_count$/i, "");
-      const def = map.get(geneName) ?? { geneName, countIdx: -1, gtdbIdx: [], ncbiIdx: [] };
-      def.countIdx = idx;
+      const def = map.get(geneName) ?? { name: geneName, index: -1, gtdbIdx: [], ncbiIdx: [] };
+      def.index = idx;
       map.set(geneName, def);
       return;
     }
 
     if (header.includes("_GTDB_")) {
       const geneName = header.split("_GTDB_")[0];
-      const def = map.get(geneName) ?? { geneName, countIdx: -1, gtdbIdx: [], ncbiIdx: [] };
+      const def = map.get(geneName) ?? { name: geneName, index: -1, gtdbIdx: [], ncbiIdx: [] };
       def.gtdbIdx.push(idx);
       map.set(geneName, def);
       return;
@@ -139,15 +142,15 @@ function buildGeneDefs(headers) {
 
     if (header.includes("_NCBI_")) {
       const geneName = header.split("_NCBI_")[0];
-      const def = map.get(geneName) ?? { geneName, countIdx: -1, gtdbIdx: [], ncbiIdx: [] };
+      const def = map.get(geneName) ?? { name: geneName, index: -1, gtdbIdx: [], ncbiIdx: [] };
       def.ncbiIdx.push(idx);
       map.set(geneName, def);
     }
   });
 
   return Array.from(map.values())
-    .filter((def) => def.countIdx >= 0)
-    .sort((a, b) => a.geneName.localeCompare(b.geneName));
+    .filter((def) => def.index >= 0)
+    .sort((a, b) => a.name.localeCompare(b.name));
 }
 
 async function loadRepresentativeSpecies() {
@@ -166,15 +169,18 @@ async function loadAlignmentFiles() {
   }
 
   const filenames = await readdir(ALIGNMENTS_DIR);
-  return filenames.filter((filename) => !filename.startsWith("."));
+  return filenames
+    .filter((filename) => !filename.startsWith("."))
+    .filter((filename) => filename.toLowerCase().endsWith(".fasta"))
+    .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }));
 }
 
 function getAlignmentFileForGene(geneName, alignmentFiles) {
   const lowerGeneName = geneName.toLowerCase();
-  return (
-    alignmentFiles.find((filename) => filename.toLowerCase().startsWith(`${lowerGeneName}_`)) ??
-    null
+  const match = alignmentFiles.find((filename) =>
+    filename.toLowerCase().startsWith(`${lowerGeneName}_`)
   );
+  return match ?? null;
 }
 
 function parseOperonRows(tsv) {
@@ -403,6 +409,14 @@ async function buildGeneProfilesIndex() {
   console.log(`Gene profiles index written: ${OUTPUT_PATH}`);
   // eslint-disable-next-line no-console
   console.log(`Genes indexed: ${genes.length}`);
+
+  const alignmentIndex = {
+    version: 1,
+    files: alignmentFiles
+  };
+  await writeFile(ALIGNMENTS_INDEX_PATH, JSON.stringify(alignmentIndex, null, 2), "utf8");
+  // eslint-disable-next-line no-console
+  console.log(`Alignments index written: ${ALIGNMENTS_INDEX_PATH} (${alignmentFiles.length} .fasta files)`);
 }
 
 buildGeneProfilesIndex().catch((error) => {

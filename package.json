@@ -10,6 +10,8 @@
     "build:taxonomy-index": "node scripts/build-taxonomy-index.mjs",
     "build:species-flagella-index": "node scripts/build-species-flagella-index.mjs",
     "build:gene-profiles-index": "node scripts/build-gene-profiles-index.mjs",
+    "split-large-alignments": "node scripts/split-large-alignments.mjs",
+    "precompute:gene-logos": "node scripts/precompute-gene-logos.mjs",
     "check-assembly-duplicates": "node scripts/check-assembly-duplicates.mjs",
     "build:flagella-svg-labels": "node scripts/build-flagella-svg-labels.mjs"
   },

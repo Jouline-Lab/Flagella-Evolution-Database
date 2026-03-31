@@ -5,12 +5,14 @@ import { useRouter, useSearchParams } from "next/navigation";
 import PageShell from "@/components/layout/PageShell";
 import SequenceLogoChart from "@/components/SequenceLogoChart";
 import {
-  getAlignmentPathForGeneClient,
+  getAlignmentPathsForGeneClient,
+  getGeneLogoPrecomputeClient,
   getGeneProfileBySlugClient,
   getSpeciesGeneIdsByGeneClient,
   type GeneProfile
 } from "@/lib/browserGenes";
 import { PAGE_ENTITY_ID_QUERY, genePageHref } from "@/lib/pageEntityQuery";
+import type { GeneLogoPrecomputePayload } from "@/lib/sequenceLogoMath";
 
 export default function GeneDetailsClient() {
   const router = useRouter();
@@ -25,7 +27,8 @@ export default function GeneDetailsClient() {
     }
   }, [idParam, legacySlugParam, router]);
   const [gene, setGene] = useState<GeneProfile | null>(null);
-  const [alignmentPath, setAlignmentPath] = useState<string | null>(null);
+  const [alignmentPaths, setAlignmentPaths] = useState<string[]>([]);
+  const [precomputedLogo, setPrecomputedLogo] = useState<GeneLogoPrecomputePayload | null>(null);
   const [speciesGeneIdsByName, setSpeciesGeneIdsByName] = useState<
     Record<string, { gtdb: string[]; ncbi: Array<string | null> }>
   >({});
@@ -35,7 +38,8 @@ export default function GeneDetailsClient() {
   useEffect(() => {
     if (!entityId) {
       setGene(null);
-      setAlignmentPath(null);
+      setAlignmentPaths([]);
+      setPrecomputedLogo(null);
       setSpeciesGeneIdsByName({});
       setLoadError(null);
       setIsLoading(false);
@@ -54,7 +58,8 @@ export default function GeneDetailsClient() {
 
         if (!profile) {
           setGene(null);
-          setAlignmentPath(null);
+          setAlignmentPaths([]);
+          setPrecomputedLogo(null);
           setSpeciesGeneIdsByName({});
           setLoadError("Gene not found.");
           return;
@@ -62,17 +67,19 @@ export default function GeneDetailsClient() {
 
         setGene(profile);
 
-        const [nextAlignmentPath, nextSpeciesGeneIdsByName] = await Promise.all([
-          getAlignmentPathForGeneClient(profile.name),
-          getSpeciesGeneIdsByGeneClient(profile.name)
+        const [nextAlignmentPaths, nextSpeciesGeneIdsByName, nextPrecomputed] = await Promise.all([
+          getAlignmentPathsForGeneClient(profile.name),
+          getSpeciesGeneIdsByGeneClient(profile.name),
+          getGeneLogoPrecomputeClient(profile.slug)
         ]);
 
         if (cancelled) {
           return;
         }
 
-        setAlignmentPath(nextAlignmentPath);
+        setAlignmentPaths(nextAlignmentPaths);
         setSpeciesGeneIdsByName(nextSpeciesGeneIdsByName);
+        setPrecomputedLogo(nextPrecomputed);
       })
       .catch((error) => {
         if (!cancelled) {
@@ -157,7 +164,8 @@ export default function GeneDetailsClient() {
           <article className="species-card species-card-wide">
             <SequenceLogoChart
               geneName={gene.name}
-              alignmentPath={alignmentPath}
+              alignmentPaths={alignmentPaths}
+              precomputedLogo={precomputedLogo}
               speciesGeneIdsByName={speciesGeneIdsByName}
             />
           </article>
