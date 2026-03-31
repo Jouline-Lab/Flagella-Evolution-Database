@@ -602,11 +602,8 @@ const SequenceLogoChart: React.FC<SequenceLogoChartProps> = ({
       return;
     }
     gapInitPathRef.current = alignmentKey;
-    const fromPath = inferAlignmentKindFromPath(kindSourcePath);
-    const kind: AlignmentKind = fromPath !== 'unknown' ? fromPath : 'reptrims';
-    const defaultGap = kind === 'reptrims' ? 55 : 30;
-    commitGapThresholdValue(defaultGap);
-  }, [alignmentKey, kindSourcePath, commitGapThresholdValue, resolvedAlignmentPaths.length]);
+    commitGapThresholdValue(30);
+  }, [alignmentKey, commitGapThresholdValue, resolvedAlignmentPaths.length]);
 
   useEffect(() => {
     const normalizedQuery = query.trim();
