@@ -1371,9 +1371,6 @@ const SequenceLogoChart: React.FC<SequenceLogoChartProps> = ({
                 </div>
               </div>
               <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">
-                {alignmentKind === 'reptrims'
-                  ? 'Column-trimmed alignments are usually less gappy; you can often use a higher threshold before sparse columns disappear. '
-                  : 'Full alignments are often gappy at the ends; a lower threshold hides columns that are mostly gaps. '}
                 Show alignment columns with at most {gapThresholdSlider}% gaps.
               </p>
             </div>
