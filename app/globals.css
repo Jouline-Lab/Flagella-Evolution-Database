@@ -496,6 +496,7 @@ a {
   z-index: 30;
   max-height: min(320px, 50vh);
   overflow-y: auto;
+  color: var(--text);
 }
 
 .hero-search-dropdown.autocomplete-dropdown {
@@ -1786,6 +1787,7 @@ a {
   border-radius: 8px;
   background: var(--dropdown-bg);
   box-shadow: var(--dropdown-shadow);
+  color: var(--text);
 }
 
 .autocomplete-item {
@@ -1807,6 +1809,11 @@ a {
 
 .autocomplete-item-checkbox input {
   margin: 0;
+  accent-color: var(--primary);
+}
+
+.autocomplete-item-checkbox span {
+  color: inherit;
 }
 
 .autocomplete-item:last-child {
@@ -1818,14 +1825,27 @@ a {
 }
 
 .autocomplete-item-active {
-  background: var(--panel-bg-strong);
-  outline: 1px solid var(--surface-border);
+  background: var(--dropdown-hover);
 }
 
 .autocomplete-empty {
   padding: 0.5rem 0.6rem;
   color: var(--text-soft);
   font-size: 0.85rem;
+}
+
+/* Native selects: match theme text and hint the UA for dark popovers where supported */
+select {
+  color: var(--text);
+}
+
+select option {
+  background-color: var(--dropdown-bg);
+  color: var(--text);
+}
+
+html[data-theme="dark"] select {
+  color-scheme: dark;
 }
 
 .chip-list {

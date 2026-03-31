@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { CheckSquare, Download, RotateCcw, Square, Table2 } from "lucide-react";
+import { DownloadActionButton } from "@/components/DownloadActionButton";
+import { CheckSquare, RotateCcw, Square, Table2 } from "lucide-react";
 import Link from "next/link";
 import {
   getPhyleticHeadersClient,
@@ -986,14 +987,9 @@ export default function PhyleticTableExplorer({
             Render table
           </button>
           {hasRendered && rows.length > 0 ? (
-            <button
-              type="button"
-              className="button button-secondary table-action-button"
-              onClick={downloadCurrentTableAsTsv}
-            >
-              <Download className="table-action-icon" />
+            <DownloadActionButton onClick={downloadCurrentTableAsTsv}>
               Download Table as TSV
-            </button>
+            </DownloadActionButton>
           ) : null}
         </section>
 

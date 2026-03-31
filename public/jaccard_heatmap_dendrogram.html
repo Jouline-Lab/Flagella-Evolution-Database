@@ -1,0 +1,1105 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Jaccard Heatmap + Left Dendrogram (No Library)</title>
+  <style>
+    body { margin: 0; font-family: Arial, sans-serif; background: #fff; color: #222; }
+    .wrap { max-width: 1400px; margin: 16px auto; padding: 0 14px; }
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(120px, 1fr));
+      gap: 8px 10px;
+      margin: 8px 0 12px 0;
+      align-items: end;
+    }
+    .controls label { font-size: 12px; color: #333; display: block; margin-bottom: 3px; }
+    .controls input, .controls select, .controls button {
+      width: 100%; box-sizing: border-box; padding: 6px; font-size: 12px;
+    }
+    #plotWrap {
+      width: 100%;
+      min-height: 700px;
+      border: 1px solid #eee;
+      overflow: auto;
+      background: #fff;
+    }
+    #plot { width: 100%; height: 100%; display: block; }
+    #status { margin-top: 8px; font-size: 12px; color: #444; white-space: pre-wrap; }
+    #tooltip {
+      position: fixed;
+      z-index: 9999;
+      pointer-events: none;
+      background: rgba(24, 24, 24, 0.95);
+      color: #fff;
+      border-radius: 6px;
+      padding: 8px 10px;
+      font-size: 12px;
+      line-height: 1.35;
+      max-width: 360px;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+      white-space: pre-wrap;
+      display: none;
+    }
+    #genePanel {
+      margin-top: 10px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      padding: 10px;
+      background: #fafafa;
+    }
+    #genePanelTop {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 8px;
+      flex-wrap: wrap;
+    }
+    #genePanelTop button {
+      width: auto;
+      padding: 5px 9px;
+      font-size: 12px;
+    }
+    #geneSummary {
+      font-size: 12px;
+      color: #444;
+    }
+    #geneCheckboxes {
+      max-height: 220px;
+      overflow: auto;
+      background: #fff;
+      border: 1px solid #e2e2e2;
+      border-radius: 4px;
+      padding: 6px;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+      gap: 4px 8px;
+    }
+    .gene-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .row { margin-bottom: 6px; }
+    h2 { margin: 0 0 8px 0; font-size: 20px; }
+    p { margin: 0 0 8px 0; font-size: 13px; color: #555; }
+    code { background: #f6f8fa; padding: 1px 4px; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h2>Jaccard Similarity Heatmap with Left Dendrogram</h2>
+    <p>
+      Pure HTML/SVG drawing (no plotting library). Uses the same weighted Jaccard logic as your
+      Python function, including taxa weighting (<code>none</code>, <code>inverse</code>, <code>inverse_sqrt</code>).
+    </p>
+
+    <div class="controls">
+      <div>
+        <label for="defaultPath">Default TSV path</label>
+        <input id="defaultPath" type="text" value="ortholog_lists/flagellar_genes_phyletic_distribution_withIDs_Mar19_2026.tsv" />
+      </div>
+      <div>
+        <label for="fileInput">Or choose TSV file</label>
+        <input id="fileInput" type="file" accept=".tsv,.txt,.csv" />
+      </div>
+      <div>
+        <label for="taxonCol">Taxon column</label>
+        <select id="taxonCol"></select>
+      </div>
+      <div>
+        <label for="weighting">Taxa normalization</label>
+        <select id="weighting">
+          <option value="none">none</option>
+          <option value="inverse" selected>inverse</option>
+          <option value="inverse_sqrt">inverse_sqrt</option>
+        </select>
+      </div>
+      <div>
+        <label for="alpha">alpha</label>
+        <input id="alpha" type="number" step="0.1" min="0" value="1.0" />
+      </div>
+      <div>
+        <label for="suffix">Gene suffix</label>
+        <input id="suffix" type="text" value="_count" />
+      </div>
+
+      <div>
+        <label for="fontSize">Label font size</label>
+        <input id="fontSize" type="number" step="1" min="8" max="20" value="16" />
+      </div>
+      <div>
+        <label for="extendTips">Dotted tip guides</label>
+        <input id="extendTips" type="checkbox" checked />
+      </div>
+      <div>
+        <label for="blueHex">Low color</label>
+        <input id="blueHex" type="text" value="#7caec4" />
+      </div>
+      <div>
+        <label for="redHex">High color</label>
+        <input id="redHex" type="text" value="#dd6030" />
+      </div>
+      <div>
+        <label>&nbsp;</label>
+        <button id="rerunBtn" type="button">Recompute + draw</button>
+      </div>
+    </div>
+
+    <div id="plotWrap">
+      <svg id="plot"></svg>
+    </div>
+    <div id="genePanel">
+      <div id="genePanelTop">
+        <strong style="font-size:13px;">Genes detected from file</strong>
+        <button id="selectAllGenesBtn" type="button">Select all</button>
+        <button id="clearAllGenesBtn" type="button">Clear all</button>
+        <span id="geneSummary">No genes loaded.</span>
+      </div>
+      <div id="geneCheckboxes"></div>
+    </div>
+    <div id="status"></div>
+    <div id="tooltip"></div>
+  </div>
+
+  <script>
+    let activeRows = null;
+    let activeHeaders = null;
+    const TAXON_COLUMNS = ["phylum", "class", "order", "family", "genus", "species"];
+
+    function setStatus(msg) {
+      document.getElementById("status").textContent = msg;
+    }
+
+    function updateGeneSummary() {
+      const boxes = document.querySelectorAll(".gene-checkbox");
+      const checked = document.querySelectorAll(".gene-checkbox:checked");
+      const summary = document.getElementById("geneSummary");
+      if (boxes.length === 0) {
+        summary.textContent = "No genes loaded.";
+        return;
+      }
+      summary.textContent = `Selected ${checked.length} / ${boxes.length} genes`;
+    }
+
+    function populateTaxonDropdown(headers, suffix) {
+      const select = document.getElementById("taxonCol");
+      const prev = select.value;
+      select.innerHTML = "";
+
+      const nonGeneCols = headers.filter(h => !h.endsWith(suffix));
+      const candidates = TAXON_COLUMNS.filter(c => nonGeneCols.includes(c));
+      if (candidates.length === 0) {
+        const opt = document.createElement("option");
+        opt.value = "";
+        opt.textContent = "(no non-gene columns found)";
+        select.appendChild(opt);
+        select.disabled = true;
+        return;
+      }
+
+      for (const col of candidates) {
+        const opt = document.createElement("option");
+        opt.value = col;
+        opt.textContent = col;
+        select.appendChild(opt);
+      }
+      select.disabled = false;
+
+      if (prev && candidates.includes(prev)) {
+        select.value = prev;
+      } else if (candidates.includes("species")) {
+        select.value = "species";
+      } else if (candidates.includes("taxon")) {
+        select.value = "taxon";
+      } else {
+        select.value = candidates[0];
+      }
+    }
+
+    function buildGeneCheckboxes(headers, suffix) {
+      const host = document.getElementById("geneCheckboxes");
+      host.innerHTML = "";
+      const countCols = headers.filter(h => h.endsWith(suffix));
+
+      for (const col of countCols) {
+        const gene = col.slice(0, -suffix.length);
+        const item = document.createElement("label");
+        item.className = "gene-item";
+
+        const cb = document.createElement("input");
+        cb.type = "checkbox";
+        cb.className = "gene-checkbox";
+        cb.value = gene;
+        cb.checked = true;
+        cb.addEventListener("change", () => {
+          updateGeneSummary();
+          if (activeRows) {
+            try {
+              recomputeAndDraw(activeRows);
+            } catch (err) {
+              setStatus(`Error: ${err.message}`);
+            }
+          }
+        });
+
+        const txt = document.createElement("span");
+        txt.textContent = gene;
+        txt.title = `${gene} (${col})`;
+
+        item.appendChild(cb);
+        item.appendChild(txt);
+        host.appendChild(item);
+      }
+      updateGeneSummary();
+    }
+
+    function getSelectedGenesFromCheckboxes() {
+      const out = new Set();
+      document.querySelectorAll(".gene-checkbox:checked").forEach(cb => out.add(cb.value));
+      return out;
+    }
+
+    function parseDelimited(text) {
+      const lines = text.replace(/\r/g, "").split("\n").filter(line => line.trim().length > 0);
+      if (lines.length < 2) throw new Error("Input file has no data rows.");
+
+      const delimiter = lines[0].includes("\t") ? "\t" : ",";
+      const headers = lines[0].split(delimiter).map(s => s.trim());
+
+      const rows = [];
+      for (let i = 1; i < lines.length; i++) {
+        const parts = lines[i].split(delimiter);
+        const row = {};
+        for (let j = 0; j < headers.length; j++) {
+          row[headers[j]] = (parts[j] ?? "").trim();
+        }
+        rows.push(row);
+      }
+      return { headers, rows };
+    }
+
+    function numberOrZero(v) {
+      const x = Number(v);
+      return Number.isFinite(x) ? x : 0;
+    }
+
+    function buildWeights(rows, taxonCol, weighting, alpha) {
+      const n = rows.length;
+      let w = new Array(n).fill(1.0);
+      if (weighting === "none") return w.map(() => 1 / n);
+
+      const counts = new Map();
+      for (const r of rows) {
+        const key = r[taxonCol] || "";
+        counts.set(key, (counts.get(key) || 0) + 1);
+      }
+
+      w = rows.map(r => {
+        const key = r[taxonCol] || "";
+        const size = counts.get(key) || 1;
+        if (weighting === "inverse") return 1 / (Math.pow(size, alpha));
+        if (weighting === "inverse_sqrt") return 1 / (Math.pow(Math.sqrt(size), alpha));
+        return 1;
+      });
+
+      const sumW = w.reduce((acc, v) => acc + v, 0);
+      return sumW > 0 ? w.map(v => v / sumW) : new Array(n).fill(1 / n);
+    }
+
+    function computeJaccardMatrix(rows, suffix, weights, dropDoubleZero, selectedGenes) {
+      const headers = Object.keys(rows[0] || {});
+      const allCountCols = headers.filter(c => c.endsWith(suffix));
+      let countCols = allCountCols;
+      if (selectedGenes && selectedGenes.size > 0) {
+        countCols = allCountCols.filter(c => selectedGenes.has(c.slice(0, -suffix.length)));
+      }
+      if (countCols.length === 0) {
+        if (selectedGenes && selectedGenes.size > 0) {
+          throw new Error(
+            `None of the requested genes were found. ` +
+            `Requested: ${Array.from(selectedGenes).slice(0, 20).join(", ")}${selectedGenes.size > 20 ? ", ..." : ""}`
+          );
+        }
+        throw new Error(`No columns end with suffix "${suffix}".`);
+      }
+
+      const labels = countCols.map(c => c.slice(0, -suffix.length));
+      const nGenes = countCols.length;
+      const nRows = rows.length;
+
+      const presence = countCols.map(col => {
+        const arr = new Array(nRows);
+        for (let i = 0; i < nRows; i++) arr[i] = numberOrZero(rows[i][col]) > 0 ? 1 : 0;
+        return arr;
+      });
+
+      const sim = Array.from({ length: nGenes }, (_, i) =>
+        Array.from({ length: nGenes }, (_, j) => (i === j ? 1 : 0))
+      );
+      const interMatrix = Array.from({ length: nGenes }, () => Array.from({ length: nGenes }, () => NaN));
+      const unionMatrix = Array.from({ length: nGenes }, () => Array.from({ length: nGenes }, () => NaN));
+      const bothCountMatrix = Array.from({ length: nGenes }, () => Array.from({ length: nGenes }, () => 0));
+      const anyCountMatrix = Array.from({ length: nGenes }, () => Array.from({ length: nGenes }, () => 0));
+      const presentCount = Array.from({ length: nGenes }, () => 0);
+      const weightedPresent = Array.from({ length: nGenes }, () => 0);
+
+      for (let i = 0; i < nGenes; i++) {
+        let c = 0;
+        let wc = 0;
+        for (let k = 0; k < nRows; k++) {
+          if (presence[i][k]) {
+            c += 1;
+            wc += weights[k];
+          }
+        }
+        presentCount[i] = c;
+        weightedPresent[i] = wc;
+        interMatrix[i][i] = wc;
+        unionMatrix[i][i] = wc;
+        bothCountMatrix[i][i] = c;
+        anyCountMatrix[i][i] = c;
+      }
+
+      for (let i = 0; i < nGenes; i++) {
+        const a = presence[i];
+        for (let j = i + 1; j < nGenes; j++) {
+          const b = presence[j];
+          let inter = 0;
+          let uni = 0;
+          let bothCount = 0;
+          let anyCount = 0;
+
+          if (dropDoubleZero) {
+            let hasAny = false;
+            for (let k = 0; k < nRows; k++) {
+              if (a[k] || b[k]) {
+                hasAny = true;
+                inter += weights[k] * (a[k] & b[k]);
+                uni += weights[k];
+                anyCount += 1;
+              }
+              bothCount += (a[k] & b[k]);
+            }
+            if (!hasAny) {
+              sim[i][j] = NaN;
+              sim[j][i] = NaN;
+              interMatrix[i][j] = interMatrix[j][i] = NaN;
+              unionMatrix[i][j] = unionMatrix[j][i] = NaN;
+              bothCountMatrix[i][j] = bothCountMatrix[j][i] = bothCount;
+              anyCountMatrix[i][j] = anyCountMatrix[j][i] = anyCount;
+              continue;
+            }
+          } else {
+            for (let k = 0; k < nRows; k++) {
+              inter += weights[k] * (a[k] & b[k]);
+              uni += weights[k] * (a[k] | b[k]);
+              bothCount += (a[k] & b[k]);
+              anyCount += (a[k] | b[k]);
+            }
+          }
+
+          const val = uni > 0 ? inter / uni : NaN;
+          sim[i][j] = val;
+          sim[j][i] = val;
+          interMatrix[i][j] = interMatrix[j][i] = inter;
+          unionMatrix[i][j] = unionMatrix[j][i] = uni;
+          bothCountMatrix[i][j] = bothCountMatrix[j][i] = bothCount;
+          anyCountMatrix[i][j] = anyCountMatrix[j][i] = anyCount;
+        }
+      }
+
+      return {
+        labels,
+        sim,
+        countCols,
+        stats: {
+          interMatrix,
+          unionMatrix,
+          bothCountMatrix,
+          anyCountMatrix,
+          presentCount,
+          weightedPresent
+        }
+      };
+    }
+
+    function toDistanceMatrix(sim) {
+      const n = sim.length;
+      const dist = Array.from({ length: n }, () => new Array(n).fill(0));
+      for (let i = 0; i < n; i++) {
+        for (let j = 0; j < n; j++) {
+          if (i === j) {
+            dist[i][j] = 0;
+            continue;
+          }
+          const sij = sim[i][j];
+          dist[i][j] = Number.isFinite(sij) ? Math.max(0, 1 - sij) : 1;
+        }
+      }
+      return dist;
+    }
+
+    function completeLinkageDistance(clusterA, clusterB, distMatrix) {
+      let d = -Infinity;
+      for (const i of clusterA.members) {
+        for (const j of clusterB.members) d = Math.max(d, distMatrix[i][j]);
+      }
+      return d;
+    }
+
+    function hierarchicalClustering(distMatrix) {
+      const n = distMatrix.length;
+      const clusters = new Map();
+      const active = new Set();
+      let nextId = n;
+
+      for (let i = 0; i < n; i++) {
+        clusters.set(i, { id: i, members: [i], left: null, right: null, height: 0 });
+        active.add(i);
+      }
+
+      while (active.size > 1) {
+        const ids = Array.from(active);
+        let bestA = null;
+        let bestB = null;
+        let bestD = Infinity;
+
+        for (let i = 0; i < ids.length; i++) {
+          for (let j = i + 1; j < ids.length; j++) {
+            const a = clusters.get(ids[i]);
+            const b = clusters.get(ids[j]);
+            const d = completeLinkageDistance(a, b, distMatrix);
+            if (d < bestD) {
+              bestD = d;
+              bestA = a;
+              bestB = b;
+            }
+          }
+        }
+
+        const minA = Math.min(...bestA.members);
+        const minB = Math.min(...bestB.members);
+        const left = minA <= minB ? bestA : bestB;
+        const right = minA <= minB ? bestB : bestA;
+
+        const merged = {
+          id: nextId++,
+          members: [...left.members, ...right.members].sort((x, y) => x - y),
+          left,
+          right,
+          height: bestD
+        };
+
+        active.delete(bestA.id);
+        active.delete(bestB.id);
+        clusters.set(merged.id, merged);
+        active.add(merged.id);
+      }
+
+      const rootId = Array.from(active)[0];
+      return clusters.get(rootId);
+    }
+
+    function leafOrderFromTree(node, out = []) {
+      if (!node.left && !node.right) {
+        out.push(node.members[0]);
+        return out;
+      }
+      leafOrderFromTree(node.left, out);
+      leafOrderFromTree(node.right, out);
+      return out;
+    }
+
+    function reorderMatrix(matrix, order) {
+      return order.map(i => order.map(j => matrix[i][j]));
+    }
+
+    function escapeHtml(s) {
+      return String(s)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    }
+
+    function showTooltip(evt, html) {
+      const tip = document.getElementById("tooltip");
+      tip.innerHTML = html;
+      tip.style.display = "block";
+      const pad = 14;
+      const x = evt.clientX + pad;
+      const y = evt.clientY + pad;
+      const maxX = window.innerWidth - tip.offsetWidth - 8;
+      const maxY = window.innerHeight - tip.offsetHeight - 8;
+      tip.style.left = `${Math.max(8, Math.min(x, maxX))}px`;
+      tip.style.top = `${Math.max(8, Math.min(y, maxY))}px`;
+    }
+
+    function hideTooltip() {
+      document.getElementById("tooltip").style.display = "none";
+    }
+
+    function fmt(v, digits = 4) {
+      return Number.isFinite(v) ? v.toFixed(digits) : "NaN";
+    }
+
+    function hexToRgb(hex) {
+      const x = hex.replace("#", "");
+      if (x.length !== 6) return { r: 128, g: 128, b: 128 };
+      return {
+        r: parseInt(x.slice(0, 2), 16),
+        g: parseInt(x.slice(2, 4), 16),
+        b: parseInt(x.slice(4, 6), 16)
+      };
+    }
+
+    function rgbToHex(r, g, b) {
+      const rr = Math.max(0, Math.min(255, Math.round(r))).toString(16).padStart(2, "0");
+      const gg = Math.max(0, Math.min(255, Math.round(g))).toString(16).padStart(2, "0");
+      const bb = Math.max(0, Math.min(255, Math.round(b))).toString(16).padStart(2, "0");
+      return `#${rr}${gg}${bb}`;
+    }
+
+    function lerp(a, b, t) {
+      return a + (b - a) * t;
+    }
+
+    function jaccardToColor(v, blueHex, redHex) {
+      const blue = hexToRgb(blueHex);
+      const white = { r: 255, g: 255, b: 255 };
+      const red = hexToRgb(redHex);
+      const t = Math.max(0, Math.min(1, v));
+      if (t <= 0.5) {
+        const u = t / 0.5;
+        return rgbToHex(lerp(blue.r, white.r, u), lerp(blue.g, white.g, u), lerp(blue.b, white.b, u));
+      }
+      const u = (t - 0.5) / 0.5;
+      return rgbToHex(lerp(white.r, red.r, u), lerp(white.g, red.g, u), lerp(white.b, red.b, u));
+    }
+
+    function makeSvgNode(tag, attrs = {}) {
+      const el = document.createElementNS("http://www.w3.org/2000/svg", tag);
+      for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, String(v));
+      return el;
+    }
+
+    const _measureCanvas = document.createElement("canvas");
+    const _measureCtx = _measureCanvas.getContext("2d");
+    function measureTextWidthPx(text, fontSize) {
+      if (!_measureCtx) return String(text).length * fontSize * 0.58;
+      _measureCtx.font = `${fontSize}px Arial, sans-serif`;
+      return _measureCtx.measureText(String(text)).width;
+    }
+
+    function drawDendrogramLines(
+      group,
+      root,
+      orderIndexMap,
+      dendroX,
+      dendroW,
+      heatY,
+      cellSize,
+      maxH,
+      extendTips,
+      rowLabelAnchorX,
+      orderedLabels,
+      fontSize
+    ) {
+      function xFromHeight(h) {
+        const t = maxH <= 0 ? 0 : h / maxH;
+        return dendroX + dendroW - t * dendroW;
+      }
+      function yFromIndex(i) {
+        return heatY + (i + 0.5) * cellSize;
+      }
+      function recurse(node) {
+        if (!node.left && !node.right) {
+          return orderIndexMap.get(node.members[0]);
+        }
+
+        const yL = recurse(node.left);
+        const yR = recurse(node.right);
+        const yMin = Math.min(yL, yR);
+        const yMax = Math.max(yL, yR);
+        const yMid = (yL + yR) / 2;
+
+        const xNode = xFromHeight(node.height);
+        const xLeft = xFromHeight((node.left.left || node.left.right) ? node.left.height : 0);
+        const xRight = xFromHeight((node.right.left || node.right.right) ? node.right.height : 0);
+
+        group.appendChild(makeSvgNode("line", {
+          x1: xNode, y1: yFromIndex(yMin), x2: xNode, y2: yFromIndex(yMax),
+          stroke: "#333", "stroke-width": 1
+        }));
+        group.appendChild(makeSvgNode("line", {
+          x1: xLeft, y1: yFromIndex(yL), x2: xNode, y2: yFromIndex(yL),
+          stroke: "#333", "stroke-width": 1
+        }));
+        group.appendChild(makeSvgNode("line", {
+          x1: xRight, y1: yFromIndex(yR), x2: xNode, y2: yFromIndex(yR),
+          stroke: "#333", "stroke-width": 1
+        }));
+        return yMid;
+      }
+      recurse(root);
+
+      if (extendTips) {
+        const tipStartX = xFromHeight(0);
+        for (let i = 0; i < orderIndexMap.size; i++) {
+          const label = String(orderedLabels[i] ?? "");
+          const textWidth = measureTextWidthPx(label, fontSize);
+          const labelLeftX = rowLabelAnchorX - textWidth;
+          const guideEndX = labelLeftX - 4; // stop just before text starts
+          const x1 = Math.min(tipStartX + 1, guideEndX);
+          const x2 = Math.max(tipStartX + 1, guideEndX);
+          const y = yFromIndex(i);
+          group.appendChild(makeSvgNode("line", {
+            x1, y1: y, x2, y2: y,
+            stroke: "#8a8a8a",
+            "stroke-width": 0.9,
+            "stroke-dasharray": "2,3"
+          }));
+        }
+      }
+    }
+
+    function drawClusteredHeatmap(labels, sim, stats, blueHex, redHex, fontSize, extendTips) {
+      const n = labels.length;
+      if (n === 0) throw new Error("No genes to draw.");
+      const dist = toDistanceMatrix(sim);
+      const tree = hierarchicalClustering(dist);
+      const order = leafOrderFromTree(tree);
+      const orderPos = new Map(order.map((leaf, idx) => [leaf, idx]));
+      const orderedLabels = order.map(i => labels[i]);
+      const orderedSim = reorderMatrix(sim, order);
+      const orderedInter = reorderMatrix(stats.interMatrix, order);
+      const orderedUnion = reorderMatrix(stats.unionMatrix, order);
+      const orderedBoth = reorderMatrix(stats.bothCountMatrix, order);
+      const orderedAny = reorderMatrix(stats.anyCountMatrix, order);
+      const orderedPresentCount = order.map(i => stats.presentCount[i]);
+      const orderedWeightedPresent = order.map(i => stats.weightedPresent[i]);
+      const maxHeight = Math.max(tree.height, 0.05);
+
+      const cellSize = Math.max(fontSize + 4, Math.min(26, Math.floor(780 / n)));
+      const heatSize = n * cellSize;
+      const dendroW = Math.max(160, Math.min(320, Math.floor(heatSize * 0.35)));
+      const colorbarW = 18;
+      const titleH = 24;
+      const maxLabelChars = labels.reduce((m, s) => Math.max(m, String(s).length), 0);
+      const rowLabelW = Math.max(90, Math.min(150, Math.ceil(maxLabelChars * fontSize * 0.50) + 12));
+      const xLabelH = Math.max(36, Math.min(210, Math.ceil(maxLabelChars * fontSize * 0.62) + 8)); // reserved space for top x labels
+      const bottomPad = 24;
+      const topPad = 8;
+      const labelGap = 6;      // distance between heatmap and tick labels (both axes)
+      const xLabelShift = 3;   // small right nudge for visual centering on cells
+
+      const colorbarH = Math.max(110, Math.min(220, Math.floor(heatSize * 0.32)));
+      const colorbarTickFont = Math.max(11, Math.min(13, fontSize));
+      const colorbarTitleFont = Math.max(12, Math.min(14, fontSize + 1));
+      const dendroToLabelGap = 10;
+      const labelBaseColor = "#222";
+      const width = 20 + dendroW + dendroToLabelGap + rowLabelW + heatSize + 24 + colorbarW + 84;
+      const height = topPad + titleH + xLabelH + heatSize + bottomPad;
+
+      const dendroX = 20;
+      const heatX = dendroX + dendroW + dendroToLabelGap + rowLabelW;
+      const heatY = topPad + titleH + xLabelH;
+      const colorbarX = heatX + heatSize + 24;
+      const colorbarY = heatY + 8;
+      const rowLabelAnchorX = heatX - labelGap;
+
+      const svg = document.getElementById("plot");
+      while (svg.firstChild) svg.removeChild(svg.firstChild);
+      svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+      svg.setAttribute("width", width);
+      svg.setAttribute("height", height);
+
+      svg.appendChild(makeSvgNode("rect", { x: 0, y: 0, width, height, fill: "#ffffff" }));
+      svg.appendChild(makeSvgNode("text", {
+        x: width / 2,
+        y: topPad + 6,
+        "text-anchor": "middle",
+        "dominant-baseline": "hanging",
+        "font-size": 22,
+        "font-weight": 600,
+        fill: "#333"
+      })).textContent = "Jaccard Similarity (complete linkage)";
+
+      const dendroGroup = makeSvgNode("g");
+      drawDendrogramLines(
+        dendroGroup,
+        tree,
+        orderPos,
+        dendroX,
+        dendroW,
+        heatY,
+        cellSize,
+        maxHeight,
+        extendTips,
+        rowLabelAnchorX,
+        orderedLabels,
+        fontSize
+      );
+      svg.appendChild(dendroGroup);
+
+      const cellRects = Array.from({ length: n }, () => Array.from({ length: n }, () => null));
+      const rowLabelNodes = [];
+      const colLabelNodes = [];
+      const hoverGuideRow = makeSvgNode("line", {
+        x1: 0, y1: 0, x2: 0, y2: 0,
+        stroke: "#1f1f1f",
+        "stroke-width": 1.2,
+        "stroke-dasharray": "3,3",
+        "stroke-linecap": "round",
+        "pointer-events": "none",
+        opacity: 0
+      });
+      const hoverGuideCol = makeSvgNode("line", {
+        x1: 0, y1: 0, x2: 0, y2: 0,
+        stroke: "#1f1f1f",
+        "stroke-width": 1.2,
+        "stroke-dasharray": "3,3",
+        "stroke-linecap": "round",
+        "pointer-events": "none",
+        opacity: 0
+      });
+      const hoverCellOutline = makeSvgNode("rect", {
+        x: 0, y: 0, width: cellSize, height: cellSize,
+        fill: "none",
+        stroke: "#222",
+        "stroke-width": 1.2,
+        "pointer-events": "none",
+        opacity: 0
+      });
+
+      function clearHoverFocus() {
+        for (let r = 0; r < n; r++) {
+          for (let c = 0; c < n; c++) {
+            const cell = cellRects[r][c];
+            if (!cell) continue;
+            cell.setAttribute("opacity", "1");
+          }
+        }
+        for (const t of rowLabelNodes) {
+          t.setAttribute("opacity", "1");
+          t.setAttribute("font-weight", "500");
+          t.setAttribute("fill", labelBaseColor);
+        }
+        for (const t of colLabelNodes) {
+          t.setAttribute("opacity", "1");
+          t.setAttribute("font-weight", "500");
+          t.setAttribute("fill", labelBaseColor);
+        }
+        hoverGuideRow.setAttribute("opacity", "0");
+        hoverGuideCol.setAttribute("opacity", "0");
+        hoverCellOutline.setAttribute("opacity", "0");
+      }
+
+      function applyHoverFocus(i, j) {
+        const cellCx = heatX + (j + 0.5) * cellSize;
+        const cellCy = heatY + (i + 0.5) * cellSize;
+        const cellX = heatX + j * cellSize;
+        const cellY = heatY + i * cellSize;
+
+        for (let r = 0; r < n; r++) {
+          for (let c = 0; c < n; c++) {
+            const cell = cellRects[r][c];
+            if (!cell) continue;
+            cell.setAttribute("opacity", "1");
+          }
+        }
+        for (let r = 0; r < n; r++) {
+          rowLabelNodes[r].setAttribute("opacity", "1");
+          rowLabelNodes[r].setAttribute("font-weight", r === i ? "700" : "500");
+          rowLabelNodes[r].setAttribute("fill", labelBaseColor);
+        }
+        for (let c = 0; c < n; c++) {
+          colLabelNodes[c].setAttribute("opacity", "1");
+          colLabelNodes[c].setAttribute("font-weight", c === j ? "700" : "500");
+          colLabelNodes[c].setAttribute("fill", labelBaseColor);
+        }
+
+        // Horizontal guide from row-label side into hovered cell center.
+        hoverGuideRow.setAttribute("x1", String(rowLabelAnchorX + 2));
+        hoverGuideRow.setAttribute("y1", String(cellCy));
+        hoverGuideRow.setAttribute("x2", String(cellX - 1));
+        hoverGuideRow.setAttribute("y2", String(cellCy));
+        hoverGuideRow.setAttribute("opacity", "1");
+
+        // Vertical guide from top-label side into hovered cell center.
+        hoverGuideCol.setAttribute("x1", String(cellCx));
+        hoverGuideCol.setAttribute("y1", String(heatY - labelGap - 2));
+        hoverGuideCol.setAttribute("x2", String(cellCx));
+        hoverGuideCol.setAttribute("y2", String(cellY - 1));
+        hoverGuideCol.setAttribute("opacity", "1");
+
+        // Draw hover outline on top layer for equal edge visibility.
+        hoverCellOutline.setAttribute("x", String(cellX));
+        hoverCellOutline.setAttribute("y", String(cellY));
+        hoverCellOutline.setAttribute("width", String(cellSize));
+        hoverCellOutline.setAttribute("height", String(cellSize));
+        hoverCellOutline.setAttribute("opacity", "1");
+      }
+
+      for (let i = 0; i < n; i++) {
+        for (let j = 0; j < n; j++) {
+          const v = orderedSim[i][j];
+          const color = Number.isFinite(v) ? jaccardToColor(v, blueHex, redHex) : "#f2f2f2";
+          const rect = makeSvgNode("rect", {
+            x: heatX + j * cellSize,
+            y: heatY + i * cellSize,
+            width: cellSize,
+            height: cellSize,
+            fill: color,
+            stroke: "none"
+          });
+          cellRects[i][j] = rect;
+          rect.addEventListener("mouseenter", () => applyHoverFocus(i, j));
+          rect.addEventListener("mousemove", (evt) => {
+            const geneRow = orderedLabels[i];
+            const geneCol = orderedLabels[j];
+            const html =
+              `<b>Row gene:</b> ${escapeHtml(geneRow)}<br>` +
+              `<b>Column gene:</b> ${escapeHtml(geneCol)}<br>` +
+              `<b>Jaccard:</b> ${fmt(v, 4)}<br>` +
+              `<b>Co-present genomes:</b> ${orderedBoth[i][j].toLocaleString()}`;
+            showTooltip(evt, html);
+          });
+          rect.addEventListener("mouseleave", () => {
+            hideTooltip();
+            clearHoverFocus();
+          });
+          svg.appendChild(rect);
+        }
+      }
+
+      svg.appendChild(makeSvgNode("rect", {
+        x: heatX,
+        y: heatY,
+        width: heatSize,
+        height: heatSize,
+        fill: "none",
+        stroke: "#777",
+        "stroke-width": 0.7
+      }));
+
+      for (let i = 0; i < n; i++) {
+        const txt = makeSvgNode("text", {
+          x: rowLabelAnchorX,
+          y: heatY + (i + 0.5) * cellSize,
+          "text-anchor": "end",
+          "dominant-baseline": "middle",
+          "font-size": fontSize,
+          fill: "#222"
+        });
+        txt.textContent = orderedLabels[i];
+        rowLabelNodes.push(txt);
+        svg.appendChild(txt);
+      }
+
+      for (let j = 0; j < n; j++) {
+        const x = heatX + (j + 0.5) * cellSize + xLabelShift;
+        const y = heatY - labelGap;
+        const txt = makeSvgNode("text", {
+          x, y,
+          "font-size": fontSize,
+          fill: "#222",
+          transform: `rotate(-90 ${x} ${y})`,
+          "text-anchor": "start"
+        });
+        txt.textContent = orderedLabels[j];
+        colLabelNodes.push(txt);
+        svg.appendChild(txt);
+      }
+
+      const defs = makeSvgNode("defs");
+      const lg = makeSvgNode("linearGradient", {
+        id: "cbarGradient",
+        x1: "0%",
+        y1: "100%",
+        x2: "0%",
+        y2: "0%"
+      });
+      lg.appendChild(makeSvgNode("stop", { offset: "0%", "stop-color": blueHex }));
+      lg.appendChild(makeSvgNode("stop", { offset: "50%", "stop-color": "#ffffff" }));
+      lg.appendChild(makeSvgNode("stop", { offset: "100%", "stop-color": redHex }));
+      defs.appendChild(lg);
+      svg.appendChild(defs);
+
+      svg.appendChild(makeSvgNode("rect", {
+        x: colorbarX,
+        y: colorbarY,
+        width: colorbarW,
+        height: colorbarH,
+        fill: "url(#cbarGradient)",
+        stroke: "#888",
+        "stroke-width": 0.6,
+        rx: 2,
+        ry: 2
+      }));
+
+      const ticks = [0, 0.5, 1];
+      for (const t of ticks) {
+        const yy = colorbarY + colorbarH - t * colorbarH;
+        svg.appendChild(makeSvgNode("line", { x1: colorbarX + colorbarW, y1: yy, x2: colorbarX + colorbarW + 5, y2: yy, stroke: "#555", "stroke-width": 1 }));
+        svg.appendChild(makeSvgNode("text", {
+          x: colorbarX + colorbarW + 8,
+          y: yy,
+          "dominant-baseline": "middle",
+          "font-size": colorbarTickFont,
+          fill: "#333"
+        })).textContent = t.toFixed(1);
+      }
+      svg.appendChild(makeSvgNode("text", {
+        x: colorbarX + colorbarW / 2,
+        y: colorbarY - 10,
+        "text-anchor": "middle",
+        "font-size": colorbarTitleFont,
+        "font-weight": 600,
+        fill: "#333"
+      })).textContent = "Jaccard";
+
+      // Add hover guides at top layer so they stay visible.
+      svg.appendChild(hoverGuideRow);
+      svg.appendChild(hoverGuideCol);
+      svg.appendChild(hoverCellOutline);
+    }
+
+    async function loadTextFromDefaultPath() {
+      const path = document.getElementById("defaultPath").value.trim();
+      if (!path) throw new Error("Default TSV path is empty.");
+      const res = await fetch(path);
+      if (!res.ok) throw new Error(`Could not fetch file: ${path} (HTTP ${res.status})`);
+      return await res.text();
+    }
+
+    async function loadTextFromFileInput() {
+      const file = document.getElementById("fileInput").files[0];
+      if (!file) return null;
+      return await file.text();
+    }
+
+    function getOptions() {
+      return {
+        taxonCol: document.getElementById("taxonCol").value.trim(),
+        weighting: document.getElementById("weighting").value,
+        alpha: Number(document.getElementById("alpha").value),
+        suffix: document.getElementById("suffix").value.trim(),
+        fontSize: Number(document.getElementById("fontSize").value) || 12,
+        extendTips: document.getElementById("extendTips").checked,
+        blueHex: document.getElementById("blueHex").value.trim(),
+        redHex: document.getElementById("redHex").value.trim()
+      };
+    }
+
+    function recomputeAndDraw(rows) {
+      if (!rows || rows.length === 0) throw new Error("No rows loaded.");
+
+      const opts = getOptions();
+      if (activeHeaders) {
+        populateTaxonDropdown(activeHeaders, opts.suffix);
+        const currentGeneCols = document.querySelectorAll(".gene-checkbox").length;
+        const expectedGeneCols = activeHeaders.filter(h => h.endsWith(opts.suffix)).length;
+        if (currentGeneCols !== expectedGeneCols) {
+          buildGeneCheckboxes(activeHeaders, opts.suffix);
+        }
+      }
+      const weights = buildWeights(rows, opts.taxonCol, opts.weighting, opts.alpha);
+      const selectedGenes = getSelectedGenesFromCheckboxes();
+      const totalGeneBoxes = document.querySelectorAll(".gene-checkbox").length;
+      if (totalGeneBoxes > 0 && selectedGenes.size === 0) {
+        throw new Error("No genes selected. Please check at least one gene.");
+      }
+      const result = computeJaccardMatrix(rows, opts.suffix, weights, false, selectedGenes);
+      drawClusteredHeatmap(result.labels, result.sim, result.stats, opts.blueHex, opts.redHex, opts.fontSize, opts.extendTips);
+
+      setStatus(
+        `Loaded rows: ${rows.length}\n` +
+        `Genes used: ${result.labels.length}\n` +
+        `Selected genes: ${selectedGenes.size}\n` +
+        `Labels shown: all\n` +
+        `Taxon column: ${opts.taxonCol}\n` +
+        `Taxa normalization: ${opts.weighting}\n` +
+        `alpha: ${opts.alpha}\n` +
+        `Dotted tip guides: ${opts.extendTips}\n` +
+        `Renderer: pure SVG (no plot library)`
+      );
+    }
+
+    async function loadDataAndDraw() {
+      try {
+        setStatus("Loading data...");
+        const textFromFile = await loadTextFromFileInput();
+        const text = textFromFile || await loadTextFromDefaultPath();
+        const parsed = parseDelimited(text);
+        activeHeaders = parsed.headers;
+        activeRows = parsed.rows;
+        populateTaxonDropdown(activeHeaders, getOptions().suffix);
+        buildGeneCheckboxes(activeHeaders, getOptions().suffix);
+        recomputeAndDraw(activeRows);
+      } catch (err) {
+        setStatus(`Error: ${err.message}\nTip: If default path does not load in file:// mode, use the file picker or run a local server.`);
+      }
+    }
+
+    document.getElementById("rerunBtn").addEventListener("click", () => {
+      try {
+        if (!activeRows) {
+          setStatus("No data loaded yet. Loading now...");
+          loadDataAndDraw();
+          return;
+        }
+        recomputeAndDraw(activeRows);
+      } catch (err) {
+        setStatus(`Error: ${err.message}`);
+      }
+    });
+    document.getElementById("fileInput").addEventListener("change", () => loadDataAndDraw());
+    document.getElementById("selectAllGenesBtn").addEventListener("click", () => {
+      document.querySelectorAll(".gene-checkbox").forEach(cb => { cb.checked = true; });
+      updateGeneSummary();
+      if (activeRows) recomputeAndDraw(activeRows);
+    });
+    document.getElementById("clearAllGenesBtn").addEventListener("click", () => {
+      document.querySelectorAll(".gene-checkbox").forEach(cb => { cb.checked = false; });
+      updateGeneSummary();
+      const svg = document.getElementById("plot");
+      while (svg.firstChild) svg.removeChild(svg.firstChild);
+      setStatus("No genes selected. Select at least one gene and click Recompute + draw.");
+    });
+    document.getElementById("suffix").addEventListener("change", () => {
+      if (activeHeaders) {
+        populateTaxonDropdown(activeHeaders, getOptions().suffix);
+        buildGeneCheckboxes(activeHeaders, getOptions().suffix);
+      }
+    });
+    document.getElementById("taxonCol").addEventListener("change", () => {
+      if (activeRows) {
+        try {
+          recomputeAndDraw(activeRows);
+        } catch (err) {
+          setStatus(`Error: ${err.message}`);
+        }
+      }
+    });
+    document.getElementById("extendTips").addEventListener("change", () => {
+      if (activeRows) {
+        try {
+          recomputeAndDraw(activeRows);
+        } catch (err) {
+          setStatus(`Error: ${err.message}`);
+        }
+      }
+    });
+
+    loadDataAndDraw();
+  </script>
+</body>
+</html>

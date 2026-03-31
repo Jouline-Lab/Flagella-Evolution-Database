@@ -11,6 +11,7 @@ const navItems = [
     label: "Phyletic Visualization",
     href: "/phyletic-distribution-visualization"
   },
+  { label: "Gene Co-presence", href: "/gene-correlation" },
   { label: "FAQ", href: "/faq" },
   { label: "Cite Us", href: "/cite-us" }
 ];

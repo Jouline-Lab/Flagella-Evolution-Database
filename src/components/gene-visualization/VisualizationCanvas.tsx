@@ -2,7 +2,8 @@
 
 import React, { useEffect, useRef, useState, useCallback, useMemo, forwardRef, useImperativeHandle } from 'react';
 import * as d3 from 'd3';
-import { Upload, Database, MousePointer, Download } from 'lucide-react';
+import { Upload, Database, MousePointer } from 'lucide-react';
+import { DownloadActionButton } from '@/components/DownloadActionButton';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -926,16 +927,10 @@ ref
           </Badge>
         </div>
         <div className="flex items-center space-x-2">
-          <Button size="sm" variant="outline" onClick={downloadSVG}>
-            <Download className="w-3 h-3 mr-1.5" />
-            Download SVG
-          </Button>
-          {onDownloadTSV && (
-            <Button size="sm" variant="outline" onClick={onDownloadTSV}>
-              <Download className="w-3 h-3 mr-1.5" />
-              Download TSV
-            </Button>
-          )}
+          <DownloadActionButton onClick={downloadSVG}>Download SVG</DownloadActionButton>
+          {onDownloadTSV ? (
+            <DownloadActionButton onClick={onDownloadTSV}>Download TSV</DownloadActionButton>
+          ) : null}
           {activeGenes.length > 0 && (
             <Badge variant="secondary" className="bg-blue-100 text-blue-800">
               {activeGenes.length} genes visualized

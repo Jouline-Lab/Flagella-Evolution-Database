@@ -3,6 +3,7 @@
 import React, { useRef, useEffect, useState, useCallback, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import * as d3 from 'd3';
+import { DownloadActionButton } from '@/components/DownloadActionButton';
 import { withBasePath } from '@/lib/assetPaths';
 import { getSpeciesSuggestionsClient } from '@/lib/browserSpecies';
 import { formatSpeciesName, normalizeSpeciesQuery } from '@/lib/speciesNaming';
@@ -1185,13 +1186,7 @@ const SequenceLogoChart: React.FC<SequenceLogoChartProps> = ({
       <div className="p-6 border-b border-black/10 dark:border-white/10 flex items-center justify-between gap-4">
         <h2 className="text-xl font-semibold m-0">Sequence Comparison with Sequence Logo</h2>
         {logoData.length > 0 ? (
-          <button
-            type="button"
-            onClick={downloadSVG}
-            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md border text-sm hover:bg-black/5 dark:hover:bg-white/10"
-          >
-            Download SVG
-          </button>
+          <DownloadActionButton onClick={downloadSVG}>Download SVG</DownloadActionButton>
         ) : null}
       </div>
 
@@ -1624,7 +1619,7 @@ const SequenceLogoChart: React.FC<SequenceLogoChartProps> = ({
           <button
             type="button"
             onClick={resetColors}
-            className="px-3 py-1 text-xs rounded border hover:bg-black/5 dark:hover:bg-white/10"
+            className="px-3 py-1 text-xs rounded-md border border-[var(--input-border)] bg-[var(--input-bg)] text-[var(--text)] hover:bg-[var(--dropdown-hover)] outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--primary)_40%,transparent)]"
           >
             Reset
           </button>
