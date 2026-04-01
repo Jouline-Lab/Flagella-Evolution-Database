@@ -6,8 +6,105 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Checkbox } from '@/components/ui/checkbox'
-import { RefreshCw, ChevronDown } from 'lucide-react'
+import { RefreshCw, ChevronDown, Info } from 'lucide-react'
 import type { TaxonomicLevel } from '@/types/gene-visualization'
+
+/** ~18rem max width; keep tooltips on-screen when the info icon is near an edge. */
+const VIZ_HINT_MAX_W_PX = 288
+
+function VizControlHint({
+  id,
+  label,
+  children,
+  tooltipMaxWidthPx = VIZ_HINT_MAX_W_PX,
+  tooltipFixedWidth = false,
+}: {
+  id: string
+  label: string
+  children: React.ReactNode
+  /** Wider tooltips (e.g. example table) need matching clamp math */
+  tooltipMaxWidthPx?: number
+  /** Use fixed width so nested grids/tables get a real containing block (e.g. TSV example). */
+  tooltipFixedWidth?: boolean
+}) {
+  const btnRef = useRef<HTMLButtonElement>(null)
+  const [open, setOpen] = useState(false)
+  const [pos, setPos] = useState({ top: 0, left: 0 })
+
+  const updatePos = useCallback(() => {
+    const el = btnRef.current
+    if (!el) return
+    const r = el.getBoundingClientRect()
+    const margin = 8
+    const vw = typeof window !== 'undefined' ? window.innerWidth : tooltipMaxWidthPx
+    const maxW = Math.min(tooltipMaxWidthPx, vw - 2 * margin)
+    const half = maxW / 2
+    const centerX = r.left + r.width / 2
+    const left = Math.min(vw - margin - half, Math.max(margin + half, centerX))
+    setPos({ top: Math.round(r.bottom + 6), left: Math.round(left) })
+  }, [tooltipMaxWidthPx])
+
+  useEffect(() => {
+    if (!open) return
+    updatePos()
+    window.addEventListener('scroll', updatePos, true)
+    window.addEventListener('resize', updatePos)
+    return () => {
+      window.removeEventListener('scroll', updatePos, true)
+      window.removeEventListener('resize', updatePos)
+    }
+  }, [open, updatePos])
+
+  const tooltip =
+    open &&
+    typeof document !== 'undefined' &&
+    createPortal(
+      <span
+        id={id}
+        role="tooltip"
+        style={
+          tooltipFixedWidth
+            ? {
+                top: pos.top,
+                left: pos.left,
+                width: `min(${tooltipMaxWidthPx}px, calc(100vw - 1rem))`,
+              }
+            : {
+                top: pos.top,
+                left: pos.left,
+                maxWidth: `min(${tooltipMaxWidthPx}px, calc(100vw - 1rem))`,
+              }
+        }
+        className={
+          tooltipFixedWidth
+            ? 'viz-opaque-menu pointer-events-none fixed z-[100110] box-border min-w-0 -translate-x-1/2 break-words rounded-md border border-gray-300 bg-white px-2 py-1.5 text-left text-[11px] font-normal leading-snug text-gray-900 shadow-lg'
+            : 'viz-opaque-menu pointer-events-none fixed z-[100110] box-border w-max min-w-0 max-w-[calc(100vw-1rem)] -translate-x-1/2 break-words rounded-md border border-gray-300 bg-white px-2 py-1.5 text-left text-[11px] font-normal leading-snug text-gray-900 shadow-lg'
+        }
+      >
+        {children}
+      </span>,
+      document.body
+    )
+
+  return (
+    <span className="inline-flex shrink-0 align-middle">
+      <button
+        ref={btnRef}
+        type="button"
+        className="rounded-full p-0.5 text-gray-500 outline-none hover:text-gray-800 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1"
+        aria-label={label}
+        aria-describedby={open ? id : undefined}
+        onMouseEnter={() => { setOpen(true); updatePos() }}
+        onMouseLeave={() => setOpen(false)}
+        onFocus={() => { setOpen(true); updatePos() }}
+        onBlur={() => setOpen(false)}
+      >
+        <Info className="h-3.5 w-3.5" strokeWidth={2} aria-hidden />
+      </button>
+      {tooltip}
+    </span>
+  )
+}
 
 interface ControlPanelProps {
   onLoadTSV: () => void
@@ -284,7 +381,38 @@ export function ControlPanel({
     <div className="flex flex-wrap items-end gap-2 overflow-x-auto pb-1.5 xl:flex-nowrap w-full text-[13px] text-gray-900">
       {/* Data Loading */}
       <div className="flex flex-col justify-between items-start gap-1 px-2.5 py-1 bg-gray-50 rounded border min-w-fit h-16">
-        <span className="text-[11px] font-semibold uppercase tracking-wide leading-none text-gray-800">Load Data</span>
+        <div className="flex items-center gap-0.5 leading-none">
+          <span className="text-[11px] font-semibold uppercase tracking-wide text-gray-800">Load Data</span>
+          <VizControlHint
+            id="viz-cp-hint-load"
+            label="TSV format and example"
+            tooltipMaxWidthPx={340}
+            tooltipFixedWidth
+          >
+            <p className="mb-2 text-[11px] leading-snug">
+              Visualize your custom data: tab-separated, one row per assembly. Header row; an{' '}
+              <span className="font-mono text-[10px]">assembly</span> column; gene columns named{' '}
+              <span className="font-mono text-[10px]">yourGene_count</span>. Numeric counts only. Assemblies must exist in the selected GTDB set.
+            </p>
+            <div className="mb-0 w-full min-w-0 rounded border border-gray-300 overflow-hidden text-[10px] font-mono leading-snug text-left text-gray-900">
+              <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,4.75rem)_minmax(0,4.75rem)] border-b border-gray-300 bg-gray-100 font-semibold">
+                <div className="min-w-0 px-1 py-0.5 align-top break-all">assembly</div>
+                <div className="min-w-0 px-1 py-0.5 text-center break-all">flgA_count</div>
+                <div className="min-w-0 px-1 py-0.5 text-center break-all">flgB_count</div>
+              </div>
+              <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,4.75rem)_minmax(0,4.75rem)] border-b border-gray-200">
+                <div className="min-w-0 px-1 py-0.5 break-all">GCA_1234567890.1</div>
+                <div className="min-w-0 px-1 py-0.5 text-center break-all">2</div>
+                <div className="min-w-0 px-1 py-0.5 text-center break-all">0</div>
+              </div>
+              <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,4.75rem)_minmax(0,4.75rem)]">
+                <div className="min-w-0 px-1 py-0.5 break-all">GCA_9876543210.2</div>
+                <div className="min-w-0 px-1 py-0.5 text-center break-all">1</div>
+                <div className="min-w-0 px-1 py-0.5 text-center break-all">3</div>
+              </div>
+            </div>
+          </VizControlHint>
+        </div>
         <div className="flex items-center gap-1">
           <Button onClick={onLoadTSV} size="sm" className="h-7 text-xs px-2">Load TSV</Button>
         </div>
@@ -292,11 +420,17 @@ export function ControlPanel({
 
       {/* Choose Taxonomy */}
       <div className="flex flex-col justify-between items-start gap-1 px-2.5 py-1 bg-gray-50 rounded border min-w-fit h-16">
-        <span className="text-[11px] font-semibold uppercase tracking-wide leading-none text-gray-800">Choose Taxonomy</span>
+        <div className="flex items-center gap-0.5 leading-none">
+          <span className="text-[11px] font-semibold uppercase tracking-wide text-gray-800">Choose Taxonomy</span>
+          <VizControlHint id="viz-cp-hint-dataset" label="About Choose Taxonomy">
+            Choose <span className="font-semibold">GTDB r214</span> to visualize along the standard GTDB taxonomic backbone, or{' '}
+            <span className="font-semibold">Flagella Phylogeny</span> to use the custom flagella-based ordering.
+          </VizControlHint>
+        </div>
         <div className="flex items-center gap-1">
           <Select value={selectedDataset} onValueChange={onDatasetChange}>
             <SelectTrigger className="h-7 text-xs w-44">
-              <SelectValue placeholder="Select GTDB dataset" />
+              <SelectValue placeholder="GTDB r214 or flagella phylogeny" />
             </SelectTrigger>
             <SelectContent>
               {datasetOptions.map((file) => (
@@ -311,7 +445,12 @@ export function ControlPanel({
 
       {/* Lineage Levels */}
       <div className={"relative flex flex-col justify-between items-start gap-1 px-2.5 py-1 bg-gray-50 rounded border min-w-fit overflow-visible h-16"}>
-        <span className="text-[11px] font-semibold uppercase tracking-wide leading-none text-gray-800">Ranks to Show</span>
+        <div className="flex items-center gap-0.5 leading-none">
+          <span className="text-[11px] font-semibold uppercase tracking-wide text-gray-800">Ranks to Show</span>
+          <VizControlHint id="viz-cp-hint-ranks" label="About Ranks to Show">
+            Which taxonomic ranks appear as segments in each bar.
+          </VizControlHint>
+        </div>
         <div className="relative" ref={levelsRef}>
           <Button
             type="button"
@@ -354,7 +493,12 @@ export function ControlPanel({
 
       {/* Search Lineage */}
       <div className="flex flex-col justify-between items-start gap-1 px-2.5 py-1 bg-gray-50 rounded border min-w-fit h-16">
-        <span className="text-[11px] font-semibold uppercase tracking-wide leading-none text-gray-800">Search Lineage</span>
+        <div className="flex items-center gap-0.5 leading-none">
+          <span className="text-[11px] font-semibold uppercase tracking-wide text-gray-800">Search Lineage</span>
+          <VizControlHint id="viz-cp-hint-lineage" label="About Search Lineage">
+            Jump to a specific lineage. Use the reset button to return to the full view.
+          </VizControlHint>
+        </div>
         <div className="flex items-center gap-1">
           <div className="w-44">
             <SearchLineageInput placeholder="Search lineage" />
@@ -367,7 +511,17 @@ export function ControlPanel({
 
       {/* Visualization Dropdown */}
       <div className="relative flex flex-col justify-between items-start gap-1 px-2.5 py-1 bg-gray-50 rounded border min-w-fit h-16" ref={vizRef}>
-        <span className="text-[11px] font-semibold uppercase tracking-wide leading-none text-gray-800">Visualization</span>
+        <div className="flex items-center gap-0.5 leading-none">
+          <span className="text-[11px] font-semibold uppercase tracking-wide text-gray-800">Visualization</span>
+          <VizControlHint id="viz-cp-hint-viz" label="About Visualization" tooltipMaxWidthPx={320}>
+            <span className="block">
+              <span className="font-semibold">Normalize width</span> reduces taxon-sampling bias: at the rank you pick, every taxon gets the same bar width so abundant lineages do not dominate the plot.
+            </span>
+            <span className="mt-2 block">
+              <span className="font-semibold">Normalize counts</span> changes how each gene track uses abundance—presence/absence (binary), scaled counts (normalized), or a color heatmap.
+            </span>
+          </VizControlHint>
+        </div>
         <Button
           ref={vizButtonRef}
           type="button"
@@ -425,7 +579,12 @@ export function ControlPanel({
 
       {/* Tree Visualization Dropdown */}
       <div className="relative flex flex-col justify-between items-start gap-1 px-2.5 py-1 bg-gray-50 rounded border min-w-fit h-16" ref={treeRef}>
-        <span className="text-[11px] font-semibold uppercase tracking-wide leading-none text-gray-800">Tree Visualization</span>
+        <div className="flex items-center gap-0.5 leading-none">
+          <span className="text-[11px] font-semibold uppercase tracking-wide text-gray-800">Tree Visualization</span>
+          <VizControlHint id="viz-cp-hint-tree" label="About Tree Visualization">
+            Visualize the taxonomic hierarchy between taxa with an optional tree above the bars.
+          </VizControlHint>
+        </div>
         <Button
           ref={treeButtonRef}
           type="button"
@@ -492,7 +651,13 @@ export function ControlPanel({
 
       {/* Gene Comparison Dropdown */}
       <div className="relative flex flex-col justify-between items-start gap-1 px-2.5 py-1 bg-gray-50 rounded border min-w-fit h-16" ref={compareRef}>
-        <span className="text-[11px] font-semibold uppercase tracking-wide leading-none text-gray-800">Gene Comparison</span>
+        <div className="flex items-center gap-0.5 leading-none">
+          <span className="text-[11px] font-semibold uppercase tracking-wide text-gray-800">Gene Comparison</span>
+          <VizControlHint id="viz-cp-hint-compare" label="About Gene Comparison" tooltipMaxWidthPx={320}>
+            Add a track that emphasizes taxa where one gene is present and the other is not, and vice versa. Enable{' '}
+            <span className="font-semibold">Use counts</span> to plot the difference in abundance; leave it off to compare simple presence versus absence only.
+          </VizControlHint>
+        </div>
         <Button
           ref={compareButtonRef}
           type="button"
@@ -565,7 +730,12 @@ export function ControlPanel({
 
       {/* Filter Genomes Dropdown */}
       <div className="relative flex flex-col justify-between items-start gap-1 px-2.5 py-1 bg-gray-50 rounded border min-w-fit h-16" ref={filterRef}>
-        <span className="text-[11px] font-semibold uppercase tracking-wide leading-none text-gray-800">Filter Genomes</span>
+        <div className="flex items-center gap-0.5 leading-none">
+          <span className="text-[11px] font-semibold uppercase tracking-wide text-gray-800">Filter Genomes</span>
+          <VizControlHint id="viz-cp-hint-filter" label="About Filter Genomes" tooltipMaxWidthPx={320}>
+            Remove genomes with no gene counts, or keep only genomes that meet a minimum count for a specific gene. For taxa, pick a rank and threshold to drop less abundant taxa below that minimum count.
+          </VizControlHint>
+        </div>
         <Button
           ref={filterButtonRef}
           type="button"

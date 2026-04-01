@@ -4,7 +4,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { EyeOff, Eye, CheckSquare, Square, Dna, GitCompare, Search, ChevronDown } from "lucide-react";
 
@@ -248,10 +248,9 @@ export function GeneSelectionSidebar({
               </div>
             </div>
 
-            <Card className="border-purple-200">
-              <CardContent className="p-2">
+            <div className="space-y-2">
                 {differenceGenes.length === 0 ? (
-                  <div className="p-4 text-center text-gray-700">
+                  <div className="py-2 text-center text-gray-700">
                     <GitCompare className="w-6 h-6 mx-auto mb-2 text-gray-300" />
                     <p className="text-xs font-medium mb-1">No comparisons created</p>
                     <p className="text-xs">Use the "Gene Comparison" controls above</p>
@@ -318,8 +317,7 @@ export function GeneSelectionSidebar({
                     )}
                   </div>
                 )}
-              </CardContent>
-            </Card>
+            </div>
           </div>
         </div>
       </CardContent>

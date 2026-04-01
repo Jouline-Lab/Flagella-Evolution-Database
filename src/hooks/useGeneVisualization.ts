@@ -181,7 +181,7 @@ export function useGeneVisualization() {
           setState((prev) => ({
             ...prev,
             isLoading: true,
-            loadingMessage: "Switching taxonomy..."
+            loadingMessage: "Switching layout..."
           }));
           await new Promise((r) => setTimeout(r, 10));
         }

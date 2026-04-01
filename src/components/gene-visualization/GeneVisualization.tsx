@@ -9,6 +9,14 @@ import { GeneSelectionSidebar } from "./GeneSelectionSidebar";
 import { VisualizationCanvas } from "./VisualizationCanvas";
 import { Loader2 } from "lucide-react";
 
+/**
+ * Minimum height (px) of the plot card only while `isLoading` is true, so the
+ * spinner stays inside the visualization panel. After load this is unset and
+ * the chart sets the height naturally—adjust this value if you want a taller
+ * or shorter loading area.
+ */
+const VIZ_PANEL_MIN_HEIGHT_WHILE_LOADING_PX = 395;
+
 function LoadingOverlay({
   isLoading,
   message
@@ -19,7 +27,7 @@ function LoadingOverlay({
   if (!isLoading) return null;
 
   return (
-    <div className="absolute inset-0 backdrop-blur-sm bg-white loading-overlay flex items-center justify-center z-10 rounded-lg">
+    <div className="absolute inset-0 overflow-hidden rounded-lg backdrop-blur-sm bg-white/80 loading-overlay flex items-center justify-center z-10">
       <div className="bg-white/90 backdrop-blur-sm rounded-lg p-6 shadow-2xl flex flex-col items-center max-w-sm mx-4 border border-gray-300">
         <Loader2 className="w-8 h-8 text-blue-600 animate-spin-custom mb-4" />
         <h3 className="text-lg font-semibold text-gray-900 mb-2">Processing...</h3>
@@ -119,7 +127,10 @@ export function GeneVisualization() {
       : "0.0";
   const gtdbCoverage =
     state.asmCount > 0 ? ((state.countMap.size / state.asmCount) * 100).toFixed(1) : "0.0";
-  const selectedDatasetLabel = datasetLabels?.[dataset] ?? dataset.replace(/\.json$/, "");
+  const referenceAssembliesLabel =
+    dataset === "GTDB214_lineage_ordered.json"
+      ? "GTDB r214 assemblies"
+      : `${datasetLabels?.[dataset] ?? dataset.replace(/\.json$/, "")} assemblies`;
 
   useEffect(() => {
     document.body.classList.add("viz-theme");
@@ -150,37 +161,6 @@ export function GeneVisualization() {
 
   return (
     <div className="min-h-screen viz-theme bg-gray-50 text-gray-900">
-      <header className="bg-white border-b border-gray-200 shadow-sm px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-wrap items-center justify-between py-2">
-          <div>
-            <h1 className="text-lg font-semibold text-gray-900 leading-tight">
-              Gene Presence Lineage Tool
-            </h1>
-            <p className="text-xs text-gray-700 leading-tight">
-              Visualize gene presence & absence across GTDB taxonomic lineages
-            </p>
-          </div>
-          <div className="hidden md:flex items-center space-x-6 text-sm text-gray-700">
-            <div className="flex items-center space-x-2">
-              <div className="w-2 h-2 bg-green-500 rounded-full" />
-              <span>
-                {selectedDatasetLabel}: {state.asmCount.toLocaleString()} assemblies
-              </span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <div className="w-2 h-2 bg-blue-500 rounded-full" />
-              <span>{state.selectedLevels.length} levels</span>
-            </div>
-            {state.totalInput > 0 && (
-              <div className="flex items-center space-x-2">
-                <div className="w-2 h-2 bg-purple-500 rounded-full" />
-                <span>{state.activeGenes.length} genes active</span>
-              </div>
-            )}
-          </div>
-        </div>
-      </header>
-
       <div className="bg-white border-b border-gray-200 shadow-sm px-3 sm:px-5 lg:px-6 py-2.5">
         <ControlPanel
           onLoadTSV={handleFileUpload}
@@ -250,32 +230,31 @@ export function GeneVisualization() {
         )}
 
         <div className="flex-1 min-w-0 flex flex-col w-full">
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 flex flex-col relative w-full">
+          <div
+            className="bg-white rounded-lg shadow-sm border border-gray-200 flex flex-col relative w-full overflow-hidden"
+            style={
+              state.isLoading ? { minHeight: VIZ_PANEL_MIN_HEIGHT_WHILE_LOADING_PX } : undefined
+            }
+          >
             <LoadingOverlay isLoading={state.isLoading} message={state.loadingMessage} />
 
-            <div className={`p-3 flex flex-col w-full ${state.isLoading ? "opacity-0 pointer-events-none" : ""}`}>
+            <div
+              className={`p-3 flex flex-col w-full ${state.isLoading ? "opacity-0 pointer-events-none select-none" : ""}`}
+            >
               {state.totalInput > 0 && (
                 <div className="mb-3 p-2 bg-blue-50 border border-blue-200 rounded-lg">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="text-sm font-medium text-blue-900">
-                        Mapped {state.countMap.size.toLocaleString()} of{" "}
-                        {state.totalInput.toLocaleString()} input assemblies
-                      </div>
-                      <div className="text-xs text-blue-700 mt-1">
-                        Coverage: {inputCoverage}% of input data • {gtdbCoverage}% of{" "}
-                        {selectedDatasetLabel}
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-lg font-semibold text-blue-900">{inputCoverage}%</div>
-                      <div className="text-xs text-blue-700">matched</div>
-                    </div>
+                  <div className="text-sm font-medium text-blue-900">
+                    Mapped {state.countMap.size.toLocaleString()} of{" "}
+                    {state.totalInput.toLocaleString()} input assemblies
+                  </div>
+                  <div className="text-xs text-blue-700 mt-1">
+                    Coverage: {inputCoverage}% of input assemblies • {gtdbCoverage}% of{" "}
+                    {referenceAssembliesLabel}
                   </div>
                 </div>
               )}
 
-              <div className="w-full flex-1">
+              <div className="w-full flex flex-col">
                 {!state.isLoading && (
                   <VisualizationCanvas
                     data={state.raw}
