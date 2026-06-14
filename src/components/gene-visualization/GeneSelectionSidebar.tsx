@@ -10,36 +10,49 @@ import { EyeOff, Eye, CheckSquare, Square, Dna, GitCompare, Search, ChevronDown 
 
 interface GeneSelectionSidebarProps {
   geneNames: string[];
+  defaultGeneNames?: string[];
+  customGeneNames?: string[];
   activeGenes: string[];
   onToggleGene: (gene: string) => void;
-  onToggleAll: () => void;
+  onToggleGeneGroup: (genes: string[]) => void;
   onTogglePresence: () => void;
   showPresence: boolean;
 }
 
 export function GeneSelectionSidebar({
   geneNames,
+  defaultGeneNames,
+  customGeneNames = [],
   activeGenes,
   onToggleGene,
-  onToggleAll,
+  onToggleGeneGroup,
   onTogglePresence,
   showPresence
 }: GeneSelectionSidebarProps) {
   const [regularOpen, setRegularOpen] = useState(false);
+  const [customOpen, setCustomOpen] = useState(false);
   const [diffOpen, setDiffOpen] = useState(false);
   const [regularQuery, setRegularQuery] = useState("");
+  const [customQuery, setCustomQuery] = useState("");
   const [diffQuery, setDiffQuery] = useState("");
   const [regularActiveIndex, setRegularActiveIndex] = useState(-1);
+  const [customActiveIndex, setCustomActiveIndex] = useState(-1);
   const [diffActiveIndex, setDiffActiveIndex] = useState(-1);
   const regularRef = useRef<HTMLDivElement>(null);
+  const customRef = useRef<HTMLDivElement>(null);
   const diffRef = useRef<HTMLDivElement>(null);
 
-  const regularGenes = geneNames.filter((gene) => !gene.includes(">") && !gene.includes("-"));
+  const defaultGeneSet = defaultGeneNames && defaultGeneNames.length > 0 ? defaultGeneNames : geneNames;
+  const regularGenes = defaultGeneSet.filter((gene) => !gene.includes(">") && !gene.includes("-"));
+  const customGenes = customGeneNames.filter((gene) => !gene.includes(">") && !gene.includes("-"));
   const differenceGenes = geneNames.filter((gene) => gene.includes(">") || gene.includes("-"));
-  const activeRegularGenes = activeGenes.filter((gene) => !gene.includes(">") && !gene.includes("-"));
+  const activeRegularGenes = activeGenes.filter((gene) => regularGenes.includes(gene));
+  const activeCustomGenes = activeGenes.filter((gene) => customGenes.includes(gene));
   const activeDifferenceGenes = activeGenes.filter(
     (gene) => gene.includes(">") || gene.includes("-")
   );
+  const allRegularGenesActive = regularGenes.length > 0 && regularGenes.every((gene) => activeGenes.includes(gene));
+  const allCustomGenesActive = customGenes.length > 0 && customGenes.every((gene) => activeGenes.includes(gene));
 
   const regularGenesSorted = React.useMemo(() => {
     return [...regularGenes].sort((a, b) => {
@@ -54,6 +67,10 @@ export function GeneSelectionSidebar({
   }, [differenceGenes]);
 
   const regularOptions = useMemo(() => regularGenesSorted, [regularGenesSorted]);
+  const customOptions = useMemo(
+    () => [...customGenes].sort((a, b) => a.replace(/_count$/, "").toLowerCase().localeCompare(b.replace(/_count$/, "").toLowerCase())),
+    [customGenes]
+  );
 
   const filteredRegularOptions = useMemo(() => {
     const q = regularQuery.trim().toLowerCase();
@@ -67,11 +84,20 @@ export function GeneSelectionSidebar({
     return differenceGenesSorted.filter((gene) => gene.toLowerCase().includes(q));
   }, [differenceGenesSorted, diffQuery]);
 
+  const filteredCustomOptions = useMemo(() => {
+    const q = customQuery.trim().toLowerCase();
+    if (!q) return customOptions;
+    return customOptions.filter((gene) => gene.replace(/_count$/, "").toLowerCase().includes(q));
+  }, [customOptions, customQuery]);
+
   useEffect(() => {
     const onMouseDown = (event: MouseEvent) => {
       const target = event.target as Node;
       if (regularRef.current && !regularRef.current.contains(target)) {
         setRegularOpen(false);
+      }
+      if (customRef.current && !customRef.current.contains(target)) {
+        setCustomOpen(false);
       }
       if (diffRef.current && !diffRef.current.contains(target)) {
         setDiffOpen(false);
@@ -86,6 +112,10 @@ export function GeneSelectionSidebar({
   }, [regularOpen]);
 
   useEffect(() => {
+    if (!customOpen) setCustomActiveIndex(-1);
+  }, [customOpen]);
+
+  useEffect(() => {
     if (!diffOpen) setDiffActiveIndex(-1);
   }, [diffOpen]);
 
@@ -97,24 +127,6 @@ export function GeneSelectionSidebar({
           Gene Selection
         </CardTitle>
         <div className="flex flex-wrap gap-1 mt-1">
-          <Button
-            onClick={onToggleAll}
-            size="sm"
-            variant="outline"
-            className="flex items-center gap-0.5 text-xs h-7 px-1"
-          >
-            {activeGenes.length === 0 ? (
-              <>
-                <CheckSquare className="w-3 h-3" />
-                Select All
-              </>
-            ) : (
-              <>
-                <Square className="w-3 h-3" />
-                Deselect All
-              </>
-            )}
-          </Button>
           <Button
             onClick={onTogglePresence}
             size="sm"
@@ -163,6 +175,24 @@ export function GeneSelectionSidebar({
                   </div>
                 ) : (
                   <div ref={regularRef} className="relative space-y-2">
+                    <Button
+                      onClick={() => onToggleGeneGroup(regularGenes)}
+                      size="sm"
+                      variant="outline"
+                      className="flex items-center gap-1 text-xs h-7 px-2"
+                    >
+                      {allRegularGenesActive ? (
+                        <>
+                          <Square className="w-3 h-3" />
+                          Deselect All
+                        </>
+                      ) : (
+                        <>
+                          <CheckSquare className="w-3 h-3" />
+                          Select All
+                        </>
+                      )}
+                    </Button>
                     <div className="relative">
                       <Search className="pointer-events-none absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-500" />
                       <input
@@ -225,6 +255,104 @@ export function GeneSelectionSidebar({
                 )}
             </CardContent>
           </div>
+
+          {customGenes.length > 0 ? (
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="font-medium text-sm text-gray-900">
+                  Operon Data
+                </h3>
+                <div className="flex items-center gap-2">
+                  <Badge variant="secondary" className="text-xs">
+                    {customGenes.length} total
+                  </Badge>
+                  {activeCustomGenes.length > 0 && (
+                    <Badge variant="default" className="text-xs bg-blue-100 text-blue-800">
+                      {activeCustomGenes.length} active
+                    </Badge>
+                  )}
+                </div>
+              </div>
+              <div ref={customRef} className="relative space-y-2">
+                <Button
+                  onClick={() => onToggleGeneGroup(customGenes)}
+                  size="sm"
+                  variant="outline"
+                  className="flex items-center gap-1 text-xs h-7 px-2"
+                >
+                  {allCustomGenesActive ? (
+                    <>
+                      <Square className="w-3 h-3" />
+                      Deselect All
+                    </>
+                  ) : (
+                    <>
+                      <CheckSquare className="w-3 h-3" />
+                      Select All
+                    </>
+                  )}
+                </Button>
+                <div className="relative">
+                  <Search className="pointer-events-none absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-500" />
+                  <input
+                    value={customQuery}
+                    onChange={(e) => setCustomQuery(e.target.value)}
+                    onFocus={() => setCustomOpen(true)}
+                    onKeyDown={(e) => {
+                      const max = filteredCustomOptions.length - 1;
+                      if (e.key === "ArrowDown") {
+                        e.preventDefault();
+                        setCustomOpen(true);
+                        setCustomActiveIndex((prev) => (max < 0 ? -1 : Math.min(prev + 1, max)));
+                      } else if (e.key === "ArrowUp") {
+                        e.preventDefault();
+                        setCustomOpen(true);
+                        setCustomActiveIndex((prev) => (max < 0 ? -1 : Math.max(prev - 1, 0)));
+                      } else if (e.key === "Enter") {
+                        if (!customOpen || max < 0) return;
+                        e.preventDefault();
+                        const idx = customActiveIndex >= 0 ? customActiveIndex : 0;
+                        const gene = filteredCustomOptions[idx];
+                        if (gene) onToggleGene(gene);
+                      } else if (e.key === "Escape") {
+                        setCustomOpen(false);
+                      }
+                    }}
+                    className="h-9 w-full rounded border border-gray-300 bg-white pl-7 pr-8 text-sm text-gray-900"
+                    placeholder="Select custom TSV columns"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setCustomOpen((v) => !v)}
+                    className="absolute right-1 top-1/2 -translate-y-1/2 rounded p-1 text-gray-700 hover:bg-gray-100"
+                    aria-label="Toggle custom TSV column menu"
+                  >
+                    <ChevronDown className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+                {customOpen && (
+                  <div className="viz-opaque-menu absolute z-30 mt-1 max-h-52 w-full overflow-auto rounded border border-gray-300 bg-white p-1 shadow-md">
+                    {filteredCustomOptions.length === 0 ? (
+                      <div className="px-2 py-1 text-sm text-gray-600">No matches</div>
+                    ) : (
+                      filteredCustomOptions.map((gene, idx) => (
+                        <label
+                          key={gene}
+                          className={`flex cursor-pointer items-center gap-2 rounded px-2 py-1 text-sm text-gray-900 hover:bg-gray-100 ${customActiveIndex === idx ? "bg-gray-100" : ""}`}
+                        >
+                          <Checkbox
+                            checked={activeGenes.includes(gene)}
+                            onCheckedChange={() => onToggleGene(gene)}
+                          />
+                          <span className="truncate">{gene.replace(/_count$/, "")}</span>
+                        </label>
+                      ))
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          ) : null}
 
           <Separator className="my-2" />
 

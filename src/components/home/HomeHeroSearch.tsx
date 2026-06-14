@@ -216,6 +216,22 @@ export default function HomeHeroSearch() {
             </div>
           </div>
         ) : null}
+
+        <div className="home-database-intro">
+          <img
+            src={withBasePath("/flagelladb_logo.svg")}
+            alt=""
+            className="home-database-logo home-database-logo-light"
+          />
+          <img
+            src={withBasePath("/flagelladb_logo_dark.svg")}
+            alt=""
+            className="home-database-logo home-database-logo-dark"
+          />
+          <p>
+            A resource for studying bacterial flagella across diverse lineages.
+          </p>
+        </div>
       </div>
     </section>
   );

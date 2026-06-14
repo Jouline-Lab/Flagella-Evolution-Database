@@ -25,6 +25,9 @@ export interface VisualizationState {
   selectedLevels: TaxonomicLevel[];
   totalInput: number;
   geneNames: string[];
+  defaultGeneNames: string[];
+  customGeneNames: string[];
+  customTsvLabel: string | null;
   matrix: Uint8Array | null;
   asmCount: number;
   countMap: Map<string, GeneCountData>;

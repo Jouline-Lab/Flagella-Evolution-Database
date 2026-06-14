@@ -7,8 +7,24 @@ export default function CiteUsPage() {
       <PageHeader
         className="page-header-prominent"
         title="Cite Us"
-        description="This page is reserved for citation guidance and references."
+        description="Please cite the Flagella Database and related work when using these resources."
       />
+      <section className="content-card">
+        <p className="eyebrow citation-section-label">Preprint</p>
+        <article className="citation-entry">
+          <h2>The last bacterial common ancestor encoded a complex flagellum</h2>
+          <p>
+            Berkay Selcuk, Ekaterina P. Andrianova, Morgan Beeby, Daniel B. Kearns,
+            Marc Erhardt, Igor B. Zhulin
+          </p>
+          <p>
+            <span className="font-semibold">bioRxiv</span> 2026.06.11.731707; doi:{" "}
+            <a href="https://doi.org/10.64898/2026.06.11.731707">
+              https://doi.org/10.64898/2026.06.11.731707
+            </a>
+          </p>
+        </article>
+      </section>
     </PageShell>
   );
 }

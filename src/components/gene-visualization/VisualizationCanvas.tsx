@@ -21,6 +21,7 @@ interface VisualizationCanvasProps {
   countMap: Map<string, Record<string, number>>;
   onLineageClick: (level: TaxonomicLevel, category: string, range?: { start: number; end: number }) => void;
   onDomainClick: () => void;
+  onRemoveGene?: (gene: string) => void;
   onWidthChange?: (width: number) => void;
   getColorScale: (level: TaxonomicLevel, categories: string[]) => (value: string) => string;
   rugMode?: 'binary' | 'normalized' | 'heatmap';
@@ -136,6 +137,7 @@ export const VisualizationCanvas = forwardRef<VisualizationCanvasHandle, Visuali
   countMap,
   onLineageClick,
   onDomainClick,
+  onRemoveGene,
   onWidthChange,
   getColorScale,
   rugMode = 'binary',
@@ -158,6 +160,7 @@ ref
     if (!svgRef.current) return;
     const original = svgRef.current;
     const clone = original.cloneNode(true) as SVGSVGElement;
+    clone.querySelectorAll('.rug-remove').forEach((node) => node.remove());
     clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
     clone.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink');
     clone.setAttribute('version', '1.1');
@@ -514,7 +517,7 @@ ref
               y: e.clientY - containerRect.top,
               level: level,
               category: d.cat,
-              count: counts[level].get(d.cat) || 0,
+              count: d.end - d.start + 1,
             });
           }
         })
@@ -601,23 +604,80 @@ ref
 
     const baseY = (selectedLevels.length + 1) * LEVEL_HEIGHT + BASE_GAP;
     const rugLabels = plot.select('g.rug-labels');
-    rugLabels.selectAll('*').remove();
 
-    if (activeGenes.length > 0) {
-      activeGenes.forEach((gene, geneIdx) => {
-        const y = baseY + geneIdx * (RUG_HEIGHT + RUG_PAD);
-        rugLabels.append('text')
-          .attr('x', -6)
-          .attr('y', y + RUG_HEIGHT / 2)
+    const labelSelection = rugLabels
+      .selectAll<SVGTextElement, string>('text.rug-label')
+      .data(activeGenes, (gene) => gene)
+      .join(
+        (enter) => enter
+          .append('text')
+          .attr('class', 'rug-label')
+          .attr('x', -18)
           .attr('dy', '.35em')
           .attr('text-anchor', 'end')
-          .text(gene.replace(/_count$/, ''))
           .style('font-size', '9px')
-          .style('font-weight', '500')
-          .style('fill', gene.includes('-') || gene.includes('>') ? 'var(--primary-strong)' : 'var(--viz-label)');
+          .style('font-weight', '500'),
+        (update) => update,
+        (exit) => exit.remove()
+      )
+      .attr('y', (_gene, geneIdx) => baseY + geneIdx * (RUG_HEIGHT + RUG_PAD) + RUG_HEIGHT / 2)
+      .text((gene) => gene.replace(/_count$/, ''))
+      .style('fill', (gene) => gene.includes('-') || gene.includes('>') ? 'var(--primary-strong)' : 'var(--viz-label)');
+
+    const removeIcons = rugLabels
+      .selectAll<SVGGElement, string>('g.rug-remove')
+      .data(activeGenes, (gene) => gene)
+      .join(
+        (enter) => enter
+          .append('g')
+          .attr('class', 'rug-remove')
+          .attr('role', 'button')
+          .style('cursor', 'pointer'),
+        (update) => update,
+        (exit) => exit.remove()
+      )
+      .attr('transform', (_gene, geneIdx) => {
+        const labelNode = labelSelection.nodes()[geneIdx];
+        const y = baseY + geneIdx * (RUG_HEIGHT + RUG_PAD) + RUG_HEIGHT / 2 - 1;
+        if (!labelNode) return `translate(-86,${y})`;
+        const labelLeftX = labelNode.getBBox().x;
+        return `translate(${Math.max(-86, labelLeftX - 11)},${y})`;
+      })
+      .on('click', (event: MouseEvent, gene) => {
+        event.stopPropagation();
+        onRemoveGene?.(gene);
+      })
+      .on('mouseover', function() {
+        d3.select(this).selectAll('line').attr('stroke', '#dc2626');
+      })
+      .on('mouseout', function() {
+        d3.select(this).selectAll('line').attr('stroke', '#111827');
       });
-    }
-  }, [data, selectedLevels, activeGenes, containerWidth, topTreeOffset]);
+
+    removeIcons
+      .selectAll<SVGRectElement, string>('rect.rug-remove-hitbox')
+      .data(['hitbox'])
+      .join('rect')
+      .attr('class', 'rug-remove-hitbox')
+      .attr('x', -8)
+      .attr('y', -8)
+      .attr('width', 16)
+      .attr('height', 16)
+      .attr('fill', 'transparent');
+
+    removeIcons
+      .selectAll<SVGLineElement, string>('line')
+      .data(['forward', 'back'])
+      .join('line')
+      .attr('x1', (direction) => direction === 'forward' ? -3.6 : 3.6)
+      .attr('y1', -3.6)
+      .attr('x2', (direction) => direction === 'forward' ? 3.6 : -3.6)
+      .attr('y2', 3.6)
+      .attr('stroke', '#111827')
+      .attr('stroke-width', 2)
+      .attr('stroke-linecap', 'round')
+      .attr('pointer-events', 'none');
+  }, [data, selectedLevels, activeGenes, coordMap, widthMap, containerWidth, topTreeOffset, onRemoveGene]);
 
   useEffect(() => {
     if (!canvasRef.current || containerWidth <= 0) {
@@ -654,10 +714,7 @@ ref
     const isAppendAtEnd = dependenciesStable &&
       activeGenes.length === prevMeta.activeGenes.length + 1 &&
       prevMeta.activeGenes.every((g, i) => g === activeGenes[i]);
-    const isTrimAtEnd = dependenciesStable &&
-      activeGenes.length + 1 === prevMeta.activeGenes.length &&
-      activeGenes.every((g, i) => g === prevMeta.activeGenes[i]);
-    const canIncremental = isAppendAtEnd || isTrimAtEnd;
+    const canIncremental = isAppendAtEnd;
 
     let previousImage: HTMLCanvasElement | null = null;
     if (canIncremental && canvas.width > 0 && canvas.height > 0) {
@@ -728,18 +785,6 @@ ref
         context.drawImage(previousImage, 0, 0, previousImage.width, previousImage.height, 0, 0, containerWidth, prevMeta.svgHeight);
         const newGene = activeGenes[activeGenes.length - 1];
         drawGeneRow(newGene, activeGenes.length - 1, rugMode === 'normalized' ? maxCountForGene(newGene) : 0);
-      } else if (isTrimAtEnd) {
-        context.drawImage(
-          previousImage,
-          0,
-          0,
-          previousImage.width,
-          Math.round(svgHeight * dpr),
-          0,
-          0,
-          containerWidth,
-          svgHeight,
-        );
       }
     } else {
       activeGenes.forEach((gene, geneIdx) => {

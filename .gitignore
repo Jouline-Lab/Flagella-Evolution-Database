@@ -21,12 +21,6 @@ pnpm-debug.log*
 # local env files
 .env*.local
 
-# large gzipped MSA files (too big for GitHub; host externally / Git LFS)
-/public/gzip_MSA/
-
-# WIP operon summary tool (local dev only; not wired to site nav)
-/app/operon-summary/
-/src/lib/operonSummary/
-/src/components/operonSummary/
-/scripts/operon-summary/
-/public/operon-summary/
+# large generated/public data files over GitHub's 100 MB limit
+/public/gzip_MSA/FliC_homologs_db_FAMSA.fasta.gz
+/public/operon-summary/operon_phyletic_distribution.tsv

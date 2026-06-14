@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="katman_1" data-name="katman 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 426.7085 218.6417">
+  <defs>
+    <style>
+      .cls-1, .cls-2, .cls-3, .cls-4 {
+        fill: #566383;
+      }
+
+      .cls-2 {
+        letter-spacing: .003em;
+      }
+
+      .cls-2, .cls-5, .cls-3, .cls-4, .cls-6 {
+        stroke: #000;
+        stroke-miterlimit: 10;
+        stroke-width: 2px;
+      }
+
+      .cls-2, .cls-4 {
+        font-family: CenturyGothic, 'Century Gothic';
+        font-size: 87.1459px;
+      }
+
+      .cls-5 {
+        fill: none;
+      }
+
+      .cls-4 {
+        letter-spacing: .003em;
+      }
+
+      .cls-6 {
+        fill: #959eaf;
+      }
+    </style>
+  </defs>
+  <g>
+    <polyline id="rect10" class="cls-1" points="73.0201 44.3995 35.7348 44.3995 35.7348 35.3995 72.9995 35.3995"/>
+    <polyline id="rect10-2" data-name="rect10" class="cls-3" points="71.7348 35.3995 98.7348 35.3995 98.7348 44.3995 71.752 44.3995"/>
+    <path class="cls-6" d="M72.2349,43.3995v56.0001c15.1879,0,27.5-10.3911,27.5-23.2091s-12.3121-23.2091-27.5-23.2091"/>
+    <path class="cls-5" d="M72.2348,36.3995v-12.5h0c0-2.1932,1.773-3.9737,3.9661-3.9829l4.0339-.0171h22.5l-5.5-12h-25.8568c-5.0496,0-9.1431,4.0935-9.1432,9.1431h0v44.1016"/>
+    <path class="cls-6" d="M62.2349,52.9747c-15.1879,0-27.5,10.3925-27.5,23.2125s12.3121,23.2125,27.5,23.2125v-48.0001"/>
+    <text class="cls-4" transform="translate(103.7343 99.67)"><tspan x="0" y="0">lagella</tspan></text>
+    <path class="cls-5" d="M97.3908,9.8471c1.7209-.1751,4.3505-.8457,6.3668-3.1574,2.3566-2.702,2.3259-5.8696,2.2985-6.6211"/>
+    <path class="cls-5" d="M97.5431,9.9006c.0766-.0018.157-.0046.2411-.0085"/>
+    <path class="cls-5" d="M117.4531.0686c.0355.5156.0953,1.7082-.0865,3.2711-.2647,2.2754-1.0415,5.3356-3.1509,8.2344-4.6659,6.4114-11.8295,6.5064-12.6084,6.5023"/>
+  </g>
+  <text class="cls-2" transform="translate(.9999 190.9191)"><tspan x="0" y="0">Database</tspan></text>
+</svg>

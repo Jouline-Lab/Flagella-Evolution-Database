@@ -9,7 +9,6 @@ import {
   DATASET_LABELS,
   DEFAULT_DATASET,
   DEFAULT_TSV_FILENAME,
-  GOLDEN,
   TAXONOMY_VERSIONS
 } from "@/lib/visualization/config";
 import type {
@@ -20,6 +19,15 @@ import type {
   DifferenceOptions
 } from "@/types/gene-visualization";
 
+const WEBSITE_CATEGORY_COLORS = [
+  "#FCB315",
+  "#7CAEC4",
+  "#DD6030",
+  "#231F20",
+  "#7D2985",
+  "#B4B4B4"
+];
+
 export function useGeneVisualization() {
   const [state, setState] = useState<VisualizationState>({
     originalRaw: [],
@@ -28,6 +36,9 @@ export function useGeneVisualization() {
     selectedLevels: ["phylum"],
     totalInput: 0,
     geneNames: [],
+    defaultGeneNames: [],
+    customGeneNames: [],
+    customTsvLabel: null,
     matrix: null,
     asmCount: 0,
     countMap: new Map(),
@@ -45,6 +56,8 @@ export function useGeneVisualization() {
   const [containerWidth, setContainerWidth] = useState(1200);
   const [lineageOptions, setLineageOptions] = useState<string[]>([]);
   const lastTSVTextRef = useRef<string | null>(null);
+  const customTSVTextRef = useRef<string | null>(null);
+  const customTSVLabelRef = useRef<string | null>(null);
   const isFirstDatasetLoadRef = useRef<boolean>(true);
 
   const [rugMode, setRugMode] = useState<"normalized" | "binary" | "heatmap">(
@@ -62,26 +75,8 @@ export function useGeneVisualization() {
   });
 
   const [dataset, setDataset] = useState<(typeof DATASETS)[number]>(DEFAULT_DATASET);
-  const colorCacheRef = useRef<{ [key: string]: any }>({});
-  const globalColorMapRef = useRef<{ [key: string]: string }>({});
-
-  const generatePastelColor = useCallback((index: number): string => {
-    const hue = (index * GOLDEN * 360) % 360;
-    const saturation = 60 + (index % 4) * 8;
-    const lightness = 40 + (index % 3) * 8;
-    return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
-  }, []);
-
-  const getLineageColor = useCallback(
-    (lineageName: string): string => {
-      if (!globalColorMapRef.current[lineageName]) {
-        const existingColors = Object.keys(globalColorMapRef.current).length;
-        globalColorMapRef.current[lineageName] = generatePastelColor(existingColors);
-      }
-      return globalColorMapRef.current[lineageName];
-    },
-    [generatePastelColor]
-  );
+  const lineageColorMapRef = useRef<Record<string, string>>({});
+  const lineageColorIndexByLevelRef = useRef<Partial<Record<TaxonomicLevel, number>>>({});
 
   const onWidthChange = useCallback((width: number) => {
     setContainerWidth(width);
@@ -92,6 +87,8 @@ export function useGeneVisualization() {
       const response = await fetch(withBasePath(fileName.startsWith("/") ? fileName : `/${fileName}`));
       const jsonData: GTDBRecord[] = await response.json();
 
+      lineageColorMapRef.current = {};
+      lineageColorIndexByLevelRef.current = {};
       sizeFilterStateRef.current = { level: null, threshold: 0, baseline: null };
       setState((prev) => ({
         ...prev,
@@ -122,48 +119,18 @@ export function useGeneVisualization() {
     await new Promise<void>((resolve) => {
       setTimeout(() => {
         setState((prev) => {
-          const lines = tsvText.trim().split(/\r?\n/);
-          const header = lines.shift()?.split("\t") || [];
-          const rows = lines.filter(Boolean);
-
-          const totalInput = rows.length;
-          const assemblyColIdx = Math.max(0, header.indexOf("assembly"));
-          const countCols = header
-            .map((name, idx) => ({ name, idx }))
-            .filter(({ name, idx }) => idx !== assemblyColIdx && name.endsWith("_count"));
-
-          const geneNames = countCols.map((c) => c.name);
-          const geneColIdxs = countCols.map((c) => c.idx);
-          const geneIndex = new Map(geneNames.map((g, i) => [g, i]));
-          let matrix = new Uint8Array(geneNames.length * prev.asmCount);
-          const newCountMap = new Map<string, GeneCountData>();
-
-          for (let r = 0; r < rows.length; r++) {
-            const cols = rows[r].split("\t");
-            const asm = cols[assemblyColIdx] ?? cols[0];
-            const asmIdx = prev.asmIndex.get(asm);
-            if (asmIdx === undefined) continue;
-
-            const cm: GeneCountData = {};
-            for (let g = 0; g < geneNames.length; g++) {
-              const colIdx = geneColIdxs[g];
-              const raw = colIdx < cols.length ? cols[colIdx] : undefined;
-              const val = Number(raw) || 0;
-              cm[geneNames[g]] = val;
-              if (val > 0) {
-                matrix[g * prev.asmCount + asmIdx] = 1;
+          const defaultData = parseTSVCounts(tsvText, prev.asmIndex);
+          const customData = customTSVTextRef.current
+            ? {
+                ...parseTSVCounts(customTSVTextRef.current, prev.asmIndex),
+                label: customTSVLabelRef.current
               }
-            }
-            newCountMap.set(asm, cm);
-          }
+            : undefined;
+          const merged = buildMergedCounts(prev.originalRaw, prev.asmCount, prev.asmIndex, defaultData, customData);
 
           return {
             ...prev,
-            totalInput,
-            geneNames,
-            geneIndex,
-            matrix,
-            countMap: newCountMap,
+            ...merged,
             isLoading: false,
             loadingMessage: ""
           };
@@ -223,21 +190,104 @@ export function useGeneVisualization() {
   }, [dataset]);
 
   const getColorScale = useCallback((level: TaxonomicLevel, categories: string[]) => {
-    const WEBSITE_CATEGORY_COLORS = [
-      "#FCB315",
-      "#7CAEC4",
-      "#DD6030",
-      "#231F20",
-      "#7D2985",
-      "#B4B4B4"
-    ];
-    const cacheKey = `${level}_${categories.slice().sort().join("_")}`;
-    if (!colorCacheRef.current[cacheKey]) {
-      const colors = categories.map((_, idx) => WEBSITE_CATEGORY_COLORS[idx % WEBSITE_CATEGORY_COLORS.length]);
-      colorCacheRef.current[cacheKey] = d3.scaleOrdinal(categories, colors);
-    }
-    return colorCacheRef.current[cacheKey];
+    const colors = categories.map((category) => {
+      const key = `${level}:${category}`;
+      const existingColor = lineageColorMapRef.current[key];
+      if (existingColor) return existingColor;
+
+      const colorIndex = lineageColorIndexByLevelRef.current[level] ?? 0;
+      const color = WEBSITE_CATEGORY_COLORS[colorIndex % WEBSITE_CATEGORY_COLORS.length];
+      lineageColorMapRef.current[key] = color;
+      lineageColorIndexByLevelRef.current[level] = colorIndex + 1;
+      return color;
+    });
+
+    return d3.scaleOrdinal<string, string>(categories, colors);
   }, []);
+
+  const parseTSVCounts = useCallback(
+    (tsvText: string, asmIndex: Map<string, number>) => {
+      const lines = tsvText.trim().split(/\r?\n/);
+      const header = lines.shift()?.split("\t") || [];
+      const rows = lines.filter(Boolean);
+      const assemblyColIdx = Math.max(0, header.indexOf("assembly"));
+      const countCols = header
+        .map((name, idx) => ({ name, idx }))
+        .filter(({ name, idx }) => idx !== assemblyColIdx && name.endsWith("_count"));
+      const geneNames = countCols.map((c) => c.name);
+      const geneColIdxs = countCols.map((c) => c.idx);
+      const countMap = new Map<string, GeneCountData>();
+
+      for (let r = 0; r < rows.length; r += 1) {
+        const cols = rows[r].split("\t");
+        const asm = cols[assemblyColIdx] ?? cols[0];
+        if (!asm || !asmIndex.has(asm)) continue;
+        const cm: GeneCountData = {};
+        for (let g = 0; g < geneNames.length; g += 1) {
+          const colIdx = geneColIdxs[g];
+          const raw = colIdx < cols.length ? cols[colIdx] : undefined;
+          cm[geneNames[g]] = Number(raw) || 0;
+        }
+        countMap.set(asm, cm);
+      }
+
+      return { totalInput: rows.length, geneNames, countMap };
+    },
+    []
+  );
+
+  const buildMergedCounts = useCallback(
+    (
+      raw: GTDBRecord[],
+      asmCount: number,
+      asmIndex: Map<string, number>,
+      defaultData: { geneNames: string[]; countMap: Map<string, GeneCountData>; totalInput: number },
+      customData?: { geneNames: string[]; countMap: Map<string, GeneCountData>; label: string | null }
+    ) => {
+      const customNames = customData?.geneNames ?? [];
+      const geneNames = [...defaultData.geneNames, ...customNames];
+      const geneIndex = new Map(geneNames.map((g, i) => [g, i]));
+      const matrix = new Uint8Array(geneNames.length * asmCount);
+      const countMap = new Map<string, GeneCountData>();
+
+      for (const record of raw) {
+        const asmIdx = asmIndex.get(record.assembly);
+        if (asmIdx === undefined) continue;
+        const defaultCounts = defaultData.countMap.get(record.assembly) ?? {};
+        const customCounts = customData?.countMap.get(record.assembly) ?? {};
+        const combined: GeneCountData = {};
+
+        for (let g = 0; g < defaultData.geneNames.length; g += 1) {
+          const gene = defaultData.geneNames[g];
+          const value = defaultCounts[gene] ?? 0;
+          combined[gene] = value;
+          if (value > 0) matrix[g * asmCount + asmIdx] = 1;
+        }
+
+        for (let g = 0; g < customNames.length; g += 1) {
+          const gene = customNames[g];
+          const matrixIndex = defaultData.geneNames.length + g;
+          const value = customCounts[gene] ?? 0;
+          combined[gene] = value;
+          if (value > 0) matrix[matrixIndex * asmCount + asmIdx] = 1;
+        }
+
+        countMap.set(record.assembly, combined);
+      }
+
+      return {
+        totalInput: customData ? Math.max(defaultData.totalInput, customData.countMap.size) : defaultData.totalInput,
+        geneNames,
+        defaultGeneNames: defaultData.geneNames,
+        customGeneNames: customNames,
+        customTsvLabel: customData?.label ?? null,
+        geneIndex,
+        matrix,
+        countMap
+      };
+    },
+    []
+  );
 
   useEffect(() => {
     if (state.assemblies.length > 0 && containerWidth > 0) {
@@ -287,7 +337,7 @@ export function useGeneVisualization() {
         return { ...prev, coordMap, widthMap };
       });
     }
-  }, [containerWidth, state.assemblies.length, state.normalizeLevel]);
+  }, [containerWidth, state.assemblies, state.normalizeLevel]);
 
   const setSelectedLevels = useCallback((levels: TaxonomicLevel[]) => {
     setState((prev) => ({
@@ -300,12 +350,19 @@ export function useGeneVisualization() {
     setState((prev) => ({ ...prev, normalizeLevel: level }));
   }, []);
 
-  const filterByLineage = useCallback((level: TaxonomicLevel, category: string) => {
+  const filterByLineage = useCallback((level: TaxonomicLevel, category: string, range?: { start: number; end: number }) => {
     setState((prev) => ({ ...prev, isLoading: true, loadingMessage: `Filtering by ${level}: ${category}...` }));
     setTimeout(() => {
       sizeFilterStateRef.current = { level: null, threshold: 0, baseline: null };
       setState((prev) => {
-        const filtered = prev.originalRaw.filter((d) => d[level] === category);
+        const hasValidRange =
+          range &&
+          range.start >= 0 &&
+          range.end >= range.start &&
+          range.end < prev.raw.length;
+        const filtered = hasValidRange
+          ? prev.raw.slice(range.start, range.end + 1)
+          : prev.raw.filter((d) => d[level] === category);
         return {
           ...prev,
           raw: filtered,
@@ -390,6 +447,50 @@ export function useGeneVisualization() {
     }, 10);
   }, []);
 
+  const loadCustomTSVData = useCallback(
+    async (
+      tsvText: string,
+      label = "Custom TSV File",
+      options: { activateCustomGenes?: boolean } = {}
+    ) => {
+      customTSVTextRef.current = tsvText;
+      customTSVLabelRef.current = label;
+      setState((prev) => ({
+        ...prev,
+        isLoading: true,
+        loadingMessage: `Processing ${label}...`
+      }));
+      await new Promise<void>((resolve) => {
+        setTimeout(() => {
+          setState((prev) => {
+            if (!lastTSVTextRef.current) {
+              return { ...prev, isLoading: false, loadingMessage: "" };
+            }
+            const defaultData = parseTSVCounts(lastTSVTextRef.current, prev.asmIndex);
+            const customData = {
+              ...parseTSVCounts(tsvText, prev.asmIndex),
+              label
+            };
+            const merged = buildMergedCounts(prev.originalRaw, prev.asmCount, prev.asmIndex, defaultData, customData);
+            const retainedActiveGenes = prev.activeGenes.filter((gene) => merged.geneIndex.has(gene));
+            const activeGenes = options.activateCustomGenes
+              ? [...retainedActiveGenes.filter((gene) => !customData.geneNames.includes(gene)), ...customData.geneNames]
+              : retainedActiveGenes;
+            return {
+              ...prev,
+              ...merged,
+              activeGenes,
+              isLoading: false,
+              loadingMessage: ""
+            };
+          });
+          resolve();
+        }, 10);
+      });
+    },
+    [buildMergedCounts, parseTSVCounts]
+  );
+
   const resetFilters = useCallback(() => {
     setState((prev) => ({ ...prev, isLoading: true, loadingMessage: "Resetting filters..." }));
     setTimeout(() => {
@@ -405,14 +506,25 @@ export function useGeneVisualization() {
   }, []);
 
   const toggleGeneSelection = useCallback((gene: string) => {
-    setState((prev) => ({ ...prev, isLoading: true, loadingMessage: "Processing gene selection..." }));
-    setTimeout(() => {
-      setState((prev) => {
-        const isActive = prev.activeGenes.includes(gene);
-        const activeGenes = isActive ? prev.activeGenes.filter((g) => g !== gene) : [...prev.activeGenes, gene];
-        return { ...prev, activeGenes, isLoading: false, loadingMessage: "" };
-      });
-    }, 10);
+    setState((prev) => {
+      const isActive = prev.activeGenes.includes(gene);
+      const activeGenes = isActive ? prev.activeGenes.filter((g) => g !== gene) : [...prev.activeGenes, gene];
+      return { ...prev, activeGenes };
+    });
+  }, []);
+
+  const toggleGeneGroupSelection = useCallback((genes: string[]) => {
+    setState((prev) => {
+      const group = genes.filter((gene) => prev.geneIndex.has(gene));
+      if (group.length === 0) return prev;
+      const groupSet = new Set(group);
+      const activeSet = new Set(prev.activeGenes);
+      const allActive = group.every((gene) => activeSet.has(gene));
+      const activeGenes = allActive
+        ? prev.activeGenes.filter((gene) => !groupSet.has(gene))
+        : [...prev.activeGenes.filter((gene) => !groupSet.has(gene)), ...group];
+      return { ...prev, activeGenes };
+    });
   }, []);
 
   const toggleAllGenes = useCallback(() => {
@@ -541,6 +653,7 @@ export function useGeneVisualization() {
     state,
     lineageOptions,
     loadTSVData,
+    loadCustomTSVData,
     setSelectedLevels,
     setNormalizeLevel,
     filterByLineage,
@@ -548,6 +661,7 @@ export function useGeneVisualization() {
     filterByRugMin,
     resetFilters,
     toggleGeneSelection,
+    toggleGeneGroupSelection,
     toggleAllGenes,
     togglePresence,
     addDifferenceVisualization,

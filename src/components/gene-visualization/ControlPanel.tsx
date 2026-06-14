@@ -684,7 +684,7 @@ export function ControlPanel({
                   <SelectTrigger className="h-7 text-xs w-44">
                     <SelectValue placeholder="Gene" />
                   </SelectTrigger>
-                  <SelectContent className="z-[100200] w-44 min-w-[11rem]">
+                  <SelectContent className="z-[100200] w-44 min-w-[11rem] max-h-[9rem] overflow-y-auto">
                     {geneNames.map(gene => (
                       <SelectItem key={gene} value={gene}>{gene.replace(/_count$/, '')}</SelectItem>
                     ))}
@@ -697,7 +697,7 @@ export function ControlPanel({
                   <SelectTrigger className="h-7 text-xs w-44">
                     <SelectValue placeholder="Gene" />
                   </SelectTrigger>
-                  <SelectContent className="z-[100200] w-44 min-w-[11rem]">
+                  <SelectContent className="z-[100200] w-44 min-w-[11rem] max-h-[9rem] overflow-y-auto">
                     {geneNames.map(gene => (
                       <SelectItem key={gene} value={gene}>{gene.replace(/_count$/, '')}</SelectItem>
                     ))}
@@ -715,9 +715,10 @@ export function ControlPanel({
                 </label>
                 <Button
                   onClick={handleAddDifference}
+                  variant="outline"
                   size="sm"
                   disabled={!diffGene1 || !diffGene2 || diffGene1 === diffGene2}
-                  className="viz-add-button h-7 text-xs px-2 disabled:opacity-100"
+                  className="h-7 text-[11px] px-2 !text-gray-900 border-gray-300 hover:bg-gray-100"
                 >
                   Add
                 </Button>
@@ -798,7 +799,7 @@ export function ControlPanel({
                   <SelectTrigger className="h-7 text-[11px] !w-[7.5rem] !text-gray-900 [&>span]:!text-gray-900">
                     <SelectValue placeholder="Gene" className="text-[11px] !text-gray-900" />
                   </SelectTrigger>
-                  <SelectContent className="z-[100200] w-[7.5rem] min-w-[7.5rem]">
+                  <SelectContent className="z-[100200] w-[7.5rem] min-w-[7.5rem] max-h-[9rem] overflow-y-auto">
                     <SelectItem value="ANY" className="text-[11px]">Gene</SelectItem>
                     {geneNames.map(g => (
                       <SelectItem key={g} value={g} className="text-[11px]">{g.replace(/_count$/, '')}</SelectItem>

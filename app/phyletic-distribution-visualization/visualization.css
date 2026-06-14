@@ -350,20 +350,3 @@
   -webkit-backdrop-filter: none !important;
 }
 
-/* Keep compare Add button style stable (avoid global bg-blue-* remaps) */
-.viz-theme .viz-add-button {
-  background-color: #2563eb !important;
-  background-image: none !important;
-  color: #ffffff !important;
-}
-
-.viz-theme .viz-add-button:hover {
-  background-color: #1d4ed8 !important;
-  background-image: none !important;
-}
-
-.viz-theme .viz-add-button:disabled {
-  background-color: #d1d5db !important;
-  background-image: none !important;
-  color: #4b5563 !important;
-}

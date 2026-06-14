@@ -16,6 +16,58 @@ import { Loader2 } from "lucide-react";
  * or shorter loading area.
  */
 const VIZ_PANEL_MIN_HEIGHT_WHILE_LOADING_PX = 395;
+const OPERON_PHYLETIC_TRANSFER_PREFIX = "operon-phyletic-transfer:";
+const OPERON_PHYLETIC_TSV_URL = "/operon-summary/operon_phyletic_distribution_min500.tsv";
+const OPERON_PHYLETIC_METADATA_COLUMNS = [
+  "assembly",
+  "domain",
+  "phylum",
+  "class",
+  "order",
+  "family",
+  "genus",
+  "species"
+];
+
+type OperonPhyleticTransferPayload = {
+  version: 1;
+  label: string;
+  columns: string[];
+};
+
+function filterTsvColumns(tsvText: string, requestedColumns: string[]): { text: string; foundColumns: string[]; missingColumns: string[] } {
+  const lines = tsvText.replace(/\r/g, "").split("\n").filter((line) => line.trim().length > 0);
+  if (lines.length === 0) {
+    throw new Error("Operon phyletic TSV is empty.");
+  }
+
+  const headers = lines[0].split("\t");
+  const headerIndex = new Map(headers.map((header, index) => [header, index]));
+  const requestedUnique = Array.from(new Set(requestedColumns));
+  const foundColumns = requestedUnique.filter((column) => headerIndex.has(column));
+  const missingColumns = requestedUnique.filter((column) => !headerIndex.has(column));
+  if (foundColumns.length === 0) {
+    throw new Error("None of the visible directed operon edges were found in the operon phyletic TSV.");
+  }
+
+  const keepColumns = [
+    ...OPERON_PHYLETIC_METADATA_COLUMNS.filter((column) => headerIndex.has(column)),
+    ...foundColumns
+  ];
+  const keepIndexes = keepColumns.map((column) => headerIndex.get(column) ?? -1);
+  const outputLines = [keepColumns.join("\t")];
+
+  for (let i = 1; i < lines.length; i += 1) {
+    const parts = lines[i].split("\t");
+    outputLines.push(keepIndexes.map((index) => parts[index] ?? "").join("\t"));
+  }
+
+  return {
+    text: outputLines.join("\n"),
+    foundColumns,
+    missingColumns
+  };
+}
 
 function LoadingOverlay({
   isLoading,
@@ -43,9 +95,11 @@ export function GeneVisualization() {
   const [treeLayoutMode, setTreeLayoutMode] = useState<'phlogram' | 'cladogram'>('phlogram');
   const [tipExtensionMode, setTipExtensionMode] = useState<'none' | 'solid' | 'dashed'>('none');
   const [treeNewick, setTreeNewick] = useState<string | null>(null);
+  const [operonTransferHandled, setOperonTransferHandled] = useState(false);
   const {
     state,
     loadTSVData,
+    loadCustomTSVData,
     setSelectedLevels,
     setNormalizeLevel,
     filterByLineage,
@@ -53,7 +107,7 @@ export function GeneVisualization() {
     filterByRugMin,
     resetFilters,
     toggleGeneSelection,
-    toggleAllGenes,
+    toggleGeneGroupSelection,
     togglePresence,
     addDifferenceVisualization,
     filterAllZeroAssemblies,
@@ -81,7 +135,7 @@ export function GeneVisualization() {
         const reader = new FileReader();
         reader.onload = (event) => {
           const text = event.target?.result as string;
-          loadTSVData(text);
+          loadCustomTSVData(text, file.name || "Custom TSV File");
         };
         reader.readAsText(file);
       }
@@ -138,6 +192,64 @@ export function GeneVisualization() {
       document.body.classList.remove("viz-theme");
     };
   }, []);
+
+  useEffect(() => {
+    if (operonTransferHandled || state.defaultGeneNames.length === 0) {
+      return;
+    }
+    const params = new URLSearchParams(window.location.search);
+    const transferId = params.get("operonTransfer");
+    if (!transferId) {
+      setOperonTransferHandled(true);
+      return;
+    }
+
+    let cancelled = false;
+    const run = async () => {
+      try {
+        const storageKey = `${OPERON_PHYLETIC_TRANSFER_PREFIX}${transferId}`;
+        const rawPayload = window.localStorage.getItem(storageKey);
+        if (!rawPayload) {
+          throw new Error("Could not find the operon transfer payload.");
+        }
+        const payload = JSON.parse(rawPayload) as OperonPhyleticTransferPayload;
+        if (payload.version !== 1 || !Array.isArray(payload.columns) || payload.columns.length === 0) {
+          throw new Error("The operon transfer payload is invalid.");
+        }
+
+        const response = await fetch(withBasePath(OPERON_PHYLETIC_TSV_URL));
+        if (!response.ok) {
+          throw new Error(`Failed to load operon phyletic TSV: HTTP ${response.status}`);
+        }
+        const sourceText = await response.text();
+        const filtered = filterTsvColumns(sourceText, payload.columns);
+        if (cancelled) return;
+
+        await loadCustomTSVData(filtered.text, payload.label || "Visible Directed Operons", {
+          activateCustomGenes: false
+        });
+        window.localStorage.removeItem(storageKey);
+        if (filtered.missingColumns.length > 0) {
+          console.warn(
+            `${filtered.missingColumns.length} transferred operon columns were not found in ${OPERON_PHYLETIC_TSV_URL}.`
+          );
+        }
+      } catch (error) {
+        if (!cancelled) {
+          alert(error instanceof Error ? error.message : "Failed to import operon data.");
+        }
+      } finally {
+        if (!cancelled) {
+          setOperonTransferHandled(true);
+        }
+      }
+    };
+
+    void run();
+    return () => {
+      cancelled = true;
+    };
+  }, [loadCustomTSVData, operonTransferHandled, state.defaultGeneNames.length]);
 
   useEffect(() => {
     if (!canShowTopTree) {
@@ -208,9 +320,11 @@ export function GeneVisualization() {
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 h-full">
               <GeneSelectionSidebar
                 geneNames={state.geneNames}
+              defaultGeneNames={state.defaultGeneNames}
+              customGeneNames={state.customGeneNames}
                 activeGenes={state.activeGenes}
                 onToggleGene={toggleGeneSelection}
-                onToggleAll={toggleAllGenes}
+                onToggleGeneGroup={toggleGeneGroupSelection}
                 onTogglePresence={togglePresence}
                 showPresence={state.showPresence}
               />
@@ -268,6 +382,7 @@ export function GeneVisualization() {
                     countMap={state.countMap}
                     onLineageClick={filterByLineage}
                     onDomainClick={resetFilters}
+                    onRemoveGene={toggleGeneSelection}
                     onWidthChange={onWidthChange}
                     getColorScale={getColorScale}
                     rugMode={rugMode}
