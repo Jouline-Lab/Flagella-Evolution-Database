@@ -10,7 +10,9 @@ import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 const MAX_SCAN_GAP_BP = 500;
+const MIN_FLAGELLAR_GENES = 25;
 const OPERON_COORDS_DIR = path.join(process.cwd(), "public", "operon_coords");
+const PHYLETIC_TSV_PATH = path.join(process.cwd(), "public", "flagellar_genes_phyletic_distribution.tsv");
 const CACHE_DIR = path.join(process.cwd(), "public", "operon-summary");
 const CACHE_PATH = path.join(CACHE_DIR, "pair-occurrences-cache.jsonl");
 const CACHE_META_PATH = path.join(CACHE_DIR, "pair-occurrences-cache.meta.json");
@@ -105,14 +107,58 @@ function extractNeighborhoodPairs(rows, maxGapBp = MAX_SCAN_GAP_BP) {
   return occurrences;
 }
 
+function loadEligibleAssembliesFromPhyleticTable(tsv, minFlagellarGenes = MIN_FLAGELLAR_GENES) {
+  const lines = tsv.split(/\r?\n/).filter((line) => line.trim());
+  if (lines.length === 0) {
+    throw new Error(`Missing rows in ${PHYLETIC_TSV_PATH}`);
+  }
+
+  const headers = lines[0].split("\t");
+  const idxAssembly = headers.indexOf("assembly");
+  if (idxAssembly === -1) {
+    throw new Error("Phyletic distribution TSV must include an assembly column.");
+  }
+
+  const countColumnIndexes = headers
+    .map((header, index) => ({ header, index }))
+    .filter(({ header }) => header.endsWith("_count"))
+    .map(({ index }) => index);
+
+  const eligible = new Set();
+  for (const line of lines.slice(1)) {
+    const parts = line.split("\t");
+    const assembly = getValue(parts, idxAssembly);
+    if (!assembly) {
+      continue;
+    }
+    const flagellarGeneCount = countColumnIndexes.reduce((count, index) => {
+      const value = Number(getValue(parts, index));
+      return count + (Number.isFinite(value) && value > 0 ? 1 : 0);
+    }, 0);
+    if (flagellarGeneCount >= minFlagellarGenes) {
+      eligible.add(assembly);
+    }
+  }
+
+  return eligible;
+}
+
 async function main() {
   if (!existsSync(OPERON_COORDS_DIR)) {
     throw new Error(`Missing operon coords directory: ${OPERON_COORDS_DIR}`);
   }
+  if (!existsSync(PHYLETIC_TSV_PATH)) {
+    throw new Error(`Missing phyletic distribution table: ${PHYLETIC_TSV_PATH}`);
+  }
 
+  const eligibleAssemblies = loadEligibleAssembliesFromPhyleticTable(
+    await readFile(PHYLETIC_TSV_PATH, "utf8"),
+    MIN_FLAGELLAR_GENES
+  );
   const filenames = (await readdir(OPERON_COORDS_DIR)).filter((name) => name.endsWith(".tsv"));
   const occurrences = [];
   let assembliesWithCoords = 0;
+  let assembliesEligibleByMinFlagellarGenes = 0;
   const batchSize = 500;
   const started = Date.now();
 
@@ -121,19 +167,32 @@ async function main() {
     const batchResults = await Promise.all(
       batch.map(async (filename) => {
         const assemblyFallback = filename.replace(/^coords_/, "").replace(/\.tsv$/, "");
+        if (!eligibleAssemblies.has(assemblyFallback)) {
+          return null;
+        }
         const raw = await readFile(path.join(OPERON_COORDS_DIR, filename), "utf8");
         const rows = parseCoordFile(raw, assemblyFallback);
-        if (rows.length === 0) return [];
-        return extractNeighborhoodPairs(rows, MAX_SCAN_GAP_BP).map((occ) => ({
-          ...occ,
-          assembly: assemblyFallback
-        }));
+        const pairs =
+          rows.length === 0
+            ? []
+            : extractNeighborhoodPairs(rows, MAX_SCAN_GAP_BP).map((occ) => ({
+                ...occ,
+                assembly: assemblyFallback
+              }));
+        return {
+          assembly: assemblyFallback,
+          pairs
+        };
       })
     );
 
-    for (const pairs of batchResults) {
-      if (pairs.length > 0) assembliesWithCoords += 1;
-      occurrences.push(...pairs);
+    for (const result of batchResults) {
+      if (!result) {
+        continue;
+      }
+      assembliesEligibleByMinFlagellarGenes += 1;
+      if (result.pairs.length > 0) assembliesWithCoords += 1;
+      occurrences.push(...result.pairs);
     }
 
     const done = Math.min(offset + batchSize, filenames.length);
@@ -153,6 +212,8 @@ async function main() {
     JSON.stringify(
       {
         assembliesScanned: filenames.length,
+        minFlagellarGeneCount: MIN_FLAGELLAR_GENES,
+        eligibleAssembliesWithMinFlagellarGenes: assembliesEligibleByMinFlagellarGenes,
         assembliesWithCoords,
         scannedAt: Date.now(),
         pairOccurrences: occurrences.length
@@ -166,7 +227,7 @@ async function main() {
   const elapsedSec = ((Date.now() - started) / 1000).toFixed(1);
   console.log(`Cache written to ${CACHE_DIR}`);
   console.log(
-    `${filenames.length} assemblies, ${assembliesWithCoords} with coords, ${occurrences.length} pair instances (${elapsedSec}s)`
+    `${filenames.length} assemblies scanned, ${assembliesEligibleByMinFlagellarGenes} with >= ${MIN_FLAGELLAR_GENES} flagellar genes, ${assembliesWithCoords} with pairs, ${occurrences.length} pair instances (${elapsedSec}s)`
   );
 }
 

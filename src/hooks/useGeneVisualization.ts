@@ -519,8 +519,8 @@ export function useGeneVisualization() {
       if (group.length === 0) return prev;
       const groupSet = new Set(group);
       const activeSet = new Set(prev.activeGenes);
-      const allActive = group.every((gene) => activeSet.has(gene));
-      const activeGenes = allActive
+      const anyActive = group.some((gene) => activeSet.has(gene));
+      const activeGenes = anyActive
         ? prev.activeGenes.filter((gene) => !groupSet.has(gene))
         : [...prev.activeGenes.filter((gene) => !groupSet.has(gene)), ...group];
       return { ...prev, activeGenes };

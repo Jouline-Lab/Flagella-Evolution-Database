@@ -55,15 +55,20 @@ export type ThresholdEdgePhylumComposition = {
   directed: Record<string, EdgePhylumCounts>;
 };
 
+export type AssociationNormalizationMode = "clade" | "genePresent";
+
 export type OperonAssociationsBundle = {
   assembliesScanned: number;
   assembliesWithCoords: number;
+  minFlagellarGeneCount?: number;
+  eligibleAssembliesWithMinFlagellarGenes?: number;
   scannedAt: number;
   thresholds: number[];
   summaries: Record<string, OperonAssociationSummary>;
   phyla: PhylumMeta[];
   phylumSummaries: Record<string, Record<string, OperonAssociationSummary>>;
   edgePhylumByThreshold: Record<string, ThresholdEdgePhylumComposition>;
+  edgeOpportunityByThreshold?: Record<string, ThresholdEdgePhylumComposition>;
 };
 
 export const OPERON_THRESHOLD_STEPS = [500] as const;
@@ -76,10 +81,10 @@ export const MAX_SCAN_GAP_BP = 500;
 export const DEFAULT_DISTANCE_THRESHOLD_BP = 500;
 
 /** Minimum phylum assembly count for edge prevalence breakdown and phylum focus dropdown. */
-export const DEFAULT_MIN_PHYLUM_SIZE = 50;
+export const DEFAULT_MIN_PHYLUM_SIZE = 10;
 
 /** Default average prevalence (%) across eligible phyla required to show an edge. */
-export const DEFAULT_AVERAGE_ASSOCIATION_PERCENT = 5;
+export const DEFAULT_AVERAGE_ASSOCIATION_PERCENT = 10;
 
 export const EDGE_PHYLUM_BREAKDOWN_TOP_N = 10;
 
@@ -230,10 +235,14 @@ function readEdgePhylumRows(
   directed: boolean,
   source: string,
   target: string,
-  minPhylumSize: number
+  minPhylumSize: number,
+  normalizationMode: AssociationNormalizationMode = "clade"
 ): EdgePhylumBreakdownRow[] {
   const step = pickThresholdStep(thresholdBp, bundle.thresholds);
-  const composition = bundle.edgePhylumByThreshold[String(step)];
+  const composition =
+    normalizationMode === "genePresent"
+      ? bundle.edgeOpportunityByThreshold?.[String(step)]
+      : bundle.edgePhylumByThreshold[String(step)];
   if (!composition) {
     return [];
   }
@@ -267,12 +276,22 @@ export function countConservedPhylaForEdge(
   directed: boolean,
   source: string,
   target: string,
-  options: { minPhylumSize: number; conservationPercent: number }
+  options: {
+    minPhylumSize: number;
+    conservationPercent: number;
+    normalizationMode?: AssociationNormalizationMode;
+  }
 ): number {
   const threshold = Math.max(0, Math.min(100, options.conservationPercent));
-  return readEdgePhylumRows(bundle, thresholdBp, directed, source, target, options.minPhylumSize).filter(
-    (row) => row.percent >= threshold
-  ).length;
+  return readEdgePhylumRows(
+    bundle,
+    thresholdBp,
+    directed,
+    source,
+    target,
+    options.minPhylumSize,
+    options.normalizationMode
+  ).filter((row) => row.percent >= threshold).length;
 }
 
 export function averageAssociationPercentForEdge(
@@ -281,8 +300,28 @@ export function averageAssociationPercentForEdge(
   directed: boolean,
   source: string,
   target: string,
-  options: { minPhylumSize: number; phylumId?: string | null }
+  options: {
+    minPhylumSize: number;
+    phylumId?: string | null;
+    normalizationMode?: AssociationNormalizationMode;
+  }
 ): number {
+  const normalizationMode = options.normalizationMode ?? "clade";
+  if (normalizationMode === "genePresent") {
+    const rows = readEdgePhylumRows(bundle, thresholdBp, directed, source, target, 1, normalizationMode);
+    const eligibleRows = rows.filter((row) => {
+      if (options.phylumId) {
+        return row.phylum === options.phylumId;
+      }
+      return row.phylumTotal >= Math.max(1, options.minPhylumSize);
+    });
+    if (eligibleRows.length === 0) {
+      return 0;
+    }
+    const totalPercent = eligibleRows.reduce((sum, row) => sum + row.percent, 0);
+    return totalPercent / eligibleRows.length;
+  }
+
   const eligiblePhyla = options.phylumId
     ? bundle.phyla.filter((phylum) => phylum.id === options.phylumId)
     : filterPhylaByMinSize(bundle.phyla, options.minPhylumSize);
@@ -296,13 +335,13 @@ export function averageAssociationPercentForEdge(
   }
 
   const rowsByPhylum = new Map(
-    readEdgePhylumRows(bundle, thresholdBp, directed, source, target, 1).map((row) => [
+    readEdgePhylumRows(bundle, thresholdBp, directed, source, target, 1, normalizationMode).map((row) => [
       row.phylum,
       row.percent
     ])
   );
-  const total = phyla.reduce((sum, phylum) => sum + (rowsByPhylum.get(phylum.id) ?? 0), 0);
-  return total / phyla.length;
+  const totalPercent = phyla.reduce((sum, phylum) => sum + (rowsByPhylum.get(phylum.id) ?? 0), 0);
+  return totalPercent / phyla.length;
 }
 
 export function getEdgePhylumBreakdown(
@@ -315,13 +354,22 @@ export function getEdgePhylumBreakdown(
     minPhylumSize?: number;
     conservationPercent?: number;
     limit?: number;
+    normalizationMode?: AssociationNormalizationMode;
   }
 ): EdgePhylumBreakdownRow[] {
   const minPhylumSize = Math.max(1, options?.minPhylumSize ?? 1);
   const conservationPercent = Math.max(0, Math.min(100, options?.conservationPercent ?? 0));
   const limit = Math.max(1, options?.limit ?? EDGE_PHYLUM_BREAKDOWN_TOP_N);
 
-  return readEdgePhylumRows(bundle, thresholdBp, directed, source, target, minPhylumSize)
+  return readEdgePhylumRows(
+    bundle,
+    thresholdBp,
+    directed,
+    source,
+    target,
+    minPhylumSize,
+    options?.normalizationMode
+  )
     .map((row) => ({
       ...row,
       meetsConservationThreshold: row.percent >= conservationPercent
@@ -610,6 +658,43 @@ export function applyAverageAssociationSummary(
     .filter((edge) => edge.averagePercent >= minAveragePercent)
     .map(({ averagePercent, ...edge }) => edge)
     .sort((a, b) => b.count - a.count || a.source.localeCompare(b.source));
+
+  return rebuildSummaryFromEdges(summary, undirected, directed);
+}
+
+export function reweightAssociationSummary(
+  bundle: OperonAssociationsBundle,
+  summary: OperonAssociationSummary,
+  options: {
+    minPhylumSize: number;
+    phylumId?: string | null;
+    normalizationMode: AssociationNormalizationMode;
+  }
+): OperonAssociationSummary {
+  const reweight = <TEdge extends UndirectedEdge | DirectedEdge>(
+    edge: TEdge,
+    directed: boolean
+  ): TEdge => {
+    const averagePercent = averageAssociationPercentForEdge(
+      bundle,
+      summary.thresholdBp,
+      directed,
+      edge.source,
+      edge.target,
+      {
+        minPhylumSize: options.minPhylumSize,
+        phylumId: options.phylumId,
+        normalizationMode: options.normalizationMode
+      }
+    );
+    return {
+      ...edge,
+      count: Number(averagePercent.toFixed(1))
+    };
+  };
+
+  const undirected = summary.undirected.map((edge) => reweight(edge, false));
+  const directed = summary.directed.map((edge) => reweight(edge, true));
 
   return rebuildSummaryFromEdges(summary, undirected, directed);
 }

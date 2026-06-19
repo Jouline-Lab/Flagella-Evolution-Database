@@ -2,7 +2,8 @@
 
 import * as d3 from "d3";
 import { createPortal } from "react-dom";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { ChevronDown, ChevronUp, ExternalLink } from "lucide-react";
 import { escapeHtml } from "@/lib/geneCorrelation/jaccardHeatmapCore";
 import { classifyGene } from "@/lib/flagellaGeneClassification";
 import {
@@ -11,7 +12,11 @@ import {
   FLAGELLA_CATEGORY_ORDER
 } from "@/lib/flagellaCategoryColors";
 import { DownloadActionButton } from "@/components/DownloadActionButton";
-import type { DirectedEdge, UndirectedEdge } from "@/lib/operonSummary/operonAssociationsCore";
+import type {
+  AssociationNormalizationMode,
+  DirectedEdge,
+  UndirectedEdge
+} from "@/lib/operonSummary/operonAssociationsCore";
 
 const VIEW_W = 940;
 const VIEW_H = 640;
@@ -33,6 +38,16 @@ const LEGEND_ITEM_H = 15;
 const LEGEND_SWATCH_R = 5;
 const LEGEND_TITLE_SIZE = 10;
 const LEGEND_TEXT_SIZE = 8.5;
+const SERPENTINE_LEFT_X = 95;
+const SERPENTINE_STEP_X = 128;
+const SERPENTINE_ROW_GAP = SERPENTINE_STEP_X;
+const SERPENTINE_TOP_Y = 100;
+const BACKBONE_STEP_X = 112;
+const BACKBONE_COMPONENT_GAP = 160;
+const BACKBONE_BRANCH_MIN_DISTANCE = 74;
+const BACKBONE_BRANCH_MAX_DISTANCE = 142;
+const SERPENTINE_COMPONENT_PAD_Y = 92;
+const SERPENTINE_AUTO_MAX_ROW_WIDTH = 760;
 
 type NetworkTheme = {
   canvasBg: string;
@@ -111,11 +126,13 @@ type RawLink = {
   curveSign: -1 | 0 | 1;
 };
 
-type LayoutMode = "force" | "backbone";
+type LayoutMode = "force" | "backbone" | "serpentine";
+type SerpentineGenesPerRow = "auto" | number;
 
 type BackboneLayout = {
   positions: Map<string, { x: number; y: number }>;
   curveSigns: Map<string, -1 | 0 | 1>;
+  height: number;
 };
 
 type TooltipState = { x: number; y: number; html: string } | null;
@@ -129,11 +146,17 @@ type EdgePhylumBreakdownItem = {
   meetsConservationThreshold: boolean;
 };
 
+type EdgeMetrics = {
+  cladeAveragePercent: number;
+  genePresentAveragePercent?: number;
+};
+
 type PinnedEdgeState = {
   source: string;
   target: string;
   count: number;
   averageGapBp?: number;
+  metrics?: EdgeMetrics;
   breakdown: EdgePhylumBreakdownItem[];
 };
 
@@ -144,18 +167,42 @@ function formatAverageGapBp(averageGapBp: number | undefined): string | null {
   return `${Math.round(averageGapBp).toLocaleString()} bp`;
 }
 
+function buildEdgeMetricHtml(
+  count: number,
+  normalizationMode: AssociationNormalizationMode,
+  cladeNormalizationLabel: string,
+  metrics?: EdgeMetrics
+): string {
+  const cladeAverage = metrics?.cladeAveragePercent ?? count;
+  const genePresentAverage = metrics?.genePresentAveragePercent;
+  const activeLabel =
+    normalizationMode === "genePresent"
+      ? "Both-genes-present visual weight"
+      : `${cladeNormalizationLabel} visual weight`;
+  return (
+    `<b>${escapeHtml(cladeNormalizationLabel)}:</b> ${cladeAverage.toFixed(1)}% average<br>` +
+    (typeof genePresentAverage === "number"
+      ? `<b>Both genes present:</b> ${genePresentAverage.toFixed(1)}% average<br>`
+      : "") +
+    `<b>${activeLabel}:</b> ${count.toFixed(1)}%<br>`
+  );
+}
+
 function buildEdgeHoverHtml(
   source: string,
   target: string,
   count: number,
   averageGapBp: number | undefined,
-  directed: boolean
+  directed: boolean,
+  normalizationMode: AssociationNormalizationMode,
+  cladeNormalizationLabel: string,
+  metrics?: EdgeMetrics
 ): string {
   const arrow = directed ? " → " : " ↔ ";
   const averageDistance = formatAverageGapBp(averageGapBp);
   return (
     `<b>${escapeHtml(source)}</b>${arrow}<b>${escapeHtml(target)}</b><br>` +
-    `<b>Average prevalence:</b> ${count.toFixed(1)}%<br>` +
+    buildEdgeMetricHtml(count, normalizationMode, cladeNormalizationLabel, metrics) +
     (averageDistance ? `<b>Avg distance:</b> ${averageDistance}<br>` : "") +
     `<i>Click for phylum prevalence</i>`
   );
@@ -440,6 +487,75 @@ function orientPathByDirection(nodePath: string[], links: RawLink[], directed: b
   return reverseScore > forwardScore ? [...nodePath].reverse() : nodePath;
 }
 
+function strongestLinkByPair(links: RawLink[]): Map<string, RawLink> {
+  const bestByPair = new Map<string, RawLink>();
+  for (const link of links) {
+    const key = unorderedPairKey(link.source, link.target);
+    const existing = bestByPair.get(key);
+    if (!existing || link.count > existing.count) {
+      bestByPair.set(key, link);
+    }
+  }
+  return bestByPair;
+}
+
+function promoteStrongAlternateBackboneNodes(nodePath: string[], component: string[], links: RawLink[]): string[] {
+  if (nodePath.length < 2) {
+    return nodePath;
+  }
+
+  const bestByPair = strongestLinkByPair(links);
+  const promoted = [...nodePath];
+  const promotedNodes = new Set(promoted);
+
+  for (let pass = 0; pass < component.length; pass += 1) {
+    let bestCandidate: { node: string; insertAfter: number; improvement: number } | null = null;
+
+    for (const node of component) {
+      if (promotedNodes.has(node)) {
+        continue;
+      }
+      for (let index = 0; index < promoted.length - 1; index += 1) {
+        const before = promoted[index];
+        const after = promoted[index + 1];
+        const direct = bestByPair.get(unorderedPairKey(before, after));
+        const first = bestByPair.get(unorderedPairKey(before, node));
+        const second = bestByPair.get(unorderedPairKey(node, after));
+        if (!direct || !first || !second) {
+          continue;
+        }
+
+        const strongestAlternate = Math.max(first.count, second.count);
+        if (strongestAlternate <= direct.count) {
+          continue;
+        }
+
+        const routeScore = first.count + second.count;
+        const improvement = Math.max(strongestAlternate - direct.count, routeScore - direct.count);
+        if (!bestCandidate || improvement > bestCandidate.improvement) {
+          bestCandidate = { node, insertAfter: index, improvement };
+        }
+      }
+    }
+
+    if (!bestCandidate) {
+      break;
+    }
+
+    promoted.splice(bestCandidate.insertAfter + 1, 0, bestCandidate.node);
+    promotedNodes.add(bestCandidate.node);
+  }
+
+  return promoted;
+}
+
+function getBackboneBranchDistance(distance: number): number {
+  return Math.max(
+    BACKBONE_BRANCH_MIN_DISTANCE,
+    Math.min(BACKBONE_BRANCH_MAX_DISTANCE, distance * 0.42)
+  );
+}
+
 function placeBranchNodeFromAnchors(
   node: string,
   links: RawLink[],
@@ -488,32 +604,73 @@ function placeBranchNodeFromAnchors(
   };
 }
 
-function buildBackboneLayout(nodes: string[], links: RawLink[], directed: boolean): BackboneLayout {
+function resolveSerpentineGenesPerRow(value: SerpentineGenesPerRow): number {
+  if (value === "auto") {
+    return Math.max(4, Math.floor(SERPENTINE_AUTO_MAX_ROW_WIDTH / SERPENTINE_STEP_X) + 1);
+  }
+  return Math.max(2, Math.min(12, Math.round(value)));
+}
+
+function placeSerpentineBackbonePath(nodePath: string[], rowY: number, genesPerRow: number) {
+  const positions = new Map<string, { x: number; y: number }>();
+  const rowCount = Math.max(1, Math.ceil(nodePath.length / genesPerRow));
+  for (let index = 0; index < nodePath.length; index += 1) {
+    const row = Math.floor(index / genesPerRow);
+    const col = index % genesPerRow;
+    const visualCol = row % 2 === 0 ? col : genesPerRow - 1 - col;
+    positions.set(nodePath[index], {
+      x: SERPENTINE_LEFT_X + visualCol * SERPENTINE_STEP_X,
+      y: rowY + row * SERPENTINE_ROW_GAP
+    });
+  }
+  return { positions, rowCount };
+}
+
+function buildBackboneLayout(
+  nodes: string[],
+  links: RawLink[],
+  directed: boolean,
+  layoutMode: Extract<LayoutMode, "backbone" | "serpentine"> = "backbone",
+  serpentineGenesPerRow: SerpentineGenesPerRow = "auto"
+): BackboneLayout {
   const positions = new Map<string, { x: number; y: number }>();
   const curveSigns = new Map<string, -1 | 0 | 1>();
   const components = connectedComponents(nodes, links);
-  let rowY = 110;
+  let rowY = layoutMode === "serpentine" ? SERPENTINE_TOP_Y : 110;
+  let layoutHeight = VIEW_H;
   for (const component of components) {
     const componentSet = new Set(component);
     const componentLinks = links.filter((link) => componentSet.has(link.source) && componentSet.has(link.target));
     const tree = maximumSpanningTree(component, componentLinks);
     const chosenPath = chooseBackbonePath(component, tree).nodePath;
-    const nodePath = orientPathByDirection(chosenPath, componentLinks, directed);
+    const orientedPath = orientPathByDirection(chosenPath, componentLinks, directed);
+    const nodePath = promoteStrongAlternateBackboneNodes(orientedPath, component, componentLinks);
     const backboneIndexByNode = new Map(nodePath.map((node, index) => [node, index]));
-    const pathEdgeByPair = new Map(tree.map((edge) => [unorderedPairKey(edge.source, edge.target), edge]));
-    const desiredXs = new Map<string, number>();
-    let x = 90;
-    for (let i = 0; i < nodePath.length; i += 1) {
-      const node = nodePath[i];
-      desiredXs.set(node, x);
-      if (i < nodePath.length - 1) {
-        const edge = pathEdgeByPair.get(unorderedPairKey(node, nodePath[i + 1]));
-        x += edge?.targetDistance ?? MIN_GAP_LINK_DISTANCE;
+
+    let scale = 1;
+    let componentRowCount = 1;
+    if (layoutMode === "serpentine") {
+      const placed = placeSerpentineBackbonePath(
+        nodePath,
+        rowY,
+        resolveSerpentineGenesPerRow(serpentineGenesPerRow)
+      );
+      componentRowCount = placed.rowCount;
+      for (const [node, position] of placed.positions) {
+        positions.set(node, position);
       }
-    }
-    const scale = x > VIEW_W - 120 ? Math.max(0.55, (VIEW_W - 210) / Math.max(1, x - 90)) : 1;
-    for (const node of nodePath) {
-      positions.set(node, { x: 90 + ((desiredXs.get(node) ?? 90) - 90) * scale, y: rowY });
+    } else {
+      const desiredXs = new Map<string, number>();
+      let x = 90;
+      for (let i = 0; i < nodePath.length; i += 1) {
+        const node = nodePath[i];
+        desiredXs.set(node, x);
+        x += BACKBONE_STEP_X;
+      }
+      scale = x > VIEW_W - 120 ? Math.max(0.55, (VIEW_W - 210) / Math.max(1, x - 90)) : 1;
+      for (const node of nodePath) {
+        positions.set(node, { x: 90 + ((desiredXs.get(node) ?? 90) - 90) * scale, y: rowY });
+      }
     }
 
     const treeAdjacency = new Map<string, RawLink[]>();
@@ -540,9 +697,19 @@ function buildBackboneLayout(nodes: string[], links: RawLink[], directed: boolea
         const branchSide = extraBranchIndex % 2 === 0 ? -1 : 1;
         const branchDepth = current.depth + 1;
         const branchDirection = directed && edge.target === current.node ? -1 : 1;
+        const fallbackDistance =
+          layoutMode === "serpentine"
+            ? Math.min(92, Math.max(62, edge.targetDistance * 0.42))
+            : getBackboneBranchDistance(edge.targetDistance * scale);
         const nextLinks = componentLinks
           .filter((link) => link.source === next || link.target === next)
-          .map((link) => ({ ...link, targetDistance: link.targetDistance * scale }));
+          .map((link) => ({
+            ...link,
+            targetDistance:
+              layoutMode === "serpentine"
+                ? Math.min(110, link.targetDistance * 0.45)
+                : getBackboneBranchDistance(link.targetDistance * scale)
+          }));
         const branchPosition = placeBranchNodeFromAnchors(
           next,
           nextLinks,
@@ -550,11 +717,11 @@ function buildBackboneLayout(nodes: string[], links: RawLink[], directed: boolea
           parent,
           branchSide,
           branchDirection,
-          edge.targetDistance * scale
+          fallbackDistance
         );
         positions.set(next, {
-          x: branchPosition.x,
-          y: branchPosition.y + branchSide * (branchDepth - 1) * 24
+          x: Math.max(42, Math.min(VIEW_W - 42, branchPosition.x)),
+          y: Math.max(44, branchPosition.y + branchSide * (branchDepth - 1) * 22)
         });
         extraBranchIndex += 1;
         queue.push({ node: next, depth: branchDepth, branchIndex: extraBranchIndex });
@@ -563,7 +730,10 @@ function buildBackboneLayout(nodes: string[], links: RawLink[], directed: boolea
 
     for (const node of component) {
       if (!positions.has(node)) {
-        positions.set(node, { x: 90 + extraBranchIndex * 90, y: rowY + (extraBranchIndex % 2 === 0 ? -80 : 80) });
+        positions.set(node, {
+          x: 90 + (extraBranchIndex % 7) * 90,
+          y: rowY + (layoutMode === "serpentine" ? componentRowCount * SERPENTINE_ROW_GAP : 0) + (extraBranchIndex % 2 === 0 ? -80 : 80)
+        });
         extraBranchIndex += 1;
       }
     }
@@ -584,10 +754,33 @@ function buildBackboneLayout(nodes: string[], links: RawLink[], directed: boolea
         sourceBackboneIndex != null &&
         targetBackboneIndex != null &&
         Math.abs(sourceBackboneIndex - targetBackboneIndex) > 1;
+      const isSnakeBackboneEdge =
+        layoutMode === "serpentine" &&
+        sourceBackboneIndex != null &&
+        targetBackboneIndex != null &&
+        Math.abs(sourceBackboneIndex - targetBackboneIndex) === 1;
+      const sourcePosition = positions.get(firstLink.source);
+      const targetPosition = positions.get(firstLink.target);
+      const isSnakeCrossRowEdge =
+        layoutMode === "serpentine" &&
+        sourcePosition != null &&
+        targetPosition != null &&
+        Math.abs(sourcePosition.y - targetPosition.y) > NODE_RADIUS * 2;
 
       if (!directed || pairLinks.length <= 1) {
         for (const link of pairLinks) {
-          curveSigns.set(directedPairKey(link.source, link.target), isBackboneSkipEdge ? 1 : 0);
+          const linkSourceBackboneIndex = backboneIndexByNode.get(link.source);
+          const linkTargetBackboneIndex = backboneIndexByNode.get(link.target);
+          const isReverseSnakeLink =
+            layoutMode === "serpentine" &&
+            linkSourceBackboneIndex != null &&
+            linkTargetBackboneIndex != null &&
+            Math.abs(linkSourceBackboneIndex - linkTargetBackboneIndex) === 1 &&
+            linkTargetBackboneIndex < linkSourceBackboneIndex;
+          curveSigns.set(
+            directedPairKey(link.source, link.target),
+            isReverseSnakeLink ? 1 : isSnakeBackboneEdge || isSnakeCrossRowEdge ? 0 : isBackboneSkipEdge ? 1 : 0
+          );
         }
         continue;
       }
@@ -596,20 +789,48 @@ function buildBackboneLayout(nodes: string[], links: RawLink[], directed: boolea
         (a, b) => b.count - a.count || a.source.localeCompare(b.source) || a.target.localeCompare(b.target)
       );
       sortedPairLinks.forEach((link, index) => {
-        curveSigns.set(directedPairKey(link.source, link.target), index === 0 && !isBackboneSkipEdge ? 0 : 1);
+        const linkSourceBackboneIndex = backboneIndexByNode.get(link.source);
+        const linkTargetBackboneIndex = backboneIndexByNode.get(link.target);
+        const isReverseSnakeLink =
+          layoutMode === "serpentine" &&
+          linkSourceBackboneIndex != null &&
+          linkTargetBackboneIndex != null &&
+          Math.abs(linkSourceBackboneIndex - linkTargetBackboneIndex) === 1 &&
+          linkTargetBackboneIndex < linkSourceBackboneIndex;
+        const isLessDominantDirection = index > 0;
+        curveSigns.set(
+          directedPairKey(link.source, link.target),
+          layoutMode === "serpentine" && (isReverseSnakeLink || isLessDominantDirection)
+            ? 1
+            : isSnakeCrossRowEdge
+              ? 0
+              : index === 0 && (isSnakeBackboneEdge || !isBackboneSkipEdge)
+                ? 0
+                : 1
+        );
       });
     }
 
-    rowY += 210;
+    if (layoutMode === "serpentine") {
+      const componentMaxY = component.reduce((maxY, node) => {
+        const position = positions.get(node);
+        return Math.max(maxY, position?.y ?? rowY);
+      }, rowY);
+      rowY = componentMaxY + SERPENTINE_COMPONENT_PAD_Y;
+    } else {
+      rowY += BACKBONE_COMPONENT_GAP;
+    }
+    layoutHeight = Math.max(layoutHeight, rowY + 40);
   }
 
-  return { positions, curveSigns };
+  return { positions, curveSigns, height: layoutHeight };
 }
 
 function linkGeometry(
   link: SimLink,
   nodeById: Map<string, SimNode>,
-  directed: boolean
+  directed: boolean,
+  canvasHeight = VIEW_H
 ): { pathD: string; labelX: number; labelY: number; arrowPath?: string } {
   const start = getNodeCoords(link.source, nodeById);
   const end = getNodeCoords(link.target, nodeById);
@@ -618,7 +839,7 @@ function linkGeometry(
   const len = Math.hypot(dx, dy);
   if (len < 1) {
     const centerDx = start.x - VIEW_W / 2;
-    const centerDy = start.y - VIEW_H / 2;
+    const centerDy = start.y - canvasHeight / 2;
     const centerLen = Math.hypot(centerDx, centerDy);
     const outX = centerLen > 1 ? centerDx / centerLen : 0;
     const outY = centerLen > 1 ? centerDy / centerLen : -1;
@@ -742,10 +963,15 @@ export default function OperonAssociationNetworkGraph({
   minCount,
   hideIsolated,
   layoutMode,
+  serpentineGenesPerRow = "auto",
   networkResetKey,
   downloadFilename,
+  controls,
   onOpenPhyleticDistribution,
   canOpenPhyleticDistribution = false,
+  normalizationMode = "clade",
+  cladeNormalizationLabel = "Genomes with >=25 genes",
+  getEdgeMetrics,
   getEdgePhylumBreakdown
 }: {
   title: string;
@@ -757,27 +983,36 @@ export default function OperonAssociationNetworkGraph({
   minCount: number;
   hideIsolated: boolean;
   layoutMode: LayoutMode;
+  serpentineGenesPerRow?: SerpentineGenesPerRow;
   networkResetKey: string;
   downloadFilename: string;
+  controls?: ReactNode;
   onOpenPhyleticDistribution?: () => void;
   canOpenPhyleticDistribution?: boolean;
+  normalizationMode?: AssociationNormalizationMode;
+  cladeNormalizationLabel?: string;
+  getEdgeMetrics?: (source: string, target: string) => EdgeMetrics | undefined;
   getEdgePhylumBreakdown?: (source: string, target: string) => EdgePhylumBreakdownItem[];
 }) {
   const svgRef = useRef<SVGSVGElement | null>(null);
   const positionsRef = useRef<Map<string, { x: number; y: number }>>(new Map());
+  const zoomTransformRef = useRef<d3.ZoomTransform>(d3.zoomIdentity);
   const getEdgePhylumBreakdownRef = useRef(getEdgePhylumBreakdown);
+  const getEdgeMetricsRef = useRef(getEdgeMetrics);
   const [tooltip, setTooltip] = useState<TooltipState>(null);
   const [pinnedEdge, setPinnedEdge] = useState<PinnedEdgeState | null>(null);
   const [legendCollapsed, setLegendCollapsed] = useState(false);
 
   getEdgePhylumBreakdownRef.current = getEdgePhylumBreakdown;
+  getEdgeMetricsRef.current = getEdgeMetrics;
 
   const theme = isDarkMode ? NETWORK_THEME_DARK : NETWORK_THEME_LIGHT;
 
-  const { rawLinks, labels, maxCount } = useMemo(() => {
-    const filtered = edges.filter((edge) => edge.count >= minCount);
+  const { rawLinks, labels, minVisualCount, maxCount } = useMemo(() => {
+    const filtered = edges;
     const labelSet = new Set<string>();
-    let max = minCount;
+    let min = Number.POSITIVE_INFINITY;
+    let max = 0;
 
     const directedEdgeKeys = new Set(filtered.map((edge) => `${edge.source}\t${edge.target}`));
     const finiteAverageGaps = filtered
@@ -788,6 +1023,7 @@ export default function OperonAssociationNetworkGraph({
     const links: RawLink[] = filtered.map((edge) => {
       labelSet.add(edge.source);
       labelSet.add(edge.target);
+      min = Math.min(min, edge.count);
       max = Math.max(max, edge.count);
       const hasReciprocal =
         directed &&
@@ -815,9 +1051,10 @@ export default function OperonAssociationNetworkGraph({
     return {
       rawLinks: links,
       labels: Array.from(labelSet).sort((a, b) => a.localeCompare(b)),
+      minVisualCount: Number.isFinite(min) ? min : 0,
       maxCount: max
     };
-  }, [edges, geneNeighborCounts, minCount, directed]);
+  }, [edges, geneNeighborCounts, directed]);
 
   const linkPreview = useMemo(() => {
     const connected = new Set<string>();
@@ -834,7 +1071,6 @@ export default function OperonAssociationNetworkGraph({
   useEffect(() => {
     setPinnedEdge(null);
     setTooltip(null);
-    positionsRef.current.clear();
   }, [networkResetKey]);
 
   const resolveLinkGeneIds = useCallback(
@@ -853,11 +1089,13 @@ export default function OperonAssociationNetworkGraph({
     (link: SimLink, nodeById: Map<string, SimNode>) => {
       const { source, target } = resolveLinkGeneIds(link, nodeById);
       const breakdown = getEdgePhylumBreakdownRef.current?.(source, target) ?? [];
+      const metrics = getEdgeMetricsRef.current?.(source, target);
       setPinnedEdge({
         source,
         target,
         count: link.count,
         averageGapBp: link.averageGapBp,
+        metrics,
         breakdown
       });
       setTooltip(null);
@@ -887,7 +1125,7 @@ export default function OperonAssociationNetworkGraph({
 
     const widthScale = d3
       .scaleLinear()
-      .domain([minCount, maxCount])
+      .domain([minVisualCount, Math.max(minVisualCount, maxCount)])
       .range([1.5, 18])
       .clamp(true);
     const edgeOutlinePad = 2.4;
@@ -927,12 +1165,16 @@ export default function OperonAssociationNetworkGraph({
         curveSign: link.curveSign
       }));
 
-    if (layoutMode === "backbone") {
+    let renderHeight = VIEW_H;
+    if (layoutMode === "backbone" || layoutMode === "serpentine") {
       const layout = buildBackboneLayout(
         nodes.map((node) => node.id),
         rawLinks.filter((link) => nodeById.has(link.source) && nodeById.has(link.target)),
-        directed
+        directed,
+        layoutMode,
+        serpentineGenesPerRow
       );
+      renderHeight = layout.height;
       for (const node of nodes) {
         const position = layout.positions.get(node.id);
         if (position) {
@@ -951,14 +1193,14 @@ export default function OperonAssociationNetworkGraph({
       svg.removeChild(svg.firstChild);
     }
     const root = d3.select(svg);
-    root.attr("viewBox", `0 0 ${VIEW_W} ${VIEW_H}`);
+    root.attr("viewBox", `0 0 ${VIEW_W} ${renderHeight}`);
 
     root
       .append("rect")
       .attr("x", 0)
       .attr("y", 0)
       .attr("width", VIEW_W)
-      .attr("height", VIEW_H)
+      .attr("height", renderHeight)
       .attr("fill", theme.canvasBg);
 
     const container = root.append("g").attr("class", "network-graph-layer");
@@ -967,9 +1209,11 @@ export default function OperonAssociationNetworkGraph({
       .zoom<SVGSVGElement, unknown>()
       .scaleExtent([0.2, 6])
       .on("zoom", (event) => {
+        zoomTransformRef.current = event.transform;
         container.attr("transform", event.transform.toString());
       });
     root.call(zoom);
+    root.call(zoom.transform, zoomTransformRef.current);
 
     const linkOutlineSel = container
       .append("g")
@@ -1090,7 +1334,16 @@ export default function OperonAssociationNetworkGraph({
         setTooltip({
           x: event.clientX,
           y: event.clientY,
-          html: buildEdgeHoverHtml(source, target, d.count, d.averageGapBp, directed)
+          html: buildEdgeHoverHtml(
+            source,
+            target,
+            d.count,
+            d.averageGapBp,
+            directed,
+            normalizationMode,
+            cladeNormalizationLabel,
+            getEdgeMetricsRef.current?.(source, target)
+          )
         });
       });
       selection.on("mouseleave", () => setTooltip(null));
@@ -1138,19 +1391,19 @@ export default function OperonAssociationNetworkGraph({
     type EdgeLabelSelection = d3.Selection<SVGTextElement, SimLink, SVGGElement, unknown>;
 
     const positionEdges = (sel: EdgeSelection) => {
-      sel.attr("d", (d) => linkGeometry(d, nodeById, directed).pathD);
+      sel.attr("d", (d) => linkGeometry(d, nodeById, directed, renderHeight).pathD);
     };
 
     const positionArrows = (sel: ArrowSelection) => {
       sel.attr("d", (d) => {
-        const geometry = linkGeometry(d, nodeById, true);
+        const geometry = linkGeometry(d, nodeById, true, renderHeight);
         return geometry.arrowPath ?? "";
       });
     };
 
     const positionEdgeLabels = (sel: EdgeLabelSelection) => {
       sel.each(function (d) {
-        const geometry = linkGeometry(d, nodeById, directed);
+        const geometry = linkGeometry(d, nodeById, directed, renderHeight);
         d3.select(this).attr("x", geometry.labelX).attr("y", geometry.labelY);
       });
     };
@@ -1238,7 +1491,11 @@ export default function OperonAssociationNetworkGraph({
         .attr("font-size", LEGEND_TITLE_SIZE)
         .attr("font-weight", 600)
         .attr("fill", theme.legendTitle)
-        .text("Avg prevalence (width)");
+        .text(
+          normalizationMode === "genePresent"
+            ? "Both genes present %"
+            : `${cladeNormalizationLabel} %`
+        );
 
       cursorY += LEGEND_TITLE_SIZE + 8;
       const wedgeTopY = cursorY;
@@ -1274,7 +1531,7 @@ export default function OperonAssociationNetworkGraph({
         .attr("y", cursorY)
         .attr("font-size", LEGEND_TEXT_SIZE)
         .attr("fill", theme.legendText)
-        .text(`${minCount}%`);
+        .text(`${minVisualCount.toFixed(1)}`);
 
       legend
         .append("text")
@@ -1283,7 +1540,7 @@ export default function OperonAssociationNetworkGraph({
         .attr("text-anchor", "end")
         .attr("font-size", LEGEND_TEXT_SIZE)
         .attr("fill", theme.legendText)
-        .text(`${maxCount.toFixed(1)}%`);
+        .text(`${maxCount.toFixed(1)}`);
 
       if (categories.length > 0) {
         cursorY += 10;
@@ -1325,13 +1582,15 @@ export default function OperonAssociationNetworkGraph({
     labels,
     rawLinks,
     geneNeighborCounts,
-    minCount,
+    minVisualCount,
     maxCount,
     hideIsolated,
     theme,
     isDarkMode,
     directed,
+    normalizationMode,
     layoutMode,
+    serpentineGenesPerRow,
     legendCollapsed,
     handleEdgePin,
     resolveLinkGeneIds
@@ -1359,34 +1618,34 @@ export default function OperonAssociationNetworkGraph({
   const hasData = labels.length > 0;
 
   return (
-    <div className="rounded-2xl border border-black/10 dark:border-white/10 bg-[var(--dialog-bg)] overflow-hidden">
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-black/10 dark:border-white/10 px-4 py-4 sm:px-5">
+    <div className="rounded-lg border border-black/10 dark:border-white/10 bg-[var(--dialog-bg)] overflow-hidden">
+      <div className="space-y-4 border-b border-black/10 dark:border-white/10 px-4 py-4 sm:px-5">
         <div className="min-w-0">
           <h2 className="text-lg font-semibold text-[var(--text)] m-0">{title}</h2>
           <p className="text-xs text-[var(--text-soft)] m-0 mt-1">{description}</p>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setLegendCollapsed((current) => !current)}
-            className="rounded-md border border-black/10 dark:border-white/10 px-3 py-1.5 text-xs font-semibold text-[var(--text-soft)] hover:text-[var(--text)]"
-            aria-pressed={legendCollapsed}
-          >
-            {legendCollapsed ? "Show legend" : "Hide legend"}
-          </button>
-          {onOpenPhyleticDistribution ? (
-            <button
-              type="button"
-              onClick={onOpenPhyleticDistribution}
-              disabled={!canOpenPhyleticDistribution}
-              className="rounded-md border border-black/10 dark:border-white/10 px-3 py-1.5 text-xs font-semibold text-[var(--text-soft)] hover:text-[var(--text)] disabled:cursor-not-allowed disabled:opacity-50"
+        <div className="flex min-w-0 items-end gap-3 overflow-x-auto pb-1">
+          {controls}
+          <div className="ml-auto flex shrink-0 items-end justify-end gap-2">
+            {onOpenPhyleticDistribution ? (
+              <button
+                type="button"
+                onClick={onOpenPhyleticDistribution}
+                disabled={!canOpenPhyleticDistribution}
+                className="inline-flex h-9 shrink-0 items-center gap-2 whitespace-nowrap rounded-md border border-[var(--input-border)] bg-[var(--surface)] px-3 text-xs font-semibold text-[var(--text-soft)] transition-colors hover:border-[var(--primary)] hover:text-[var(--text)] disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Phyletic Distribution
+                <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
+              </button>
+            ) : null}
+            <DownloadActionButton
+              onClick={downloadNetworkSvg}
+              disabled={!hasData || linkPreview.edgeCount === 0}
+              className="h-9 shrink-0 whitespace-nowrap rounded-md border-[var(--input-border)] bg-[var(--surface)] px-3 text-xs font-semibold text-[var(--text-soft)] hover:border-[var(--primary)] hover:text-[var(--text)]"
             >
-              Go to Phyletic Distribution
-            </button>
-          ) : null}
-          <DownloadActionButton onClick={downloadNetworkSvg} disabled={!hasData || linkPreview.edgeCount === 0}>
-            Download SVG
-          </DownloadActionButton>
+              Download SVG
+            </DownloadActionButton>
+          </div>
         </div>
       </div>
 
@@ -1403,11 +1662,15 @@ export default function OperonAssociationNetworkGraph({
                 {pinnedEdge.source} {directed ? "→" : "↔"} {pinnedEdge.target}
               </p>
               <p className="text-xs text-[var(--text-soft)] m-0 mt-1 tabular-nums">
-                {pinnedEdge.count.toFixed(1)}% average prevalence
+                {cladeNormalizationLabel}: {(pinnedEdge.metrics?.cladeAveragePercent ?? pinnedEdge.count).toFixed(1)}%
+                {typeof pinnedEdge.metrics?.genePresentAveragePercent === "number"
+                  ? ` · both genes present: ${pinnedEdge.metrics.genePresentAveragePercent.toFixed(1)}%`
+                  : ""}
+                {` · active visual weight: ${pinnedEdge.count.toFixed(1)}%`}
                 {formatAverageGapBp(pinnedEdge.averageGapBp)
                   ? ` · avg distance ${formatAverageGapBp(pinnedEdge.averageGapBp)}`
                   : ""}{" "}
-                · top phyla by prevalence (% of each phylum&apos;s assemblies with this edge)
+                · {normalizationMode === "genePresent" ? "top phyla by prevalence (% of assemblies where both genes are present)" : "top phyla by prevalence (% of each phylum's included assemblies)"}
               </p>
             </div>
             <button
@@ -1438,7 +1701,7 @@ export default function OperonAssociationNetworkGraph({
                   <div className="flex items-center justify-between gap-3 tabular-nums mt-0.5">
                     <span className="text-[10px]">
                       {item.assembliesWithEdge.toLocaleString()} of {item.phylumTotal.toLocaleString()}{" "}
-                      assemblies
+                      {normalizationMode === "genePresent" ? "opportunities" : "assemblies"}
                     </span>
                   </div>
                   <div className="mt-1 h-1.5 rounded-full bg-black/10 dark:bg-white/10 overflow-hidden">
@@ -1459,7 +1722,7 @@ export default function OperonAssociationNetworkGraph({
         </div>
       ) : null}
 
-      <div className="relative overflow-hidden min-h-[400px] bg-[var(--surface)]">
+      <div className="relative h-[1080px] overflow-hidden bg-[var(--surface)]">
         {hasData ? (
           <svg ref={svgRef} className="block w-full h-auto" aria-label={title} />
         ) : (
@@ -1467,10 +1730,25 @@ export default function OperonAssociationNetworkGraph({
             No operon association data available yet.
           </p>
         )}
+        {hasData ? (
+          <button
+            type="button"
+            onClick={() => setLegendCollapsed((current) => !current)}
+            className="absolute right-3 top-3 inline-flex h-7 w-7 items-center justify-center rounded-md border border-[var(--input-border)] bg-[var(--dialog-bg)] text-[var(--text-soft)] shadow-sm transition-colors hover:border-[var(--primary)] hover:text-[var(--text)]"
+            aria-pressed={legendCollapsed}
+            aria-label={legendCollapsed ? "Show legend" : "Hide legend"}
+            title={legendCollapsed ? "Show legend" : "Hide legend"}
+          >
+            {legendCollapsed ? (
+              <ChevronDown className="h-3.5 w-3.5" aria-hidden="true" />
+            ) : (
+              <ChevronUp className="h-3.5 w-3.5" aria-hidden="true" />
+            )}
+          </button>
+        ) : null}
         {hasData && linkPreview.edgeCount === 0 ? (
           <p className="pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2 text-center text-sm text-[var(--text-soft)] px-4">
-            No edges meet the minimum average association of {minCount}%. Lower the average
-            threshold.
+            No edges meet the minimum average association of {minCount}%. Lower the threshold.
           </p>
         ) : null}
       </div>

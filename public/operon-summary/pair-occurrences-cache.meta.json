@@ -1,6 +1,8 @@
 {
   "assembliesScanned": 50995,
-  "assembliesWithCoords": 33007,
-  "scannedAt": 1781288750999,
-  "pairOccurrences": 977856
+  "minFlagellarGeneCount": 25,
+  "eligibleAssembliesWithMinFlagellarGenes": 28253,
+  "assembliesWithCoords": 28253,
+  "scannedAt": 1781556272964,
+  "pairOccurrences": 947095
 }

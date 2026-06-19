@@ -51,8 +51,8 @@ export function GeneSelectionSidebar({
   const activeDifferenceGenes = activeGenes.filter(
     (gene) => gene.includes(">") || gene.includes("-")
   );
-  const allRegularGenesActive = regularGenes.length > 0 && regularGenes.every((gene) => activeGenes.includes(gene));
-  const allCustomGenesActive = customGenes.length > 0 && customGenes.every((gene) => activeGenes.includes(gene));
+  const hasActiveRegularGenes = activeRegularGenes.length > 0;
+  const hasActiveCustomGenes = activeCustomGenes.length > 0;
 
   const regularGenesSorted = React.useMemo(() => {
     return [...regularGenes].sort((a, b) => {
@@ -181,7 +181,7 @@ export function GeneSelectionSidebar({
                       variant="outline"
                       className="flex items-center gap-1 text-xs h-7 px-2"
                     >
-                      {allRegularGenesActive ? (
+                      {hasActiveRegularGenes ? (
                         <>
                           <Square className="w-3 h-3" />
                           Deselect All
@@ -280,7 +280,7 @@ export function GeneSelectionSidebar({
                   variant="outline"
                   className="flex items-center gap-1 text-xs h-7 px-2"
                 >
-                  {allCustomGenesActive ? (
+                  {hasActiveCustomGenes ? (
                     <>
                       <Square className="w-3 h-3" />
                       Deselect All

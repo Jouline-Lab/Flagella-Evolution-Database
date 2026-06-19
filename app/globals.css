@@ -1298,6 +1298,10 @@ html[data-theme="dark"] .home-database-logo-dark {
   gap: 1rem;
 }
 
+.species-page-inner > * {
+  min-width: 0;
+}
+
 .species-header {
   background: var(--surface);
   border: 1px solid var(--surface-border);

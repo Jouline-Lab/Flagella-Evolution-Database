@@ -19,6 +19,7 @@ const TSV_PATH = path.join(process.cwd(), "public", "flagellar_genes_phyletic_di
 const OUT_PATH = path.join(CACHE_DIR, "operon-associations-bundle.json");
 
 const THRESHOLD_STEPS = [500];
+const MIN_FLAGELLAR_GENE_COUNT = 25;
 
 function undirectedKey(a, b) {
   return a <= b ? `${a}\t${b}` : `${b}\t${a}`;
@@ -45,16 +46,23 @@ function addEdgePhylumAssembly(store, edgeKey, phylum, assembly) {
   assemblies.add(assembly);
 }
 
-function buildPhylumAssemblyTotals(occurrences, assemblyPhylum) {
+function isEligibleAssembly(assembly, assemblyMeta) {
+  const meta = assemblyMeta.get(assembly);
+  return Boolean(
+    meta &&
+      meta.phylum &&
+      meta.phylum !== "Unknown" &&
+      meta.flagellarGeneCount >= MIN_FLAGELLAR_GENE_COUNT
+  );
+}
+
+function buildPhylumAssemblyTotals(occurrences, assemblyMeta) {
   const sets = new Map();
   for (const occ of occurrences) {
-    if (!occ.assembly) {
+    if (!occ.assembly || !isEligibleAssembly(occ.assembly, assemblyMeta)) {
       continue;
     }
-    const phylum = assemblyPhylum.get(occ.assembly) ?? "Unknown";
-    if (phylum === "Unknown") {
-      continue;
-    }
+    const phylum = assemblyMeta.get(occ.assembly).phylum;
     const assemblySet = sets.get(phylum) ?? new Set();
     assemblySet.add(occ.assembly);
     sets.set(phylum, assemblySet);
@@ -93,6 +101,82 @@ function phylumPrevalenceList(phylumAssemblyMap, phylumTotals) {
     assembliesWithEdge,
     phylumTotal
   ]);
+}
+
+function buildGenePresenceByPhylum(assemblyMeta, phylumTotals) {
+  const genePresence = new Map();
+  for (const [assembly, meta] of assemblyMeta.entries()) {
+    if (
+      !meta.phylum ||
+      meta.phylum === "Unknown" ||
+      meta.flagellarGeneCount < MIN_FLAGELLAR_GENE_COUNT ||
+      !phylumTotals.has(meta.phylum)
+    ) {
+      continue;
+    }
+
+    for (const gene of meta.genes) {
+      let phylumMap = genePresence.get(gene);
+      if (!phylumMap) {
+        phylumMap = new Map();
+        genePresence.set(gene, phylumMap);
+      }
+      let assemblies = phylumMap.get(meta.phylum);
+      if (!assemblies) {
+        assemblies = new Set();
+        phylumMap.set(meta.phylum, assemblies);
+      }
+      assemblies.add(assembly);
+    }
+  }
+  return genePresence;
+}
+
+function intersectionSize(a, b) {
+  if (!a || !b) {
+    return 0;
+  }
+  const [small, large] = a.size <= b.size ? [a, b] : [b, a];
+  let count = 0;
+  for (const value of small) {
+    if (large.has(value)) {
+      count += 1;
+    }
+  }
+  return count;
+}
+
+function buildOpportunityPrevalenceMap(edgePhylumAssemblies, genePresenceByPhylum) {
+  return Object.fromEntries(
+    [...edgePhylumAssemblies.entries()].map(([edgeKey, phylumAssemblies]) => {
+      const [source, target] = edgeKey.split("\t");
+      const opportunityCounts = new Map();
+      const sourcePhyla = genePresenceByPhylum.get(source) ?? new Map();
+      const targetPhyla = genePresenceByPhylum.get(target) ?? new Map();
+      const phyla = new Set([...sourcePhyla.keys(), ...targetPhyla.keys()]);
+
+      for (const phylum of phyla) {
+        const opportunityCount = intersectionSize(sourcePhyla.get(phylum), targetPhyla.get(phylum));
+        if (opportunityCount > 0) {
+          opportunityCounts.set(phylum, opportunityCount);
+        }
+      }
+
+      const rows = [...opportunityCounts.entries()]
+        .map(([phylum, opportunityCount]) => {
+          const assembliesWithEdge = phylumAssemblies.get(phylum)?.size ?? 0;
+          return [phylum, assembliesWithEdge, opportunityCount];
+        })
+        .filter(([, , opportunityCount]) => opportunityCount > 0)
+        .sort((a, b) => {
+          const percentA = a[2] > 0 ? (100 * a[1]) / a[2] : 0;
+          const percentB = b[2] > 0 ? (100 * b[1]) / b[2] : 0;
+          return percentB - percentA || b[1] - a[1] || a[0].localeCompare(b[0]);
+        });
+
+      return [edgeKey, rows];
+    })
+  );
 }
 
 function buildSummaryFromCounts(
@@ -136,7 +220,7 @@ function buildSummaryFromCounts(
   };
 }
 
-function aggregateAtThreshold(occurrences, threshold, assemblyPhylum, phylumAssemblyTotals) {
+function aggregateAtThreshold(occurrences, threshold, assemblyMeta, phylumAssemblyTotals) {
   const undirectedCounts = new Map();
   const directedCounts = new Map();
   const undirectedGapSums = new Map();
@@ -152,8 +236,9 @@ function aggregateAtThreshold(occurrences, threshold, assemblyPhylum, phylumAsse
 
   for (const occ of occurrences) {
     if (occ.gap > threshold) continue;
+    if (!isEligibleAssembly(occ.assembly, assemblyMeta)) continue;
 
-    const phylum = assemblyPhylum.get(occ.assembly) ?? "Unknown";
+    const phylum = assemblyMeta.get(occ.assembly).phylum;
 
     const uKey = undirectedKey(occ.geneA, occ.geneB);
     const dKey = `${occ.upstream}\t${occ.downstream}`;
@@ -202,6 +287,17 @@ function aggregateAtThreshold(occurrences, threshold, assemblyPhylum, phylumAsse
       ])
     )
   };
+  const genePresenceByPhylum = buildGenePresenceByPhylum(assemblyMeta, phylumAssemblyTotals);
+  const edgeOpportunity = {
+    undirected: buildOpportunityPrevalenceMap(
+      undirectedPhylumAssemblies,
+      genePresenceByPhylum
+    ),
+    directed: buildOpportunityPrevalenceMap(
+      directedPhylumAssemblies,
+      genePresenceByPhylum
+    )
+  };
 
   const phylumSummaries = {};
   for (const [phylum, counts] of phylumUndirected.entries()) {
@@ -239,11 +335,12 @@ function aggregateAtThreshold(occurrences, threshold, assemblyPhylum, phylumAsse
     ),
     phylumSummaries,
     phyla,
-    edgePhylum
+    edgePhylum,
+    edgeOpportunity
   };
 }
 
-async function loadAssemblyPhylumMap() {
+async function loadAssemblyMetaMap() {
   if (!existsSync(TSV_PATH)) {
     throw new Error(`Missing taxonomy TSV: ${TSV_PATH}`);
   }
@@ -253,16 +350,24 @@ async function loadAssemblyPhylumMap() {
   const rl = createInterface({ input: stream, crlfDelay: Infinity });
   let idxAssembly = -1;
   let idxPhylum = -1;
+  let geneCountIndexes = [];
+  let headers = [];
 
   for await (const line of rl) {
     const trimmed = line.trim();
     if (!trimmed) continue;
     if (idxAssembly === -1) {
-      const headers = trimmed.split("\t");
+      headers = trimmed.split("\t");
       idxAssembly = headers.indexOf("assembly");
       idxPhylum = headers.indexOf("phylum");
+      geneCountIndexes = headers
+        .map((header, index) => (header.endsWith("_count") ? index : -1))
+        .filter((index) => index >= 0);
       if (idxAssembly === -1 || idxPhylum === -1) {
         throw new Error("Phyletic distribution TSV must include assembly and phylum columns.");
+      }
+      if (geneCountIndexes.length === 0) {
+        throw new Error("Phyletic distribution TSV must include *_count gene columns.");
       }
       continue;
     }
@@ -271,7 +376,14 @@ async function loadAssemblyPhylumMap() {
     const assembly = parts[idxAssembly]?.trim();
     const phylum = parts[idxPhylum]?.trim();
     if (assembly && phylum) {
-      map.set(assembly, phylum);
+      const genes = new Set();
+      for (const index of geneCountIndexes) {
+        const value = Number(parts[index]);
+        if (Number.isFinite(value) && value > 0) {
+          genes.add(headers[index].replace(/_count$/, ""));
+        }
+      }
+      map.set(assembly, { phylum, flagellarGeneCount: genes.size, genes });
     }
   }
 
@@ -317,21 +429,26 @@ async function loadOccurrencesFromCache() {
   };
 }
 
-const assemblyPhylum = await loadAssemblyPhylumMap();
-console.log(`Loaded taxonomy for ${assemblyPhylum.size.toLocaleString()} assemblies.`);
+const assemblyMeta = await loadAssemblyMetaMap();
+console.log(`Loaded taxonomy/gene counts for ${assemblyMeta.size.toLocaleString()} assemblies.`);
 
 const cache = await loadOccurrencesFromCache();
-const phylumAssemblyTotals = buildPhylumAssemblyTotals(cache.occurrences, assemblyPhylum);
+const phylumAssemblyTotals = buildPhylumAssemblyTotals(cache.occurrences, assemblyMeta);
+const eligibleAssemblyCount = [...phylumAssemblyTotals.values()].reduce((sum, count) => sum + count, 0);
+console.log(
+  `Using ${eligibleAssemblyCount.toLocaleString()} cached assemblies with at least ${MIN_FLAGELLAR_GENE_COUNT} flagellar genes.`
+);
 const summaries = {};
 const phylumSummariesByThreshold = {};
 const edgePhylumByThreshold = {};
+const edgeOpportunityByThreshold = {};
 let phyla = [];
 
 for (const threshold of THRESHOLD_STEPS) {
   const aggregated = aggregateAtThreshold(
     cache.occurrences,
     threshold,
-    assemblyPhylum,
+    assemblyMeta,
     phylumAssemblyTotals
   );
   aggregated.summary.assembliesScanned = cache.assembliesScanned;
@@ -339,6 +456,7 @@ for (const threshold of THRESHOLD_STEPS) {
   summaries[String(threshold)] = aggregated.summary;
   phylumSummariesByThreshold[String(threshold)] = aggregated.phylumSummaries;
   edgePhylumByThreshold[String(threshold)] = aggregated.edgePhylum;
+  edgeOpportunityByThreshold[String(threshold)] = aggregated.edgeOpportunity;
   phyla = aggregated.phyla;
   console.log(
     `threshold ${String(threshold).padStart(4)} bp: ${aggregated.summary.pairOccurrences.toLocaleString()} instances, ${aggregated.summary.undirected.length} undirected edges, ${phyla.length} phyla`
@@ -348,12 +466,15 @@ for (const threshold of THRESHOLD_STEPS) {
 const bundle = {
   assembliesScanned: cache.assembliesScanned,
   assembliesWithCoords: cache.assembliesWithCoords,
+  minFlagellarGeneCount: MIN_FLAGELLAR_GENE_COUNT,
+  eligibleAssembliesWithMinFlagellarGenes: eligibleAssemblyCount,
   scannedAt: cache.scannedAt,
   thresholds: THRESHOLD_STEPS,
   summaries,
   phyla,
   phylumSummaries: phylumSummariesByThreshold,
-  edgePhylumByThreshold
+  edgePhylumByThreshold,
+  edgeOpportunityByThreshold
 };
 
 await mkdir(CACHE_DIR, { recursive: true });
