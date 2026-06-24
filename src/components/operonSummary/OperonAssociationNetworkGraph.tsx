@@ -42,10 +42,6 @@ const SERPENTINE_LEFT_X = 95;
 const SERPENTINE_STEP_X = 128;
 const SERPENTINE_ROW_GAP = SERPENTINE_STEP_X;
 const SERPENTINE_TOP_Y = 100;
-const BACKBONE_STEP_X = 112;
-const BACKBONE_COMPONENT_GAP = 160;
-const BACKBONE_BRANCH_MIN_DISTANCE = 74;
-const BACKBONE_BRANCH_MAX_DISTANCE = 142;
 const SERPENTINE_COMPONENT_PAD_Y = 92;
 const SERPENTINE_AUTO_MAX_ROW_WIDTH = 760;
 
@@ -126,10 +122,10 @@ type RawLink = {
   curveSign: -1 | 0 | 1;
 };
 
-type LayoutMode = "force" | "backbone" | "serpentine";
+type LayoutMode = "force" | "serpentine";
 type SerpentineGenesPerRow = "auto" | number;
 
-type BackboneLayout = {
+type SerpentineLayout = {
   positions: Map<string, { x: number; y: number }>;
   curveSigns: Map<string, -1 | 0 | 1>;
   height: number;
@@ -549,13 +545,6 @@ function promoteStrongAlternateBackboneNodes(nodePath: string[], component: stri
   return promoted;
 }
 
-function getBackboneBranchDistance(distance: number): number {
-  return Math.max(
-    BACKBONE_BRANCH_MIN_DISTANCE,
-    Math.min(BACKBONE_BRANCH_MAX_DISTANCE, distance * 0.42)
-  );
-}
-
 function placeBranchNodeFromAnchors(
   node: string,
   links: RawLink[],
@@ -626,17 +615,16 @@ function placeSerpentineBackbonePath(nodePath: string[], rowY: number, genesPerR
   return { positions, rowCount };
 }
 
-function buildBackboneLayout(
+function buildSerpentineLayout(
   nodes: string[],
   links: RawLink[],
   directed: boolean,
-  layoutMode: Extract<LayoutMode, "backbone" | "serpentine"> = "backbone",
   serpentineGenesPerRow: SerpentineGenesPerRow = "auto"
-): BackboneLayout {
+): SerpentineLayout {
   const positions = new Map<string, { x: number; y: number }>();
   const curveSigns = new Map<string, -1 | 0 | 1>();
   const components = connectedComponents(nodes, links);
-  let rowY = layoutMode === "serpentine" ? SERPENTINE_TOP_Y : 110;
+  let rowY = SERPENTINE_TOP_Y;
   let layoutHeight = VIEW_H;
   for (const component of components) {
     const componentSet = new Set(component);
@@ -647,30 +635,14 @@ function buildBackboneLayout(
     const nodePath = promoteStrongAlternateBackboneNodes(orientedPath, component, componentLinks);
     const backboneIndexByNode = new Map(nodePath.map((node, index) => [node, index]));
 
-    let scale = 1;
-    let componentRowCount = 1;
-    if (layoutMode === "serpentine") {
-      const placed = placeSerpentineBackbonePath(
-        nodePath,
-        rowY,
-        resolveSerpentineGenesPerRow(serpentineGenesPerRow)
-      );
-      componentRowCount = placed.rowCount;
-      for (const [node, position] of placed.positions) {
-        positions.set(node, position);
-      }
-    } else {
-      const desiredXs = new Map<string, number>();
-      let x = 90;
-      for (let i = 0; i < nodePath.length; i += 1) {
-        const node = nodePath[i];
-        desiredXs.set(node, x);
-        x += BACKBONE_STEP_X;
-      }
-      scale = x > VIEW_W - 120 ? Math.max(0.55, (VIEW_W - 210) / Math.max(1, x - 90)) : 1;
-      for (const node of nodePath) {
-        positions.set(node, { x: 90 + ((desiredXs.get(node) ?? 90) - 90) * scale, y: rowY });
-      }
+    const placed = placeSerpentineBackbonePath(
+      nodePath,
+      rowY,
+      resolveSerpentineGenesPerRow(serpentineGenesPerRow)
+    );
+    const componentRowCount = placed.rowCount;
+    for (const [node, position] of placed.positions) {
+      positions.set(node, position);
     }
 
     const treeAdjacency = new Map<string, RawLink[]>();
@@ -697,18 +669,12 @@ function buildBackboneLayout(
         const branchSide = extraBranchIndex % 2 === 0 ? -1 : 1;
         const branchDepth = current.depth + 1;
         const branchDirection = directed && edge.target === current.node ? -1 : 1;
-        const fallbackDistance =
-          layoutMode === "serpentine"
-            ? Math.min(92, Math.max(62, edge.targetDistance * 0.42))
-            : getBackboneBranchDistance(edge.targetDistance * scale);
+        const fallbackDistance = Math.min(92, Math.max(62, edge.targetDistance * 0.42));
         const nextLinks = componentLinks
           .filter((link) => link.source === next || link.target === next)
           .map((link) => ({
             ...link,
-            targetDistance:
-              layoutMode === "serpentine"
-                ? Math.min(110, link.targetDistance * 0.45)
-                : getBackboneBranchDistance(link.targetDistance * scale)
+            targetDistance: Math.min(110, link.targetDistance * 0.45)
           }));
         const branchPosition = placeBranchNodeFromAnchors(
           next,
@@ -732,7 +698,7 @@ function buildBackboneLayout(
       if (!positions.has(node)) {
         positions.set(node, {
           x: 90 + (extraBranchIndex % 7) * 90,
-          y: rowY + (layoutMode === "serpentine" ? componentRowCount * SERPENTINE_ROW_GAP : 0) + (extraBranchIndex % 2 === 0 ? -80 : 80)
+          y: rowY + componentRowCount * SERPENTINE_ROW_GAP + (extraBranchIndex % 2 === 0 ? -80 : 80)
         });
         extraBranchIndex += 1;
       }
@@ -755,14 +721,12 @@ function buildBackboneLayout(
         targetBackboneIndex != null &&
         Math.abs(sourceBackboneIndex - targetBackboneIndex) > 1;
       const isSnakeBackboneEdge =
-        layoutMode === "serpentine" &&
         sourceBackboneIndex != null &&
         targetBackboneIndex != null &&
         Math.abs(sourceBackboneIndex - targetBackboneIndex) === 1;
       const sourcePosition = positions.get(firstLink.source);
       const targetPosition = positions.get(firstLink.target);
       const isSnakeCrossRowEdge =
-        layoutMode === "serpentine" &&
         sourcePosition != null &&
         targetPosition != null &&
         Math.abs(sourcePosition.y - targetPosition.y) > NODE_RADIUS * 2;
@@ -772,7 +736,6 @@ function buildBackboneLayout(
           const linkSourceBackboneIndex = backboneIndexByNode.get(link.source);
           const linkTargetBackboneIndex = backboneIndexByNode.get(link.target);
           const isReverseSnakeLink =
-            layoutMode === "serpentine" &&
             linkSourceBackboneIndex != null &&
             linkTargetBackboneIndex != null &&
             Math.abs(linkSourceBackboneIndex - linkTargetBackboneIndex) === 1 &&
@@ -792,7 +755,6 @@ function buildBackboneLayout(
         const linkSourceBackboneIndex = backboneIndexByNode.get(link.source);
         const linkTargetBackboneIndex = backboneIndexByNode.get(link.target);
         const isReverseSnakeLink =
-          layoutMode === "serpentine" &&
           linkSourceBackboneIndex != null &&
           linkTargetBackboneIndex != null &&
           Math.abs(linkSourceBackboneIndex - linkTargetBackboneIndex) === 1 &&
@@ -800,7 +762,7 @@ function buildBackboneLayout(
         const isLessDominantDirection = index > 0;
         curveSigns.set(
           directedPairKey(link.source, link.target),
-          layoutMode === "serpentine" && (isReverseSnakeLink || isLessDominantDirection)
+          isReverseSnakeLink || isLessDominantDirection
             ? 1
             : isSnakeCrossRowEdge
               ? 0
@@ -811,15 +773,11 @@ function buildBackboneLayout(
       });
     }
 
-    if (layoutMode === "serpentine") {
-      const componentMaxY = component.reduce((maxY, node) => {
-        const position = positions.get(node);
-        return Math.max(maxY, position?.y ?? rowY);
-      }, rowY);
-      rowY = componentMaxY + SERPENTINE_COMPONENT_PAD_Y;
-    } else {
-      rowY += BACKBONE_COMPONENT_GAP;
-    }
+    const componentMaxY = component.reduce((maxY, node) => {
+      const position = positions.get(node);
+      return Math.max(maxY, position?.y ?? rowY);
+    }, rowY);
+    rowY = componentMaxY + SERPENTINE_COMPONENT_PAD_Y;
     layoutHeight = Math.max(layoutHeight, rowY + 40);
   }
 
@@ -1166,12 +1124,11 @@ export default function OperonAssociationNetworkGraph({
       }));
 
     let renderHeight = VIEW_H;
-    if (layoutMode === "backbone" || layoutMode === "serpentine") {
-      const layout = buildBackboneLayout(
+    if (layoutMode === "serpentine") {
+      const layout = buildSerpentineLayout(
         nodes.map((node) => node.id),
         rawLinks.filter((link) => nodeById.has(link.source) && nodeById.has(link.target)),
         directed,
-        layoutMode,
         serpentineGenesPerRow
       );
       renderHeight = layout.height;

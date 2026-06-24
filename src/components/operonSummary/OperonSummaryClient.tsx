@@ -202,6 +202,16 @@ type DirectionalityTooltip = {
   lesser: string;
 } | null;
 
+type OperonPhyleticColumnMetric = {
+  column: string;
+  source: string;
+  target: string;
+  role: "backbone" | "alternative";
+  mainTarget?: string;
+  cladeAveragePercent: number;
+  genePresentAveragePercent: number;
+};
+
 function DirectionalityRatioBarPlot({
   rows,
   maxFiniteRatio,
@@ -778,6 +788,160 @@ function promoteBackboneGenePath(nodePath: string[], component: string[], edges:
   return promoted;
 }
 
+function orientBackboneGenePath(nodePath: string[], edges: BackboneEdge[]): string[] {
+  if (nodePath.length <= 1) return nodePath;
+
+  const indexByNode = new Map(nodePath.map((node, index) => [node, index]));
+  let forwardScore = 0;
+  let reverseScore = 0;
+  for (const edge of edges) {
+    const sourceIndex = indexByNode.get(edge.source);
+    const targetIndex = indexByNode.get(edge.target);
+    if (sourceIndex == null || targetIndex == null || sourceIndex === targetIndex) continue;
+    if (sourceIndex < targetIndex) {
+      forwardScore += edge.count;
+    } else {
+      reverseScore += edge.count;
+    }
+  }
+
+  return reverseScore > forwardScore ? [...nodePath].reverse() : nodePath;
+}
+
+/**
+ * Order phyletic tracks in operon reading direction. Edges leaving the same
+ * node stay together: the edge continuing along the visible backbone is first,
+ * followed by alternatives from most to least abundant.
+ */
+function orderDirectedEdgesForPhyleticTransfer(
+  edges: DirectedEdge[],
+  backbonePaths: string[][]
+): DirectedEdge[] {
+  if (edges.length <= 1) return edges;
+
+  const orientedPaths = backbonePaths.map((path) => orientBackboneGenePath(path, edges));
+  const nodeRank = new Map<string, [number, number]>();
+  const backboneNext = new Map<string, string>();
+  orientedPaths.forEach((path, componentIndex) => {
+    path.forEach((node, nodeIndex) => {
+      if (!nodeRank.has(node)) nodeRank.set(node, [componentIndex, nodeIndex]);
+      if (nodeIndex < path.length - 1) backboneNext.set(node, path[nodeIndex + 1]);
+    });
+  });
+
+  const outgoing = new Map<string, DirectedEdge[]>();
+  const indegree = new Map<string, number>();
+  const nodes = new Set<string>();
+  for (const edge of edges) {
+    nodes.add(edge.source);
+    nodes.add(edge.target);
+    outgoing.set(edge.source, [...(outgoing.get(edge.source) ?? []), edge]);
+    indegree.set(edge.target, (indegree.get(edge.target) ?? 0) + 1);
+    if (!indegree.has(edge.source)) indegree.set(edge.source, indegree.get(edge.source) ?? 0);
+  }
+
+  const compareNodes = (a: string, b: string) => {
+    const rankA = nodeRank.get(a) ?? [Number.MAX_SAFE_INTEGER, Number.MAX_SAFE_INTEGER];
+    const rankB = nodeRank.get(b) ?? [Number.MAX_SAFE_INTEGER, Number.MAX_SAFE_INTEGER];
+    return rankA[0] - rankB[0] || rankA[1] - rankB[1] || a.localeCompare(b);
+  };
+  const compareOutgoing = (a: DirectedEdge, b: DirectedEdge) => {
+    const next = backboneNext.get(a.source);
+    const aBackbone = next === a.target ? 1 : 0;
+    const bBackbone = next === b.target ? 1 : 0;
+    return bBackbone - aBackbone || b.count - a.count || compareNodes(a.target, b.target);
+  };
+  for (const sourceEdges of outgoing.values()) sourceEdges.sort(compareOutgoing);
+
+  const roots = [
+    ...orientedPaths.map((path) => path[0]).filter((node): node is string => Boolean(node)),
+    ...[...nodes].filter((node) => (indegree.get(node) ?? 0) === 0).sort(compareNodes),
+    ...[...nodes].sort(compareNodes)
+  ];
+  const queued = new Set<string>();
+  const processedSources = new Set<string>();
+  const ordered: DirectedEdge[] = [];
+  const seenEdges = new Set<DirectedEdge>();
+  const queue: string[] = [];
+  const enqueue = (node: string) => {
+    if (!queued.has(node) && !processedSources.has(node)) {
+      queued.add(node);
+      queue.push(node);
+    }
+  };
+
+  for (const root of roots) {
+    enqueue(root);
+    while (queue.length > 0) {
+      const source = queue.shift()!;
+      queued.delete(source);
+      if (processedSources.has(source)) continue;
+      processedSources.add(source);
+      for (const edge of outgoing.get(source) ?? []) {
+        if (!seenEdges.has(edge)) {
+          seenEdges.add(edge);
+          ordered.push(edge);
+        }
+        enqueue(edge.target);
+      }
+    }
+  }
+
+  return ordered.length === edges.length ? ordered : [...ordered, ...edges.filter((edge) => !seenEdges.has(edge))];
+}
+
+function getBackbonePhyleticColumnRoles(
+  edges: DirectedEdge[],
+  backbonePaths: string[][]
+): { backboneColumns: string[]; alternativeColumns: string[] } {
+  const edgeByDirection = new Map<string, DirectedEdge>();
+  for (const edge of edges) {
+    edgeByDirection.set(`${edge.source}\t${edge.target}`, edge);
+  }
+
+  const backboneColumns = new Set<string>();
+  const alternativeColumns = new Set<string>();
+  for (const path of backbonePaths.map((nodePath) => orientBackboneGenePath(nodePath, edges))) {
+    for (let index = 0; index < path.length - 1; index += 1) {
+      const source = path[index];
+      const target = path[index + 1];
+      const forward = edgeByDirection.get(`${source}\t${target}`);
+      const reverse = edgeByDirection.get(`${target}\t${source}`);
+      if (!forward && !reverse) continue;
+
+      if (forward && reverse) {
+        const backbone = forward.count >= reverse.count ? forward : reverse;
+        const alternative = backbone === forward ? reverse : forward;
+        backboneColumns.add(operonPhyleticColumnName(backbone.source, backbone.target));
+        alternativeColumns.add(operonPhyleticColumnName(alternative.source, alternative.target));
+        continue;
+      }
+
+      const backbone = forward ?? reverse;
+      if (backbone) {
+        backboneColumns.add(operonPhyleticColumnName(backbone.source, backbone.target));
+      }
+    }
+  }
+
+  return {
+    backboneColumns: Array.from(backboneColumns),
+    alternativeColumns: Array.from(alternativeColumns)
+  };
+}
+
+function getBackboneNextBySource(edges: DirectedEdge[], backbonePaths: string[][]): Map<string, string> {
+  const backboneNext = new Map<string, string>();
+  for (const path of backbonePaths.map((nodePath) => orientBackboneGenePath(nodePath, edges))) {
+    for (let index = 0; index < path.length - 1; index += 1) {
+      if (!backboneNext.has(path[index])) {
+        backboneNext.set(path[index], path[index + 1]);
+      }
+    }
+  }
+  return backboneNext;
+}
+
 export default function OperonSummaryClient() {
   const [parsed, setParsed] = useState<ParsedTable | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -800,7 +964,7 @@ export default function OperonSummaryClient() {
   const [bundle, setBundle] = useState<OperonAssociationsBundle | null>(null);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [isDarkMode, setIsDarkMode] = useState(false);
-  const [layoutMode, setLayoutMode] = useState<"force" | "backbone" | "serpentine">("backbone");
+  const [layoutMode, setLayoutMode] = useState<"force" | "serpentine">("serpentine");
   const [serpentineGenesPerRow, setSerpentineGenesPerRow] = useState<"auto" | number>("auto");
   const [backboneScanResult, setBackboneScanResult] = useState<BackboneScanResult | null>(null);
   const [backboneScanError, setBackboneScanError] = useState<string | null>(null);
@@ -1225,13 +1389,75 @@ export default function OperonSummaryClient() {
   }, [directionalityMode, directionalityPlotRows]);
 
   const visibleDirectedEdges = summary?.directed ?? [];
+  const orderedVisibleDirectedEdges = useMemo(
+    () => orderDirectedEdgesForPhyleticTransfer(visibleDirectedEdges, visibleBackboneComponents),
+    [visibleDirectedEdges, visibleBackboneComponents]
+  );
+  const phyleticColumnRoles = useMemo(
+    () => getBackbonePhyleticColumnRoles(orderedVisibleDirectedEdges, visibleBackboneComponents),
+    [orderedVisibleDirectedEdges, visibleBackboneComponents]
+  );
+  const phyleticColumnMetrics = useMemo((): OperonPhyleticColumnMetric[] => {
+    if (!bundle) {
+      return [];
+    }
+
+    const backboneColumnSet = new Set(phyleticColumnRoles.backboneColumns);
+    const backboneNextBySource = getBackboneNextBySource(orderedVisibleDirectedEdges, visibleBackboneComponents);
+    return orderedVisibleDirectedEdges.map((edge) => {
+      const column = operonPhyleticColumnName(edge.source, edge.target);
+      const mainTarget = backboneNextBySource.get(edge.source);
+      const role = backboneColumnSet.has(column) ? "backbone" : "alternative";
+      const isSourceAlternative = role === "alternative" && edge.source !== edge.target && mainTarget && mainTarget !== edge.target;
+      return {
+        column,
+        source: edge.source,
+        target: edge.target,
+        role,
+        mainTarget: isSourceAlternative ? mainTarget : undefined,
+        cladeAveragePercent: averageAssociationPercentForEdge(
+          bundle,
+          summary?.thresholdBp ?? distanceThreshold,
+          true,
+          edge.source,
+          edge.target,
+          {
+            minPhylumSize,
+            phylumId: effectiveSelectedPhylum || null,
+            normalizationMode: "clade"
+          }
+        ),
+        genePresentAveragePercent: averageAssociationPercentForEdge(
+          bundle,
+          summary?.thresholdBp ?? distanceThreshold,
+          true,
+          edge.source,
+          edge.target,
+          {
+            minPhylumSize,
+            phylumId: effectiveSelectedPhylum || null,
+            normalizationMode: "genePresent"
+          }
+        )
+      };
+    });
+  }, [
+    bundle,
+    distanceThreshold,
+    effectiveSelectedPhylum,
+    minPhylumSize,
+    orderedVisibleDirectedEdges,
+    phyleticColumnRoles.backboneColumns,
+    summary?.thresholdBp,
+    visibleBackboneComponents
+  ]);
   const openPhyleticDistributionForDirectedEdges = useCallback(() => {
-    if (visibleDirectedEdges.length === 0) {
+    if (orderedVisibleDirectedEdges.length === 0) {
       return;
     }
 
     const columns = Array.from(
-      new Set(visibleDirectedEdges.map((edge) => operonPhyleticColumnName(edge.source, edge.target)))
+      new Set(orderedVisibleDirectedEdges.map((edge) => operonPhyleticColumnName(edge.source, edge.target)))
     );
     const transferId =
       typeof crypto !== "undefined" && "randomUUID" in crypto
@@ -1254,7 +1480,10 @@ export default function OperonSummaryClient() {
       JSON.stringify({
         version: 1,
         label: labelParts.join(" · "),
-        columns
+        columns,
+        backboneColumns: phyleticColumnRoles.backboneColumns,
+        alternativeColumns: phyleticColumnRoles.alternativeColumns,
+        columnMetrics: phyleticColumnMetrics
       })
     );
 
@@ -1272,7 +1501,9 @@ export default function OperonSummaryClient() {
     normalizationMode,
     maxAverageGapBp,
     selectedPhylumMeta,
-    visibleDirectedEdges
+    orderedVisibleDirectedEdges,
+    phyleticColumnRoles,
+    phyleticColumnMetrics
   ]);
 
   const runBackboneConservationScan = useCallback(async () => {
@@ -1690,7 +1921,7 @@ export default function OperonSummaryClient() {
                     role="group"
                     aria-label="Network layout"
                   >
-                    {(["backbone", "serpentine", "force"] as const).map((mode) => (
+                    {(["serpentine", "force"] as const).map((mode) => (
                       <button
                         key={mode}
                         type="button"
@@ -1703,7 +1934,7 @@ export default function OperonSummaryClient() {
                         )}
                         aria-pressed={layoutMode === mode}
                       >
-                        {mode === "force" ? "Force" : mode === "serpentine" ? "Snake" : "Operon backbone"}
+                        {mode === "force" ? "Force" : "Snake"}
                       </button>
                     ))}
                   </div>

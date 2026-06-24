@@ -33,6 +33,38 @@ type OperonPhyleticTransferPayload = {
   version: 1;
   label: string;
   columns: string[];
+  backboneColumns?: string[];
+  alternativeColumns?: string[];
+  columnMetrics?: OperonColumnMetricPayload[];
+};
+
+function operonColumnDisplayName(column: string): string {
+  return column.replace(/_to_/, "→");
+}
+
+type OperonColumnMetricPayload = {
+  column: string;
+  source: string;
+  target: string;
+  role: "backbone" | "alternative";
+  mainTarget?: string;
+  cladeAveragePercent: number;
+  genePresentAveragePercent: number;
+};
+
+export type OperonRugTooltipStats = {
+  source: string;
+  target: string;
+  role: "backbone" | "alternative";
+  mainTarget?: string;
+  cladeAveragePercent: number;
+  genePresentAveragePercent: number;
+  missingMainTargetAlternativeCount?: number;
+  missingMainTargetGenomeCount?: number;
+  missingMainTargetAlternativePercent?: number;
+  alternativeCount?: number;
+  alternativeWithMainTargetMissingCount?: number;
+  alternativeWithMainTargetMissingPercent?: number;
 };
 
 function filterTsvColumns(tsvText: string, requestedColumns: string[]): { text: string; foundColumns: string[]; missingColumns: string[] } {
@@ -55,7 +87,11 @@ function filterTsvColumns(tsvText: string, requestedColumns: string[]): { text: 
     ...foundColumns
   ];
   const keepIndexes = keepColumns.map((column) => headerIndex.get(column) ?? -1);
-  const outputLines = [keepColumns.join("\t")];
+  const outputHeaders = [
+    ...OPERON_PHYLETIC_METADATA_COLUMNS.filter((column) => headerIndex.has(column)),
+    ...foundColumns.map(operonColumnDisplayName)
+  ];
+  const outputLines = [outputHeaders.join("\t")];
 
   for (let i = 1; i < lines.length; i += 1) {
     const parts = lines[i].split("\t");
@@ -67,6 +103,90 @@ function filterTsvColumns(tsvText: string, requestedColumns: string[]): { text: 
     foundColumns,
     missingColumns
   };
+}
+
+function parseTsvRows(tsvText: string): { headers: string[]; rows: string[][] } {
+  const lines = tsvText.replace(/\r/g, "").split("\n").filter((line) => line.trim().length > 0);
+  if (lines.length === 0) {
+    return { headers: [], rows: [] };
+  }
+  return {
+    headers: lines[0].split("\t"),
+    rows: lines.slice(1).map((line) => line.split("\t"))
+  };
+}
+
+function buildOperonRugTooltipStats(
+  tsvText: string,
+  metrics: OperonColumnMetricPayload[],
+  defaultCountMap: Map<string, Record<string, number>>
+): Record<string, OperonRugTooltipStats> {
+  const { headers, rows } = parseTsvRows(tsvText);
+  const headerIndex = new Map(headers.map((header, index) => [header, index]));
+  const assemblyIndex = headerIndex.get("assembly") ?? 0;
+  const tooltipStats: Record<string, OperonRugTooltipStats> = {};
+
+  for (const metric of metrics) {
+    const displayColumn = operonColumnDisplayName(metric.column);
+    const stats: OperonRugTooltipStats = {
+      source: metric.source,
+      target: metric.target,
+      role: metric.role,
+      mainTarget: metric.mainTarget,
+      cladeAveragePercent: metric.cladeAveragePercent,
+      genePresentAveragePercent: metric.genePresentAveragePercent
+    };
+
+    const edgeIndex = headerIndex.get(metric.column);
+    if (
+      metric.role === "alternative" &&
+      metric.mainTarget &&
+      metric.source !== metric.target &&
+      edgeIndex != null
+    ) {
+      const mainTargetColumn = `${metric.mainTarget}_count`;
+      let missingMainTargetGenomeCount = 0;
+      let missingMainTargetAlternativeCount = 0;
+      let alternativeCount = 0;
+      let alternativeWithMainTargetMissingCount = 0;
+
+      for (const row of rows) {
+        const assembly = row[assemblyIndex] ?? "";
+        const defaultCounts = defaultCountMap.get(assembly);
+        if (!defaultCounts) continue;
+        const hasAlternative = (Number(row[edgeIndex] ?? 0) || 0) > 0;
+        const mainTargetMissing = (defaultCounts[mainTargetColumn] ?? 0) <= 0;
+
+        if (hasAlternative) {
+          alternativeCount += 1;
+          if (mainTargetMissing) {
+            alternativeWithMainTargetMissingCount += 1;
+          }
+        }
+        if (mainTargetMissing) {
+          missingMainTargetGenomeCount += 1;
+          if (hasAlternative) {
+            missingMainTargetAlternativeCount += 1;
+          }
+        }
+      }
+
+      stats.missingMainTargetGenomeCount = missingMainTargetGenomeCount;
+      stats.missingMainTargetAlternativeCount = missingMainTargetAlternativeCount;
+      stats.missingMainTargetAlternativePercent =
+        missingMainTargetGenomeCount > 0
+          ? (100 * missingMainTargetAlternativeCount) / missingMainTargetGenomeCount
+          : 0;
+      stats.alternativeCount = alternativeCount;
+      stats.alternativeWithMainTargetMissingCount = alternativeWithMainTargetMissingCount;
+      stats.alternativeWithMainTargetMissingPercent =
+        alternativeCount > 0 ? (100 * alternativeWithMainTargetMissingCount) / alternativeCount : 0;
+    }
+
+    tooltipStats[displayColumn] = stats;
+  }
+
+  return tooltipStats;
 }
 
 function LoadingOverlay({
@@ -96,6 +216,9 @@ export function GeneVisualization() {
   const [tipExtensionMode, setTipExtensionMode] = useState<'none' | 'solid' | 'dashed'>('none');
   const [treeNewick, setTreeNewick] = useState<string | null>(null);
   const [operonTransferHandled, setOperonTransferHandled] = useState(false);
+  const [operonBackboneGenes, setOperonBackboneGenes] = useState<string[]>([]);
+  const [operonAlternativeGenes, setOperonAlternativeGenes] = useState<string[]>([]);
+  const [operonRugTooltipStats, setOperonRugTooltipStats] = useState<Record<string, OperonRugTooltipStats>>({});
   const {
     state,
     loadTSVData,
@@ -224,6 +347,25 @@ export function GeneVisualization() {
         const sourceText = await response.text();
         const filtered = filterTsvColumns(sourceText, payload.columns);
         if (cancelled) return;
+
+        const foundColumnSet = new Set(filtered.foundColumns);
+        setOperonBackboneGenes(
+          (payload.backboneColumns ?? [])
+            .filter((column) => foundColumnSet.has(column))
+            .map(operonColumnDisplayName)
+        );
+        setOperonAlternativeGenes(
+          (payload.alternativeColumns ?? [])
+            .filter((column) => foundColumnSet.has(column))
+            .map(operonColumnDisplayName)
+        );
+        setOperonRugTooltipStats(
+          buildOperonRugTooltipStats(
+            sourceText,
+            (payload.columnMetrics ?? []).filter((metric) => foundColumnSet.has(metric.column)),
+            state.countMap
+          )
+        );
 
         await loadCustomTSVData(filtered.text, payload.label || "Visible Directed Operons", {
           activateCustomGenes: false
@@ -380,6 +522,10 @@ export function GeneVisualization() {
                     asmIndex={state.asmIndex}
                     geneIndex={state.geneIndex}
                     countMap={state.countMap}
+                    customRugGenes={state.customGeneNames}
+                    backboneRugGenes={operonBackboneGenes}
+                    alternativeRugGenes={operonAlternativeGenes}
+                    rugTooltipStats={operonRugTooltipStats}
                     onLineageClick={filterByLineage}
                     onDomainClick={resetFilters}
                     onRemoveGene={toggleGeneSelection}

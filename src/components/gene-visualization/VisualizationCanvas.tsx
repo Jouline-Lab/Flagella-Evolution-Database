@@ -19,6 +19,10 @@ interface VisualizationCanvasProps {
   asmIndex: Map<string, number>;
   geneIndex: Map<string, number>;
   countMap: Map<string, Record<string, number>>;
+  customRugGenes?: string[];
+  backboneRugGenes?: string[];
+  alternativeRugGenes?: string[];
+  rugTooltipStats?: Record<string, RugTooltipStats>;
   onLineageClick: (level: TaxonomicLevel, category: string, range?: { start: number; end: number }) => void;
   onDomainClick: () => void;
   onRemoveGene?: (gene: string) => void;
@@ -31,6 +35,21 @@ interface VisualizationCanvasProps {
   treeLayoutMode?: 'phlogram' | 'cladogram';
   tipExtensionMode?: 'none' | 'solid' | 'dashed';
 }
+
+type RugTooltipStats = {
+  source: string;
+  target: string;
+  role: "backbone" | "alternative";
+  mainTarget?: string;
+  cladeAveragePercent: number;
+  genePresentAveragePercent: number;
+  missingMainTargetAlternativeCount?: number;
+  missingMainTargetGenomeCount?: number;
+  missingMainTargetAlternativePercent?: number;
+  alternativeCount?: number;
+  alternativeWithMainTargetMissingCount?: number;
+  alternativeWithMainTargetMissingPercent?: number;
+};
 
 export type VisualizationCanvasHandle = {
   downloadSVG: () => void;
@@ -95,6 +114,40 @@ function getRugColor(gene: string, count: number, maxCount: number, rugMode: Rug
   return `rgb(${intensity}, ${intensity}, ${intensity})`;
 }
 
+function formatTooltipPercent(value?: number): string {
+  if (value == null || !Number.isFinite(value)) return "n/a";
+  return `${value.toLocaleString(undefined, { maximumFractionDigits: value < 1 && value > 0 ? 2 : 1 })}%`;
+}
+
+function formatRugTooltipLabel(stats: RugTooltipStats): string {
+  const lines = [
+    `${stats.role === "backbone" ? "Backbone" : "Alternative"} association`,
+    `Avg phylum % (>=25 genes): ${formatTooltipPercent(stats.cladeAveragePercent)}`,
+    `Avg phylum % (both genes exist): ${formatTooltipPercent(stats.genePresentAveragePercent)}`
+  ];
+
+  if (
+    stats.role === "alternative" &&
+    stats.mainTarget &&
+    stats.missingMainTargetGenomeCount != null &&
+    stats.missingMainTargetAlternativeCount != null
+  ) {
+    lines.push(
+      `When ${stats.mainTarget} is missing: ${stats.missingMainTargetAlternativeCount.toLocaleString()}/${stats.missingMainTargetGenomeCount.toLocaleString()} genomes (${formatTooltipPercent(stats.missingMainTargetAlternativePercent)})`
+    );
+    if (
+      stats.alternativeCount != null &&
+      stats.alternativeWithMainTargetMissingCount != null
+    ) {
+      lines.push(
+        `Alt cases with ${stats.mainTarget} missing: ${stats.alternativeWithMainTargetMissingCount.toLocaleString()}/${stats.alternativeCount.toLocaleString()} (${formatTooltipPercent(stats.alternativeWithMainTargetMissingPercent)})`
+      );
+    }
+  }
+
+  return lines.join("\n");
+}
+
 interface TooltipProps {
   isVisible: boolean;
   x: number;
@@ -106,20 +159,25 @@ interface TooltipProps {
   label?: string;
 }
 
-function Tooltip({ isVisible, x, y, category, count, label }: TooltipProps) {
+function Tooltip({ isVisible, x, y, category, count, containerWidth, containerHeight, label }: TooltipProps) {
   if (!isVisible) return null;
+  const labelLines = label?.split("\n").filter(Boolean) ?? [];
+  const tooltipX = containerWidth > 0 ? Math.min(x + 14, Math.max(12, containerWidth - 440)) : x + 14;
+  const tooltipY = containerHeight > 0 ? Math.min(y + 14, Math.max(12, containerHeight - 180)) : y + 14;
   return (
     <div
-      className="viz-tooltip absolute pointer-events-none text-xs rounded px-2 py-1 shadow-lg z-50 whitespace-nowrap"
+      className="viz-tooltip absolute pointer-events-none text-xs rounded px-2 py-1 shadow-lg whitespace-nowrap"
       style={{
-        left: `${x - 12}px`,
-        top: `${y + 12}px`,
-        transform: 'translate(-100%, 0)'
+        left: `${tooltipX}px`,
+        top: `${tooltipY}px`,
+        zIndex: 9999
       }}
     >
       <div className="font-semibold">{category}</div>
-      <div>Count: {count.toLocaleString()}</div>
-      {label ? (<div>{label}</div>) : null}
+      {count >= 0 ? <div>Count: {count.toLocaleString()}</div> : null}
+      {labelLines.map((line) => (
+        <div key={line}>{line}</div>
+      ))}
     </div>
   );
 }
@@ -135,6 +193,10 @@ export const VisualizationCanvas = forwardRef<VisualizationCanvasHandle, Visuali
   asmIndex,
   geneIndex,
   countMap,
+  customRugGenes = [],
+  backboneRugGenes = [],
+  alternativeRugGenes = [],
+  rugTooltipStats = {},
   onLineageClick,
   onDomainClick,
   onRemoveGene,
@@ -604,6 +666,9 @@ ref
 
     const baseY = (selectedLevels.length + 1) * LEVEL_HEIGHT + BASE_GAP;
     const rugLabels = plot.select('g.rug-labels');
+    const customRugGeneSet = new Set(customRugGenes);
+    const backboneRugGeneSet = new Set(backboneRugGenes);
+    const alternativeRugGeneSet = new Set(alternativeRugGenes);
 
     const labelSelection = rugLabels
       .selectAll<SVGTextElement, string>('text.rug-label')
@@ -622,7 +687,45 @@ ref
       )
       .attr('y', (_gene, geneIdx) => baseY + geneIdx * (RUG_HEIGHT + RUG_PAD) + RUG_HEIGHT / 2)
       .text((gene) => gene.replace(/_count$/, ''))
-      .style('fill', (gene) => gene.includes('-') || gene.includes('>') ? 'var(--primary-strong)' : 'var(--viz-label)');
+      .style('fill', (gene) => {
+        if (customRugGeneSet.has(gene)) {
+          if (alternativeRugGeneSet.has(gene)) return '#d97706';
+          return backboneRugGeneSet.has(gene) ? '#2563eb' : '#d97706';
+        }
+        return gene.includes('-') || gene.includes('>') ? 'var(--primary-strong)' : 'var(--viz-label)';
+      })
+      .style('cursor', (gene) => rugTooltipStats[gene] ? 'pointer' : 'default')
+      .on('mouseenter', (event: MouseEvent, gene) => {
+        const stats = rugTooltipStats[gene];
+        if (!stats || !containerRef.current) return;
+        event.stopPropagation();
+        const rect = containerRef.current.getBoundingClientRect();
+        setTooltip({
+          isVisible: true,
+          x: event.clientX - rect.left,
+          y: event.clientY - rect.top,
+          level: 'Operon association',
+          category: `${stats.source}→${stats.target}`,
+          count: -1,
+          label: formatRugTooltipLabel(stats),
+        });
+      })
+      .on('mousemove', (event: MouseEvent, gene) => {
+        const stats = rugTooltipStats[gene];
+        if (!stats || !containerRef.current) return;
+        event.stopPropagation();
+        const rect = containerRef.current.getBoundingClientRect();
+        setTooltip((current) => ({
+          ...current,
+          isVisible: true,
+          x: event.clientX - rect.left,
+          y: event.clientY - rect.top,
+        }));
+      })
+      .on('mouseleave', (event: MouseEvent) => {
+        event.stopPropagation();
+        setTooltip((current) => ({ ...current, isVisible: false }));
+      });
 
     const removeIcons = rugLabels
       .selectAll<SVGGElement, string>('g.rug-remove')
@@ -677,7 +780,20 @@ ref
       .attr('stroke-width', 2)
       .attr('stroke-linecap', 'round')
       .attr('pointer-events', 'none');
-  }, [data, selectedLevels, activeGenes, coordMap, widthMap, containerWidth, topTreeOffset, onRemoveGene]);
+  }, [
+    data,
+    selectedLevels,
+    activeGenes,
+    coordMap,
+    widthMap,
+    containerWidth,
+    topTreeOffset,
+    onRemoveGene,
+    customRugGenes,
+    backboneRugGenes,
+    alternativeRugGenes,
+    rugTooltipStats
+  ]);
 
   useEffect(() => {
     if (!canvasRef.current || containerWidth <= 0) {
@@ -1007,8 +1123,8 @@ ref
               y={tooltip.y}
               category={tooltip.category}
               count={tooltip.count}
-              containerWidth={0}
-              containerHeight={0}
+              containerWidth={containerWidth}
+              containerHeight={lastSvgHeight}
               label={tooltip.label}
             />
           </div>
