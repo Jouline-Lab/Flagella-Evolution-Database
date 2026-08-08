@@ -1,0 +1,712 @@
+{
+  "metadata": {
+    "source": "InterPro API",
+    "sourceUrl": "https://www.ebi.ac.uk/interpro/api/",
+    "generatedAt": "2026-07-03T20:34:00.980Z",
+    "totalIds": 100,
+    "retrievedIds": 100,
+    "missingIds": []
+  },
+  "entries": {
+    "PF00022": {
+      "shortName": "Actin",
+      "name": "Actin",
+      "description": null,
+      "type": "family",
+      "integrated": "IPR004000"
+    },
+    "PF00015": {
+      "shortName": "MCPsignal",
+      "name": "Methyl-accepting chemotaxis protein (MCP) signalling domain",
+      "description": "This domain is thought to transduce the signal to CheA since it is highly conserved in very diverse MCPs.",
+      "type": "family",
+      "integrated": "IPR004089"
+    },
+    "PF00005": {
+      "shortName": "ABC_tran",
+      "name": "ABC transporter",
+      "description": "ABC transporters for a large family of proteins responsible for translocation of a variety of compounds across biological membranes. ABC transporters are the largest family of proteins in many completely sequenced bacteria. ABC transporters are composed of two copies of this domain and two copies of a transmembrane domain [pfam:PF00664]. These four domains may belong to a single polypeptide as in [swissprot:P13569], or belong in different polypeptide chains.",
+      "type": "domain",
+      "integrated": "IPR003439"
+    },
+    "PF00004": {
+      "shortName": "AAA",
+      "name": "ATPase family associated with various cellular activities (AAA)",
+      "description": "AAA family proteins often perform chaperone-like functions that assist in the assembly, operation, or disassembly of protein complexes [[cite:PUB00005841]].",
+      "type": "domain",
+      "integrated": "IPR003959"
+    },
+    "PF00012": {
+      "shortName": "HSP70",
+      "name": "Hsp70 protein",
+      "description": "Hsp70 chaperones help to fold many proteins. Hsp70 assisted folding involves repeated cycles of substrate binding and release. Hsp70 activity is ATP dependent. Hsp70 proteins are made up of two regions: the amino terminus is the ATPase domain and the carboxyl terminus is the substrate binding region.",
+      "type": "family",
+      "integrated": "IPR013126"
+    },
+    "PF00106": {
+      "shortName": "adh_short",
+      "name": "short chain dehydrogenase",
+      "description": "This family contains a wide variety of dehydrogenases.",
+      "type": "domain",
+      "integrated": "IPR002347"
+    },
+    "PF00155": {
+      "shortName": "Aminotran_1_2",
+      "name": "Aminotransferase class I and II",
+      "description": null,
+      "type": "domain",
+      "integrated": "IPR004839"
+    },
+    "PF00156": {
+      "shortName": "Pribosyltran",
+      "name": "Phosphoribosyl transferase domain",
+      "description": "This family includes a range of diverse phosphoribosyl transferase enzymes. This family includes: Adenine phosphoribosyl-transferase [ec:2.4.2.7], [swissprot:P07672]. Hypoxanthine-guanine-xanthine phosphoribosyl-transferase [swissprot:P51900]. Hypoxanthine phosphoribosyl-transferase [ec:2.4.2.8] [swissprot:P36766]. Ribose-phosphate pyrophosphokinase i [ec:2.7.6.1] [swissprot:P09329]. Amidophosphoribosyltransferase [ec:2.4.2.14] [swissprot:P00496]. Orotate phosphoribosyl-transferase [ec:2.4.2.10] [swissprot:P11172]. Uracil phosphoribosyl-transferase [ec:2.4.2.9] [swissprot:P25532]. Xanthine-guanine phosphoribosyl-transferase [ec:2.4.2.22] [swissprot:P00501]. In Arabidopsis, At the very N-terminus of this domain is the P-Loop NTPase domain [[cite:PUB00060940]].",
+      "type": "domain",
+      "integrated": "IPR000836"
+    },
+    "PF00158": {
+      "shortName": "Sigma54_activat",
+      "name": "Sigma-54 interaction domain",
+      "description": null,
+      "type": "domain",
+      "integrated": "IPR002078"
+    },
+    "PF00196": {
+      "shortName": "GerE",
+      "name": "Bacterial regulatory proteins, luxR family",
+      "description": null,
+      "type": "domain",
+      "integrated": "IPR000792"
+    },
+    "PF00270": {
+      "shortName": "DEAD",
+      "name": "DEAD/DEAH box helicase",
+      "description": "Members of this family include the DEAD and DEAH box helicases. Helicases are involved in unwinding nucleic acids. The DEAD box helicases are involved in various aspects of RNA metabolism, including nuclear transcription, pre mRNA splicing, ribosome biogenesis, nucleocytoplasmic transport, translation, RNA decay and organellar gene expression.",
+      "type": "domain",
+      "integrated": "IPR011545"
+    },
+    "PF00271": {
+      "shortName": "Helicase_C",
+      "name": "Helicase conserved C-terminal domain",
+      "description": "The Prosite family is restricted to DEAD/H helicases, whereas this domain family is found in a wide variety of helicases and helicase related proteins. It may be that this is not an autonomously folding unit, but an integral part of the helicase.",
+      "type": "domain",
+      "integrated": "IPR001650"
+    },
+    "PF00460": {
+      "shortName": "Flg_bb_rod",
+      "name": "Flagella basal body rod protein",
+      "description": null,
+      "type": "family",
+      "integrated": "IPR001444"
+    },
+    "PF00486": {
+      "shortName": "Trans_reg_C",
+      "name": "Transcriptional regulatory protein, C terminal",
+      "description": null,
+      "type": "domain",
+      "integrated": "IPR001867"
+    },
+    "PF00512": {
+      "shortName": "HisKA",
+      "name": "His Kinase A (phospho-acceptor) domain",
+      "description": "Dimerisation and phospho-acceptor domain of histidine kinases.",
+      "type": "domain",
+      "integrated": "IPR003661"
+    },
+    "PF00535": {
+      "shortName": "Glycos_transf_2",
+      "name": "Glycosyl transferase family 2",
+      "description": "Diverse family, transferring sugar from UDP-glucose, UDP-N-acetyl- galactosamine, GDP-mannose or CDP-abequose, to a range of substrates including cellulose, dolichol phosphate and teichoic acids.",
+      "type": "domain",
+      "integrated": "IPR001173"
+    },
+    "PF00072": {
+      "shortName": "Response_reg",
+      "name": "Response regulator receiver domain",
+      "description": "This domain receives the signal from the sensor partner in bacterial two-component systems. It is usually found N-terminal to a DNA binding effector domain.",
+      "type": "domain",
+      "integrated": "IPR001789"
+    },
+    "PF00571": {
+      "shortName": "CBS",
+      "name": "CBS domain",
+      "description": "CBS domains are small intracellular modules that pair together to form a stable globular domain [[cite:PUB00000457]]. This family represents a single CBS domain. Pairs of these domains have been termed a Bateman domain [[cite:PUB00019267]]. CBS domains have been shown to bind ligands with an adenosyl group such as AMP, ATP and S-AdoMet [[cite:PUB00014845]]. CBS domains are found attached to a wide range of other protein domains suggesting that CBS domains may play a regulatory role making proteins sensitive to adenosyl carrying ligands. The region containing the CBS domains in Cystathionine-beta synthase is involved in regulation by S-AdoMet [[cite:PUB00019266]]. CBS domain pairs from AMPK bind AMP or ATP [[cite:PUB00014845]]. The CBS domains from IMPDH and the chloride channel CLC2 bind ATP [[cite:PUB00014845]].",
+      "type": "domain",
+      "integrated": "IPR000644"
+    },
+    "PF00583": {
+      "shortName": "Acetyltransf_1",
+      "name": "Acetyltransferase (GNAT) family",
+      "description": "This family contains proteins with N-acetyltransferase functions such as Elp3-related proteins.",
+      "type": "family",
+      "integrated": "IPR000182"
+    },
+    "PF00589": {
+      "shortName": "Phage_integrase",
+      "name": "Phage integrase family",
+      "description": "Members of this family cleave DNA substrates by a series of staggered cuts, during which the protein becomes covalently linked to the DNA through a catalytic tyrosine residue at the carboxy end of the alignment. The catalytic site residues in CRE recombinase ([swissprot:P06956]) are Arg-173, His-289, Arg-292 and Tyr-324.",
+      "type": "family",
+      "integrated": "IPR002104"
+    },
+    "PF00563": {
+      "shortName": "EAL",
+      "name": "EAL domain",
+      "description": "This domain is found in diverse bacterial signaling proteins. It is called EAL after its conserved residues. The EAL domain is a good candidate for a diguanylate phosphodiesterase function [[cite:PUB00007150]]. The domain contains many conserved acidic residues that could participate in metal binding and might form the phosphodiesterase active site [[cite:PUB00007150]].",
+      "type": "domain",
+      "integrated": "IPR001633"
+    },
+    "PF00672": {
+      "shortName": "HAMP",
+      "name": "HAMP domain",
+      "description": null,
+      "type": "domain",
+      "integrated": "IPR003660"
+    },
+    "PF00696": {
+      "shortName": "AA_kinase",
+      "name": "Amino acid kinase family",
+      "description": "This family includes kinases that phosphorylate a variety of amino acid substrates, as well as uridylate kinase and carbamate kinase. This family includes: Aspartokinase [ec:2.7.2.4], [swissprot:P00561]. Acetylglutamate kinase [ec:2.7.2.8], [swissprot:Q07905]. Glutamate 5-kinase [ec:2.7.2.11], [swissprot:P07005]. Uridylate kinase [ec:2.7.4.-], [swissprot:P29464]. Carbamate kinase [ec:2.7.2.2], [swissprot:O96432].",
+      "type": "family",
+      "integrated": "IPR001048"
+    },
+    "PF00890": {
+      "shortName": "FAD_binding_2",
+      "name": "FAD binding domain",
+      "description": "This family includes members that bind FAD. This family includes the flavoprotein subunits from succinate and fumarate dehydrogenase, aspartate oxidase and the alpha subunit of adenylylsulphate reductase.",
+      "type": "domain",
+      "integrated": "IPR003953"
+    },
+    "PF00989": {
+      "shortName": "PAS",
+      "name": "PAS fold",
+      "description": "The PAS fold corresponds to the structural domain that has previously been defined as PAS and PAC motifs [[cite:PUB00014500]]. The PAS fold appears in archaea, eubacteria and eukarya. This domain can bind gases (O2, CO and NO), FAD, 4-hydroxycinnamic acid and NAD+ [[cite:PUB00099685]].",
+      "type": "domain",
+      "integrated": "IPR013767"
+    },
+    "PF00515": {
+      "shortName": "TPR_1",
+      "name": "Tetratricopeptide repeat",
+      "description": null,
+      "type": "repeat",
+      "integrated": "IPR019734"
+    },
+    "PF00990": {
+      "shortName": "GGDEF",
+      "name": "Diguanylate cyclase, GGDEF domain",
+      "description": "This domain is found linked to a wide range of non-homologous domains in a variety of bacteria. It has been shown to be homologous to the adenylyl cyclase catalytic domain [[cite:PUB00007061]] and has diguanylate cyclase activity [[cite:PUB00016966]]. This observation correlates with the functional information available on two GGDEF-containing proteins, namely diguanylate cyclase and phosphodiesterase A of Acetobacter xylinum, both of which regulate the turnover of cyclic diguanosine monophosphate. In the WspR protein of Pseudomonas aeruginosa, the GGDEF domain acts as a diguanylate cyclase, PDB:3bre, when the whole molecule appears to form a tetramer consisting of two symmetrically-related dimers representing a biological unit. The active site is the GGD/EF motif, buried in the structure, and the cyclic dimeric guanosine monophosphate (c-di-GMP) bind to the inhibitory-motif RxxD on the surface. The enzyme thus catalyses the cyclisation of two guanosine triphosphate (GTP) molecules to one c-di-GMP molecule [[cite:PUB00016971],[cite:PUB00109145],[cite:PUB00050740]].",
+      "type": "domain",
+      "integrated": "IPR000160"
+    },
+    "PF01312": {
+      "shortName": "Bac_export_2",
+      "name": "FlhB HrpN YscU SpaS Family",
+      "description": "This family includes the following members: FlhB, HrpN, YscU, SpaS, HrcU SsaU and YopU. All of these proteins export peptides using the type III secretion system. The peptides exported are quite diverse.",
+      "type": "family",
+      "integrated": "IPR006135"
+    },
+    "PF01370": {
+      "shortName": "Epimerase",
+      "name": "NAD dependent epimerase/dehydratase family",
+      "description": "This family of proteins utilise NAD as a cofactor. The proteins in this family use nucleotide-sugar substrates for a variety of chemical reactions.",
+      "type": "family",
+      "integrated": "IPR001509"
+    },
+    "PF01411": {
+      "shortName": "tRNA-synt_2c",
+      "name": "tRNA synthetases class II (A)",
+      "description": "Other tRNA synthetase sub-families are too dissimilar to be included. This family includes only alanyl-tRNA synthetases.",
+      "type": "family",
+      "integrated": "IPR018164"
+    },
+    "PF01464": {
+      "shortName": "SLT",
+      "name": "Transglycosylase SLT domain",
+      "description": "This family is distantly related to [pfam:PF00062]. Members are found in phages, type II, type III and type IV secretion systems (reviewed in [[cite:PUB00020347]]).",
+      "type": "domain",
+      "integrated": "IPR008258"
+    },
+    "PF01339": {
+      "shortName": "CheB_methylest",
+      "name": "CheB methylesterase",
+      "description": null,
+      "type": "domain",
+      "integrated": "IPR000673"
+    },
+    "PF01584": {
+      "shortName": "CheW",
+      "name": "CheW-like domain",
+      "description": "CheW proteins are part of the chemotaxis signaling mechanism in bacteria. CheW interacts with the methyl accepting chemotaxis proteins (MCPs) and relays signals to CheY, which affects flageller rotation. This family includes CheW and other related proteins that are involved in chemotaxis. The CheW-like regulatory domain in CheA [[cite:PUB00000966]] binds to CheW, suggesting that these domains can interact with each other.",
+      "type": "domain",
+      "integrated": "IPR002545"
+    },
+    "PF01627": {
+      "shortName": "Hpt",
+      "name": "Hpt domain",
+      "description": "The histidine-containing phosphotransfer (HPt) domain is a novel protein module with an active histidine residue that mediates phosphotransfer reactions in the two-component signaling systems. A multistep phosphorelay involving the HPt domain has been suggested for these signaling pathways. The crystal structure of the HPt domain of the anaerobic sensor kinase ArcB has been determined [[cite:PUB00000945]]. The domain consists of six alpha helices containing a four-helix bundle-folding. The pattern of sequence similarity of the HPt domains of ArcB and components in other signaling systems can be interpreted in light of the three-dimensional structure and supports the conclusion that the HPt domains have a common structural motif both in prokaryotes and eukaryotes. In S. cerevisiae ypd1p this domain has been shown to contain a binding surface for Ssk1p (response regulator receiver domain containing protein [pfam:PF00072]) [[cite:PUB00019719]].",
+      "type": "domain",
+      "integrated": "IPR008207"
+    },
+    "PF01656": {
+      "shortName": "CbiA",
+      "name": "CobQ/CobB/MinD/ParA nucleotide binding domain",
+      "description": "This family consists of various cobyrinic acid a,c-diamide synthases. These include CbiA [swissprot:P29946] and CbiP [swissprot:Q05597] from S.typhimurium [[cite:PUB00015329]], and CobQ [swissprot:Q52686] from R. capsulatus [[cite:PUB00002275]]. These amidases catalyse amidations to various side chains of hydrogenobyrinic acid or cobyrinic acid a,c-diamide in the biosynthesis of cobalamin (vitamin B12) from uroporphyrinogen III. Vitamin B12 is an important cofactor and an essential nutrient for many plants and animals and is primarily produced by bacteria [[cite:PUB00015329]]. The family also contains dethiobiotin synthetases as well as the plasmid partitioning proteins of the MinD/ParA family [[cite:PUB00003797]].",
+      "type": "domain",
+      "integrated": "IPR002586"
+    },
+    "PF01739": {
+      "shortName": "CheR",
+      "name": "CheR methyltransferase, SAM binding domain",
+      "description": "CheR proteins are part of the chemotaxis signaling mechanism in bacteria. CheR methylates the chemotaxis receptor at specific glutamate residues. CheR is an S-adenosylmethionine- dependent methyltransferase - the C-terminal domain (this one) binds SAM.",
+      "type": "domain",
+      "integrated": "IPR022642"
+    },
+    "PF01842": {
+      "shortName": "ACT",
+      "name": "ACT domain",
+      "description": "This family of domains generally have a regulatory role. ACT domains are linked to a wide range of metabolic enzymes that are regulated by amino acid concentration. Pairs of ACT domains bind specifically to a particular amino acid leading to regulation of the linked enzyme. The ACT domain is found in: D-3-phosphoglycerate dehydrogenase [ec:1.1.1.95] [swissprot:P08328], which is inhibited by serine [[cite:PUB00005737]]. Aspartokinase [ec:2.7.2.4] [swissprot:P53553], which is regulated by lysine. Acetolactate synthase small regulatory subunit [swissprot:P00894], which is inhibited by valine. Phenylalanine-4-hydroxylase [ec:1.14.16.1] [swissprot:P00439], which is regulated by phenylalanine. Prephenate dehydrogenase [ec:4.2.1.51] [swissprot:P21203]. formyltetrahydrofolate deformylase [ec:3.5.1.10], [swissprot:P37051], which is activated by methionine and inhibited by glycine. GTP pyrophosphokinase [ec:2.7.6.5] [swissprot:P11585]",
+      "type": "domain",
+      "integrated": "IPR002912"
+    },
+    "PF01926": {
+      "shortName": "MMR_HSR1",
+      "name": "50S ribosome-binding GTPase",
+      "description": "The full-length GTPase protein is required for the complete activity of the protein of interacting with the 50S ribosome and binding of both adenine and guanine nucleotides, with a preference for guanine nucleotide.",
+      "type": "family",
+      "integrated": "IPR006073"
+    },
+    "PF01966": {
+      "shortName": "HD",
+      "name": "HD domain",
+      "description": "HD domains are metal dependent phosphohydrolases.",
+      "type": "family",
+      "integrated": "IPR006674"
+    },
+    "PF02272": {
+      "shortName": "DHHA1",
+      "name": "DHHA1 domain",
+      "description": "This domain is often found adjacent to the DHH domain [pfam:PF01368] and is called DHHA1 for DHH associated domain. This domain is diagnostic of DHH subfamily 1 members [[cite:PUB00005478]]. This domain is also found in alanyl tRNA synthetase e.g. [swissprot:P00957], suggesting that this domain may have an RNA binding function. The domain is about 60 residues long and contains a conserved GG motif.",
+      "type": "domain",
+      "integrated": "IPR003156"
+    },
+    "PF02374": {
+      "shortName": "ArsA_ATPase",
+      "name": "Anion-transporting ATPase",
+      "description": "This Pfam family represents a conserved domain, which is sometimes repeated, in an anion-transporting ATPase. The ATPase is involved in the removal of arsenate, antimonite, and arsenate from the cell.",
+      "type": "domain",
+      "integrated": "IPR025723"
+    },
+    "PF02895": {
+      "shortName": "H-kinase_dim",
+      "name": "Signal transducing histidine kinase, homodimeric domain",
+      "description": "This helical bundle domain is the homodimer interface of the signal transducing histidine kinase family.",
+      "type": "domain",
+      "integrated": "IPR004105"
+    },
+    "PF03705": {
+      "shortName": "CheR_N",
+      "name": "CheR methyltransferase, all-alpha domain",
+      "description": "CheR proteins are part of the chemotaxis signaling mechanism in bacteria. CheR methylates the chemotaxis receptor at specific glutamate residues. CheR is an S-adenosylmethionine- dependent methyltransferase.",
+      "type": "domain",
+      "integrated": "IPR022641"
+    },
+    "PF04055": {
+      "shortName": "Radical_SAM",
+      "name": "Radical SAM superfamily",
+      "description": "Radical SAM proteins catalyse diverse reactions, including unusual methylations, isomerisation, sulphur insertion, ring formation, anaerobic oxidation and protein radical formation.",
+      "type": "domain",
+      "integrated": "IPR007197"
+    },
+    "PF04542": {
+      "shortName": "Sigma70_r2",
+      "name": "Sigma-70 region 2",
+      "description": "Region 2 of sigma-70 is the most conserved region of the entire protein. All members of this class of sigma-factor contain region 2. The high conservation is due to region 2 containing both the -10 promoter recognition helix and the primary core RNA polymerase binding determinant. The core binding helix, interacts with the clamp domain of the largest polymerase subunit, beta prime [[cite:PUB00010042],[cite:PUB00000942]]. The aromatic residues of the recognition helix, found at the C-terminus of this domain are though to mediate strand separation, thereby allowing transcription initiation [[cite:PUB00010042],[cite:PUB00000942]].",
+      "type": "domain",
+      "integrated": "IPR007627"
+    },
+    "PF02518": {
+      "shortName": "HATPase_c",
+      "name": "Histidine kinase-, DNA gyrase B-, and HSP90-like ATPase",
+      "description": "This family represents the structurally related ATPase domains of histidine kinase, DNA gyrase B and HSP90.",
+      "type": "domain",
+      "integrated": "IPR003594"
+    },
+    "PF04545": {
+      "shortName": "Sigma70_r4",
+      "name": "Sigma-70, region 4",
+      "description": "Region 4 of sigma-70 like sigma-factors are involved in binding to the -35 promoter element via a helix-turn-helix motif [[cite:PUB00010042]]. Due to the way Pfam works, the threshold has been set artificially high to prevent overlaps with other helix-turn-helix families. Therefore there are many false negatives.",
+      "type": "domain",
+      "integrated": "IPR007630"
+    },
+    "PF04851": {
+      "shortName": "ResIII",
+      "name": "Type III restriction enzyme, res subunit",
+      "description": null,
+      "type": "family",
+      "integrated": "IPR006935"
+    },
+    "PF06018": {
+      "shortName": "CodY",
+      "name": "CodY GAF-like domain",
+      "description": "This domain is a GAF-like domain found at the N-terminus of several bacterial GTP-sensing transcriptional pleiotropic repressor CodY proteins. This domain is involved in GTP binding and also branched chain amino acids (Matilla et. al., FEMS Microbiology Reviews, fuab043, 45, 2021, 1. https://doi.org/10.1093/femsre/fuab043). CodY has been found to repress the dipeptide transport operon (dpp) of Bacillus subtilis in nutrient-rich conditions [[cite:PUB00012225]]. The CodY protein also has a repressor effect on many genes in Lactococcus lactis during growth in milk [[cite:PUB00012226]].",
+      "type": "domain",
+      "integrated": "IPR010312"
+    },
+    "PF06429": {
+      "shortName": "Flg_bbr_C",
+      "name": "Flagellar basal body rod FlgEFG protein C-terminal",
+      "description": "This family consists of a number of C-terminal domains of unknown function. This domain seems to be specific to flagellar basal-body rod and flagellar hook proteins in which [pfam:PF00460] is often present at the extreme N terminus.",
+      "type": "domain",
+      "integrated": "IPR010930"
+    },
+    "PF06564": {
+      "shortName": "CBP_BcsQ",
+      "name": "Cellulose biosynthesis protein BcsQ",
+      "description": "This is a family of bacterial proteins involved in cellulose biosynthesis. (Roemling U. and Galperin M.Y. \"Bacterial cellulose biosynthesis. Diversity of operons and subunits\" (manuscript in preparation)). A second component of the extracellular matrix of the multicellular morphotype (rdar) of Salmonella typhimurium and Escherichia coli is cellulose. The family does contain a P-loop sequence motif suggesting a nucleotide binding function, but this has not been confirmed.",
+      "type": "domain",
+      "integrated": "IPR017746"
+    },
+    "PF02954": {
+      "shortName": "HTH_8",
+      "name": "Bacterial regulatory protein, Fis family",
+      "description": null,
+      "type": "domain",
+      "integrated": "IPR002197"
+    },
+    "PF06723": {
+      "shortName": "MreB_Mbl",
+      "name": "MreB/Mbl protein",
+      "description": "This family consists of bacterial MreB and Mbl proteins as well as two related archaeal sequences. MreB is known to be a rod shape-determining protein in bacteria and goes to make up the bacterial cytoskeleton. Genes coding for MreB/Mbl are only found in elongated bacteria, not in coccoid forms. It has been speculated that constituents of the eukaryotic cytoskeleton (tubulin, actin) may have evolved from prokaryotic precursor proteins closely related to today's bacterial proteins FtsZ and MreB/Mbl [[cite:PUB00012806]].",
+      "type": "family",
+      "integrated": "IPR056546"
+    },
+    "PF07238": {
+      "shortName": "PilZ",
+      "name": "PilZ domain",
+      "description": "PilZ is a c-di-GMP binding domain [[cite:PUB00055000]] found in widespread cytoplasmic receptors, which is involved in regulation of motility, biofilm formation and virulence of many bacterial pathogens. This domain binds c-di-GMP through RXXXR and [D/N]hSXXG motifs, however, some PilZ domains lack these motifs and do not bind c-di-GMP [[cite:PUB00098203]]. Proteins which contain PilZ are known to interact with the flagellar switch-complex proteins FliG and FliM. This interaction results in a reduction of torque generation and induces CCW motor bias [[cite:PUB00055001]]. This is the canonical PilZ domain whose structure consists of six beta-strands that form a beta barrel, followed by a long C-terminal alpha-helix [[cite:PUB00098203]].",
+      "type": "domain",
+      "integrated": "IPR009875"
+    },
+    "PF07690": {
+      "shortName": "MFS_1",
+      "name": "Major Facilitator Superfamily",
+      "description": null,
+      "type": "family",
+      "integrated": "IPR011701"
+    },
+    "PF07719": {
+      "shortName": "TPR_2",
+      "name": "Tetratricopeptide repeat",
+      "description": "This Pfam entry includes outlying Tetratricopeptide-like repeats (TPR) that are not matched by [pfam:PF00515].",
+      "type": "repeat",
+      "integrated": "IPR013105"
+    },
+    "PF07728": {
+      "shortName": "AAA_5",
+      "name": "AAA domain (dynein-related subfamily)",
+      "description": "This Pfam entry includes some of the AAA proteins not detected by the [pfam:PF00004] model.",
+      "type": "domain",
+      "integrated": "IPR011704"
+    },
+    "PF07973": {
+      "shortName": "tRNA_SAD",
+      "name": "Threonyl and Alanyl tRNA synthetase second additional domain",
+      "description": "The catalytically active from of threonyl/alanyl tRNA synthetase is a dimer. Within the tRNA synthetase class II dimer, the bound tRNA interacts with both monomers making specific interactions with the catalytic domain, the C-terminal domain, and this domain (the second additional domain). The second additional domain is comprised of a pair of perpendicularly orientated antiparallel beta sheets, of four and three strands, respectively, that surround a central alpha helix that forms the core of the domain [[cite:PUB00006444]].",
+      "type": "domain",
+      "integrated": "IPR012947"
+    },
+    "PF08241": {
+      "shortName": "Methyltransf_11",
+      "name": "Methyltransferase domain",
+      "description": "Members of this family are SAM dependent methyltransferases.",
+      "type": "domain",
+      "integrated": "IPR013216"
+    },
+    "PF08242": {
+      "shortName": "Methyltransf_12",
+      "name": "Methyltransferase domain",
+      "description": "Members of this family are SAM dependent methyltransferases.",
+      "type": "domain",
+      "integrated": "IPR013217"
+    },
+    "PF08281": {
+      "shortName": "Sigma70_r4_2",
+      "name": "Sigma-70, region 4",
+      "description": "Region 4 of sigma-70 like sigma-factors are involved in binding to the -35 promoter element via a helix-turn-helix motif [[cite:PUB00010042]].",
+      "type": "domain",
+      "integrated": "IPR013249"
+    },
+    "PF08447": {
+      "shortName": "PAS_3",
+      "name": "PAS fold",
+      "description": "The PAS fold corresponds to the structural domain that has previously been defined as PAS and PAC motifs [[cite:PUB00014500]]. The PAS fold appears in archaea, eubacteria and eukarya.",
+      "type": "domain",
+      "integrated": "IPR013655"
+    },
+    "PF08448": {
+      "shortName": "PAS_4",
+      "name": "PAS fold",
+      "description": "The PAS fold corresponds to the structural domain that has previously been defined as PAS and PAC motifs [[cite:PUB00014500]]. The PAS fold appears in archaea, eubacteria and eukarya. This domain is associated to signalling systems and works as a signal sensor domain. It recognises differently substituted aromatic hydrocarbons, oxygen, different dodecanoic acids, autoinducers, 3,5-dimethyl-pyrazin-2-ol and N-alanyl-aminoacetone (Matilla et. al., FEMS Microbiology Reviews, fuab043, 45, 2021, 1. https://doi.org/10.1093/femsre/fuab043).",
+      "type": "domain",
+      "integrated": "IPR013656"
+    },
+    "PF08659": {
+      "shortName": "KR",
+      "name": "KR domain",
+      "description": "This enzymatic domain is part of bacterial polyketide synthases and catalyses the first step in the reductive modification of the beta-carbonyl centres in the growing polyketide chain. It uses NADPH to reduce the keto group to a hydroxy group [[cite:PUB00071551]].",
+      "type": "family",
+      "integrated": "IPR013968"
+    },
+    "PF08668": {
+      "shortName": "HDOD",
+      "name": "HDOD domain",
+      "description": null,
+      "type": "domain",
+      "integrated": "IPR013976"
+    },
+    "PF09140": {
+      "shortName": "MipZ",
+      "name": "ATPase MipZ",
+      "description": "MipZ is an ATPase that forms a complex with the chromosome partitioning protein ParB near the chromosomal origin of replication [[cite:PUB00035421]]. It is responsible for the temporal and spatial regulation of FtsZ ring formation [[cite:PUB00035421]].",
+      "type": "domain",
+      "integrated": "IPR015223"
+    },
+    "PF10609": {
+      "shortName": "ParA",
+      "name": "NUBPL iron-transfer P-loop NTPase",
+      "description": "This family contains ATPases involved in plasmid partitioning [[cite:PUB00003797]]. It also contains the cytosolic Fe-S cluster assembling factor NBP35 which is required for biogenesis and export of both ribosomal subunits [[cite:PUB00044419]].",
+      "type": "family",
+      "integrated": "IPR033756"
+    },
+    "PF10768": {
+      "shortName": "FliX",
+      "name": "Class II flagellar assembly regulator",
+      "description": "The FliX protein is possibly a transient component of the flagellum that is required for the assembly process. FliX may contribute to the targeting or assembly of the P- and L-ring protein monomers at the cell pole. The family carries a potential N-terminal signal sequence and at least one transmembrane domain indicating that it might function either in or in association with the cell membrane [[cite:PUB00044265]].",
+      "type": "family",
+      "integrated": "IPR019704"
+    },
+    "PF12895": {
+      "shortName": "ANAPC3",
+      "name": "Anaphase-promoting complex, cyclosome, subunit 3",
+      "description": "Apc3, otherwise known as Cdc27, is one of the subunits of the anaphase-promoting complex or cyclosome. The anaphase-promoting complex is a multiprotein subunit E3 ubiquitin ligase complex that controls segregation of chromosomes and exit from mitosis in eukaryotes [[cite:PUB00056269],[cite:PUB00055977]]. The protein members of this family contain TPR repeats just as those of Apc7 do, and it appears that these TPR units bind the C-termini of the APC co-activators CDH1 and CDC20 [[cite:PUB00150944]].",
+      "type": "repeat",
+      "integrated": null
+    },
+    "PF08222": {
+      "shortName": "HTH_CodY",
+      "name": "CodY helix-turn-helix domain",
+      "description": "This family consists of the C-terminal helix-turn-helix domain found in several bacterial GTP-sensing transcriptional pleiotropic repressor CodY proteins. CodY has been found to repress the dipeptide transport operon (dpp) of Bacillus subtilis in nutrient-rich conditions [[cite:PUB00012225]]. The CodY protein also has a repressor effect on many genes in Lactococcus lactis during growth in milk [[cite:PUB00012226]].",
+      "type": "domain",
+      "integrated": "IPR013198"
+    },
+    "PF13174": {
+      "shortName": "TPR_6",
+      "name": "Tetratricopeptide repeat",
+      "description": null,
+      "type": "repeat",
+      "integrated": "IPR019734"
+    },
+    "PF13176": {
+      "shortName": "TPR_7",
+      "name": "Tetratricopeptide repeat",
+      "description": null,
+      "type": "repeat",
+      "integrated": "IPR019734"
+    },
+    "PF13177": {
+      "shortName": "DNA_pol3_delta2",
+      "name": "DNA polymerase III, delta subunit",
+      "description": "DNA polymerase III, delta subunit (EC 2.7.7.7) is required for, along with delta' subunit, the assembly of the processivity factor beta(2) onto primed DNA in the DNA polymerase III holoenzyme-catalysed reaction [[cite:PUB00012271]]. The delta subunit is also known as HolA.",
+      "type": "domain",
+      "integrated": null
+    },
+    "PF13181": {
+      "shortName": "TPR_8",
+      "name": "Tetratricopeptide repeat",
+      "description": null,
+      "type": "repeat",
+      "integrated": "IPR019734"
+    },
+    "PF13188": {
+      "shortName": "PAS_8",
+      "name": "PAS domain",
+      "description": "PAS domains are involved in many signalling proteins where they are used as a signal sensor domain [[cite:PUB00015791]]. PAS domains appear in archaea, bacteria and eukaryotes. Several PAS-domain proteins are known to detect their signal by way of an associated cofactor. Heme, flavin, and a 4-hydroxycinnamyl chromophore are used in different proteins. This domain recognises oxygen and CO (Matilla et al., FEMS Microbiology Reviews, fuab043, 45, 2021, 1. https://doi.org/10.1093/femsre/fuab043).",
+      "type": "domain",
+      "integrated": "IPR000014"
+    },
+    "PF13245": {
+      "shortName": "AAA_19",
+      "name": "AAA domain",
+      "description": null,
+      "type": "domain",
+      "integrated": null
+    },
+    "PF13371": {
+      "shortName": "TPR_9",
+      "name": "Tetratricopeptide repeat",
+      "description": null,
+      "type": "repeat",
+      "integrated": null
+    },
+    "PF13304": {
+      "shortName": "AAA_21",
+      "name": "AAA domain, putative AbiEii toxin, Type IV TA system",
+      "description": "Several members are annotated as being of the abortive phage resistance system, in which case the family would be acting as the toxin for a type IV toxin-antitoxin resistance system.",
+      "type": "domain",
+      "integrated": "IPR003959"
+    },
+    "PF13374": {
+      "shortName": "TPR_10",
+      "name": "Tetratricopeptide repeat",
+      "description": null,
+      "type": "repeat",
+      "integrated": null
+    },
+    "PF13414": {
+      "shortName": "TPR_11",
+      "name": "TPR repeat",
+      "description": null,
+      "type": "repeat",
+      "integrated": null
+    },
+    "PF13424": {
+      "shortName": "TPR_12",
+      "name": "Tetratricopeptide repeat",
+      "description": null,
+      "type": "repeat",
+      "integrated": null
+    },
+    "PF13426": {
+      "shortName": "PAS_9",
+      "name": "PAS domain",
+      "description": "This domain is found in many signalling proteins in which it functions as a sensor domain. It recognises FMN, Zn(II), FAD and riboflavin (MAtilla et. al., FEMS Microbiology Reviews, fuab043, 45, 2021, 1. https://doi.org/10.1093/femsre/fuab043).",
+      "type": "domain",
+      "integrated": "IPR000014"
+    },
+    "PF13428": {
+      "shortName": "TPR_14",
+      "name": "Tetratricopeptide repeat",
+      "description": null,
+      "type": "repeat",
+      "integrated": null
+    },
+    "PF13431": {
+      "shortName": "TPR_17",
+      "name": "Tetratricopeptide repeat",
+      "description": null,
+      "type": "repeat",
+      "integrated": null
+    },
+    "PF13432": {
+      "shortName": "TPR_16",
+      "name": "Tetratricopeptide repeat",
+      "description": "This family is found predominantly at the C-terminus of transglutaminase enzyme core regions.",
+      "type": "repeat",
+      "integrated": null
+    },
+    "PF13487": {
+      "shortName": "HD_5",
+      "name": "HD domain",
+      "description": "HD domains are metal dependent phosphohydrolases [[cite:PUB00005837],[cite:PUB00151592]]. This entry covers the HD-GYP domain [[cite:PUB00151592]].",
+      "type": "domain",
+      "integrated": "IPR037522"
+    },
+    "PF13489": {
+      "shortName": "Methyltransf_23",
+      "name": "Methyltransferase domain",
+      "description": "This family appears to be a methyltransferase domain.",
+      "type": "domain",
+      "integrated": null
+    },
+    "PF13561": {
+      "shortName": "adh_short_C2",
+      "name": "Enoyl-(Acyl carrier protein) reductase",
+      "description": "This domain is found in Enoyl-(Acyl carrier protein) reductases.",
+      "type": "domain",
+      "integrated": "IPR002347"
+    },
+    "PF13649": {
+      "shortName": "Methyltransf_25",
+      "name": "Methyltransferase domain",
+      "description": "This family appears to be a methyltransferase domain.",
+      "type": "domain",
+      "integrated": "IPR041698"
+    },
+    "PF13614": {
+      "shortName": "AAA_31",
+      "name": "AAA domain",
+      "description": "This family includes a wide variety of AAA domains including some that have lost essential nucleotide binding residues in the P-loop.",
+      "type": "domain",
+      "integrated": "IPR025669"
+    },
+    "PF13840": {
+      "shortName": "ACT_7",
+      "name": "ACT domain",
+      "description": "The ACT domain is a structural motif of 70-90 amino acids that functions in the control of metabolism, solute transport and signal transduction. They are thus found in a variety of different proteins in a variety of different arrangements [[cite:PUB00066777]]. In mammalian phenylalanine hydroxylase the domain forms no contacts but promotes an allosteric effect despite the apparent lack of ligand binding [[cite:PUB00066778]].",
+      "type": "domain",
+      "integrated": "IPR027795"
+    },
+    "PF14450": {
+      "shortName": "FtsA",
+      "name": "Cell division protein FtsA",
+      "description": "FtsA is essential for bacterial cell division, and co-localises to the septal ring with FtsZ. It has been suggested that the interaction of FtsA-FtsZ has arisen through coevolution in different bacterial strains [[cite:PUB00009447]]. The FtsA protein contains two structurally related actin-like ATPase domains which are also structurally related to the ATPase domains of HSP70 (see PF00012). FtsA has a SHS2 domain PF02491 inserted in to the RnaseH fold PF02491 [[cite:PUB00057445]].",
+      "type": "domain",
+      "integrated": null
+    },
+    "PF14532": {
+      "shortName": "Sigma54_activ_2",
+      "name": "Sigma-54 interaction domain",
+      "description": null,
+      "type": "domain",
+      "integrated": "IPR002078"
+    },
+    "PF14559": {
+      "shortName": "TPR_19",
+      "name": "Tetratricopeptide repeat",
+      "description": null,
+      "type": "repeat",
+      "integrated": null
+    },
+    "PF20072": {
+      "shortName": "DUF6468",
+      "name": "Domain of unknown function (DUF6468)",
+      "description": "This domain of unknown function is found in uncharacterised proteins predominantly from Alphaproteobacteria but it is also present in some sequences from eukaryotes. This domain is approximately 75 amino acids in length.",
+      "type": "domain",
+      "integrated": "IPR045531"
+    },
+    "PF13847": {
+      "shortName": "Methyltransf_31",
+      "name": "Methyltransferase domain",
+      "description": "This family appears to have methyltransferase activity.",
+      "type": "domain",
+      "integrated": "IPR025714"
+    },
+    "PF22468": {
+      "shortName": "ACT_9",
+      "name": "ACT domain",
+      "description": "This entry represents the ACT domain, which is found twice in Aspartate kinase from Methanocaldococcus jannaschii, the enzyme that catalyses the phosphorylation of aspartic acid [[cite:PUB00050859]]. This domain folds as a four-stranded antiparallel sheet with two alpha-helices parallel to the sheet and located on one side of the sheet [[cite:PUB00039980]].",
+      "type": "domain",
+      "integrated": "IPR054352"
+    },
+    "PF22692": {
+      "shortName": "LlgE_F_G_D1",
+      "name": "Flagellar hook protein FlgE/F/G D1 domain",
+      "description": "This entry represents the D1 domain found in three closely related flagellar proteins usually denoted FlgE, FlgF and FlgG. In FlgE there is an additional domain (D2, [pfam:PF07559]) outside D1 [[cite:PUB00032756],[cite:PUB00154040],[cite:PUB00106064],[cite:PUB00151809],[cite:PUB00154041]]. The flagellar hook is a short, highly curved tubular structure that connects the flagellar motor to the long filament acting as a helical propeller.",
+      "type": "domain",
+      "integrated": "IPR053967"
+    },
+    "PF25601": {
+      "shortName": "AAA_lid_14",
+      "name": "AAA+ ATPase lid domain",
+      "description": "This entry represents the alpha helical AAA+ lid domain that is found to the C-terminus of AAA domains.",
+      "type": "domain",
+      "integrated": "IPR058031"
+    },
+    "PF26154": {
+      "shortName": "DUF8042",
+      "name": "Domain of unknown function (DUF8042)",
+      "description": "This entry represents an uncharacterised domain family which forms a four helical bundle structure. This family includes the B. subtilis YvzG protein ([swissprot:C0H3R9]).",
+      "type": "domain",
+      "integrated": "IPR058355"
+    }
+  }
+}

@@ -15,7 +15,14 @@
     "check-assembly-duplicates": "node scripts/check-assembly-duplicates.mjs",
     "build:flagella-svg-labels": "node scripts/build-flagella-svg-labels.mjs",
     "build:flagella-database-svg": "node scripts/build-flagella-database-svg.mjs",
-    "build:home-stats": "node scripts/build-home-stats.mjs"
+    "build:home-stats": "node scripts/build-home-stats.mjs",
+    "build:operon-insertions": "node scripts/operon-insertions/build-insertion-neighbor-associations.mjs",
+    "build:insertion-phyletic-distribution": "node scripts/operon-insertions/build-insertion-phyletic-distribution.mjs",
+    "build:raw-pfam-operon-insertions": "node scripts/operon-insertions/build-insertion-neighbor-associations.mjs --reference public\\operon_coords --insertions public\\flagellar_genes_homologs_June5_neighbors_db_pfam_top100_coordinates.tsv --output public\\operon-insertions\\pfam-raw-insertion-neighbor-associations.json --max-distance 500",
+    "build:ko-pfam-overlaps": "node scripts/operon-insertions/build-ko-pfam-overlaps.mjs",
+    "fetch:kegg-insertion-names": "node scripts/operon-insertions/fetch-kegg-orthology-names.mjs",
+    "fetch:pfam-insertion-metadata": "node scripts/operon-insertions/fetch-pfam-entry-metadata.mjs",
+    "merge:pfam-insertion-domains": "node scripts/operon-insertions/merge-correlated-pfam-domains.mjs"
   },
   "dependencies": {
     "@radix-ui/react-checkbox": "latest",

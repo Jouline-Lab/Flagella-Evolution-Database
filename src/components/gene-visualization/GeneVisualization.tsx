@@ -33,13 +33,17 @@ type OperonPhyleticTransferPayload = {
   version: 1;
   label: string;
   columns: string[];
+  sourceUrl?: string;
+  sourceFormat?: "tsv" | "sparse-association-v1";
+  customDataKind?: "operon" | "insertion";
+  displayNames?: Record<string, string>;
   backboneColumns?: string[];
   alternativeColumns?: string[];
   columnMetrics?: OperonColumnMetricPayload[];
 };
 
-function operonColumnDisplayName(column: string): string {
-  return column.replace(/_to_/, "→");
+function operonColumnDisplayName(column: string, displayNames?: Record<string, string>): string {
+  return displayNames?.[column] ?? column.replace(/_to_/, "→");
 }
 
 type OperonColumnMetricPayload = {
@@ -48,6 +52,11 @@ type OperonColumnMetricPayload = {
   target: string;
   role: "backbone" | "alternative";
   mainTarget?: string;
+  direction?: string;
+  sourceType?: "kegg" | "pfam";
+  count?: number;
+  occurrencePercent?: number;
+  meanDistanceBp?: number;
   cladeAveragePercent: number;
   genePresentAveragePercent: number;
 };
@@ -57,6 +66,11 @@ export type OperonRugTooltipStats = {
   target: string;
   role: "backbone" | "alternative";
   mainTarget?: string;
+  direction?: string;
+  sourceType?: "kegg" | "pfam";
+  count?: number;
+  occurrencePercent?: number;
+  meanDistanceBp?: number;
   cladeAveragePercent: number;
   genePresentAveragePercent: number;
   missingMainTargetAlternativeCount?: number;
@@ -67,7 +81,17 @@ export type OperonRugTooltipStats = {
   alternativeWithMainTargetMissingPercent?: number;
 };
 
-function filterTsvColumns(tsvText: string, requestedColumns: string[]): { text: string; foundColumns: string[]; missingColumns: string[] } {
+type SparseInsertionPhyleticBundle = {
+  schemaVersion: 1;
+  assemblies: string[];
+  associations: Record<string, Array<[number, number]>>;
+};
+
+function filterTsvColumns(
+  tsvText: string,
+  requestedColumns: string[],
+  displayNames?: Record<string, string>
+): { text: string; foundColumns: string[]; missingColumns: string[] } {
   const lines = tsvText.replace(/\r/g, "").split("\n").filter((line) => line.trim().length > 0);
   if (lines.length === 0) {
     throw new Error("Operon phyletic TSV is empty.");
@@ -89,13 +113,50 @@ function filterTsvColumns(tsvText: string, requestedColumns: string[]): { text: 
   const keepIndexes = keepColumns.map((column) => headerIndex.get(column) ?? -1);
   const outputHeaders = [
     ...OPERON_PHYLETIC_METADATA_COLUMNS.filter((column) => headerIndex.has(column)),
-    ...foundColumns.map(operonColumnDisplayName)
+    ...foundColumns.map((column) => operonColumnDisplayName(column, displayNames))
   ];
   const outputLines = [outputHeaders.join("\t")];
 
   for (let i = 1; i < lines.length; i += 1) {
     const parts = lines[i].split("\t");
     outputLines.push(keepIndexes.map((index) => parts[index] ?? "").join("\t"));
+  }
+
+  return {
+    text: outputLines.join("\n"),
+    foundColumns,
+    missingColumns
+  };
+}
+
+function materializeSparseInsertionTsv(
+  bundle: SparseInsertionPhyleticBundle,
+  requestedColumns: string[],
+  displayNames?: Record<string, string>
+): { text: string; foundColumns: string[]; missingColumns: string[] } {
+  const requestedUnique = Array.from(new Set(requestedColumns));
+  const foundColumns = requestedUnique.filter((column) => Array.isArray(bundle.associations[column]));
+  const missingColumns = requestedUnique.filter((column) => !Array.isArray(bundle.associations[column]));
+  if (foundColumns.length === 0) {
+    throw new Error("None of the visible directed insertion associations were found in the insertion phyletic bundle.");
+  }
+
+  const countRows = Array.from({ length: bundle.assemblies.length }, () =>
+    new Array(foundColumns.length).fill(0)
+  );
+  foundColumns.forEach((column, columnIndex) => {
+    for (const [assemblyIndex, count] of bundle.associations[column] ?? []) {
+      if (assemblyIndex >= 0 && assemblyIndex < countRows.length) {
+        countRows[assemblyIndex][columnIndex] = count;
+      }
+    }
+  });
+
+  const outputLines = [
+    ["assembly", ...foundColumns.map((column) => operonColumnDisplayName(column, displayNames))].join("\t")
+  ];
+  for (let index = 0; index < bundle.assemblies.length; index += 1) {
+    outputLines.push([bundle.assemblies[index], ...countRows[index]].join("\t"));
   }
 
   return {
@@ -119,7 +180,8 @@ function parseTsvRows(tsvText: string): { headers: string[]; rows: string[][] } 
 function buildOperonRugTooltipStats(
   tsvText: string,
   metrics: OperonColumnMetricPayload[],
-  defaultCountMap: Map<string, Record<string, number>>
+  defaultCountMap: Map<string, Record<string, number>>,
+  displayNames?: Record<string, string>
 ): Record<string, OperonRugTooltipStats> {
   const { headers, rows } = parseTsvRows(tsvText);
   const headerIndex = new Map(headers.map((header, index) => [header, index]));
@@ -127,12 +189,17 @@ function buildOperonRugTooltipStats(
   const tooltipStats: Record<string, OperonRugTooltipStats> = {};
 
   for (const metric of metrics) {
-    const displayColumn = operonColumnDisplayName(metric.column);
+    const displayColumn = operonColumnDisplayName(metric.column, displayNames);
     const stats: OperonRugTooltipStats = {
       source: metric.source,
       target: metric.target,
       role: metric.role,
       mainTarget: metric.mainTarget,
+      direction: metric.direction,
+      sourceType: metric.sourceType,
+      count: metric.count,
+      occurrencePercent: metric.occurrencePercent,
+      meanDistanceBp: metric.meanDistanceBp,
       cladeAveragePercent: metric.cladeAveragePercent,
       genePresentAveragePercent: metric.genePresentAveragePercent
     };
@@ -210,6 +277,7 @@ function LoadingOverlay({
 }
 
 export function GeneVisualization() {
+  const [customDataKind, setCustomDataKind] = useState<"user" | "operon" | "insertion">("user");
   const [showSidebar, setShowSidebar] = useState(true);
   const [showTopTree, setShowTopTree] = useState(false);
   const [treeLayoutMode, setTreeLayoutMode] = useState<'phlogram' | 'cladogram'>('phlogram');
@@ -258,6 +326,10 @@ export function GeneVisualization() {
         const reader = new FileReader();
         reader.onload = (event) => {
           const text = event.target?.result as string;
+          setCustomDataKind("user");
+          setOperonBackboneGenes([]);
+          setOperonAlternativeGenes([]);
+          setOperonRugTooltipStats({});
           loadCustomTSVData(text, file.name || "Custom TSV File");
         };
         reader.readAsText(file);
@@ -340,30 +412,42 @@ export function GeneVisualization() {
           throw new Error("The operon transfer payload is invalid.");
         }
 
-        const response = await fetch(withBasePath(OPERON_PHYLETIC_TSV_URL));
+        const sourceUrl = payload.sourceUrl ?? OPERON_PHYLETIC_TSV_URL;
+        const sourceFormat = payload.sourceFormat ?? "tsv";
+        const response = await fetch(withBasePath(sourceUrl));
         if (!response.ok) {
-          throw new Error(`Failed to load operon phyletic TSV: HTTP ${response.status}`);
+          throw new Error(`Failed to load phyletic transfer data: HTTP ${response.status}`);
         }
-        const sourceText = await response.text();
-        const filtered = filterTsvColumns(sourceText, payload.columns);
+        const sourceText =
+          sourceFormat === "sparse-association-v1" ? "" : await response.text();
+        const filtered =
+          sourceFormat === "sparse-association-v1"
+            ? materializeSparseInsertionTsv(
+                (await response.json()) as SparseInsertionPhyleticBundle,
+                payload.columns,
+                payload.displayNames
+              )
+            : filterTsvColumns(sourceText, payload.columns, payload.displayNames);
         if (cancelled) return;
 
         const foundColumnSet = new Set(filtered.foundColumns);
+        setCustomDataKind(payload.customDataKind ?? "operon");
         setOperonBackboneGenes(
           (payload.backboneColumns ?? [])
             .filter((column) => foundColumnSet.has(column))
-            .map(operonColumnDisplayName)
+            .map((column) => operonColumnDisplayName(column, payload.displayNames))
         );
         setOperonAlternativeGenes(
           (payload.alternativeColumns ?? [])
             .filter((column) => foundColumnSet.has(column))
-            .map(operonColumnDisplayName)
+            .map((column) => operonColumnDisplayName(column, payload.displayNames))
         );
         setOperonRugTooltipStats(
           buildOperonRugTooltipStats(
-            sourceText,
+            sourceFormat === "sparse-association-v1" ? filtered.text : sourceText,
             (payload.columnMetrics ?? []).filter((metric) => foundColumnSet.has(metric.column)),
-            state.countMap
+            state.countMap,
+            payload.displayNames
           )
         );
 
@@ -373,7 +457,7 @@ export function GeneVisualization() {
         window.localStorage.removeItem(storageKey);
         if (filtered.missingColumns.length > 0) {
           console.warn(
-            `${filtered.missingColumns.length} transferred operon columns were not found in ${OPERON_PHYLETIC_TSV_URL}.`
+            `${filtered.missingColumns.length} transferred phyletic columns were not found in ${sourceUrl}.`
           );
         }
       } catch (error) {
@@ -391,7 +475,7 @@ export function GeneVisualization() {
     return () => {
       cancelled = true;
     };
-  }, [loadCustomTSVData, operonTransferHandled, state.defaultGeneNames.length]);
+  }, [loadCustomTSVData, operonTransferHandled, state.countMap, state.defaultGeneNames.length]);
 
   useEffect(() => {
     if (!canShowTopTree) {
@@ -462,8 +546,9 @@ export function GeneVisualization() {
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 h-full">
               <GeneSelectionSidebar
                 geneNames={state.geneNames}
-              defaultGeneNames={state.defaultGeneNames}
-              customGeneNames={state.customGeneNames}
+                defaultGeneNames={state.defaultGeneNames}
+                customGeneNames={state.customGeneNames}
+                customDataKind={customDataKind}
                 activeGenes={state.activeGenes}
                 onToggleGene={toggleGeneSelection}
                 onToggleGeneGroup={toggleGeneGroupSelection}
@@ -522,10 +607,10 @@ export function GeneVisualization() {
                     asmIndex={state.asmIndex}
                     geneIndex={state.geneIndex}
                     countMap={state.countMap}
-                    customRugGenes={state.customGeneNames}
-                    backboneRugGenes={operonBackboneGenes}
-                    alternativeRugGenes={operonAlternativeGenes}
-                    rugTooltipStats={operonRugTooltipStats}
+                    customRugGenes={customDataKind === "operon" || customDataKind === "insertion" ? state.customGeneNames : []}
+                    backboneRugGenes={customDataKind === "operon" || customDataKind === "insertion" ? operonBackboneGenes : []}
+                    alternativeRugGenes={customDataKind === "operon" || customDataKind === "insertion" ? operonAlternativeGenes : []}
+                    rugTooltipStats={customDataKind === "operon" || customDataKind === "insertion" ? operonRugTooltipStats : {}}
                     onLineageClick={filterByLineage}
                     onDomainClick={resetFilters}
                     onRemoveGene={toggleGeneSelection}

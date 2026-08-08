@@ -12,6 +12,7 @@ interface GeneSelectionSidebarProps {
   geneNames: string[];
   defaultGeneNames?: string[];
   customGeneNames?: string[];
+  customDataKind?: "user" | "operon" | "insertion";
   activeGenes: string[];
   onToggleGene: (gene: string) => void;
   onToggleGeneGroup: (genes: string[]) => void;
@@ -23,6 +24,7 @@ export function GeneSelectionSidebar({
   geneNames,
   defaultGeneNames,
   customGeneNames = [],
+  customDataKind = "user",
   activeGenes,
   onToggleGene,
   onToggleGeneGroup,
@@ -42,35 +44,25 @@ export function GeneSelectionSidebar({
   const customRef = useRef<HTMLDivElement>(null);
   const diffRef = useRef<HTMLDivElement>(null);
 
+  const customGeneSet = new Set(customGeneNames);
+  const isComparisonGene = (gene: string) => !customGeneSet.has(gene) && (gene.includes(">") || gene.includes("-"));
   const defaultGeneSet = defaultGeneNames && defaultGeneNames.length > 0 ? defaultGeneNames : geneNames;
-  const regularGenes = defaultGeneSet.filter((gene) => !gene.includes(">") && !gene.includes("-"));
-  const customGenes = customGeneNames.filter((gene) => !gene.includes(">") && !gene.includes("-"));
-  const differenceGenes = geneNames.filter((gene) => gene.includes(">") || gene.includes("-"));
+  const regularGenes = defaultGeneSet.filter((gene) => !isComparisonGene(gene));
+  const customGenes = customGeneNames;
+  const differenceGenes = geneNames.filter(isComparisonGene);
   const activeRegularGenes = activeGenes.filter((gene) => regularGenes.includes(gene));
   const activeCustomGenes = activeGenes.filter((gene) => customGenes.includes(gene));
-  const activeDifferenceGenes = activeGenes.filter(
-    (gene) => gene.includes(">") || gene.includes("-")
-  );
+  const activeDifferenceGenes = activeGenes.filter(isComparisonGene);
   const hasActiveRegularGenes = activeRegularGenes.length > 0;
   const hasActiveCustomGenes = activeCustomGenes.length > 0;
-
-  const regularGenesSorted = React.useMemo(() => {
-    return [...regularGenes].sort((a, b) => {
-      const la = a.replace(/_count$/, "").toLowerCase();
-      const lb = b.replace(/_count$/, "").toLowerCase();
-      return la.localeCompare(lb);
-    });
-  }, [regularGenes]);
 
   const differenceGenesSorted = React.useMemo(() => {
     return [...differenceGenes].sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
   }, [differenceGenes]);
 
-  const regularOptions = useMemo(() => regularGenesSorted, [regularGenesSorted]);
-  const customOptions = useMemo(
-    () => [...customGenes].sort((a, b) => a.replace(/_count$/, "").toLowerCase().localeCompare(b.replace(/_count$/, "").toLowerCase())),
-    [customGenes]
-  );
+  // Preserve TSV header order for default, user, operon, and insertion data.
+  const regularOptions = useMemo(() => regularGenes, [regularGenes]);
+  const customOptions = useMemo(() => customGenes, [customGenes]);
 
   const filteredRegularOptions = useMemo(() => {
     const q = regularQuery.trim().toLowerCase();
@@ -260,7 +252,11 @@ export function GeneSelectionSidebar({
             <div>
               <div className="flex items-center justify-between mb-2">
                 <h3 className="font-medium text-sm text-gray-900">
-                  Operon Data
+                  {customDataKind === "insertion"
+                    ? "Insertions"
+                    : customDataKind === "operon"
+                      ? "Operon Data"
+                      : "User Data"}
                 </h3>
                 <div className="flex items-center gap-2">
                   <Badge variant="secondary" className="text-xs">
@@ -319,13 +315,25 @@ export function GeneSelectionSidebar({
                       }
                     }}
                     className="h-9 w-full rounded border border-gray-300 bg-white pl-7 pr-8 text-sm text-gray-900"
-                    placeholder="Select custom TSV columns"
+                    placeholder={
+                      customDataKind === "operon"
+                        ? "Select operon columns"
+                        : customDataKind === "insertion"
+                          ? "Select insertions"
+                        : "Select user data columns"
+                    }
                   />
                   <button
                     type="button"
                     onClick={() => setCustomOpen((v) => !v)}
                     className="absolute right-1 top-1/2 -translate-y-1/2 rounded p-1 text-gray-700 hover:bg-gray-100"
-                    aria-label="Toggle custom TSV column menu"
+                    aria-label={`Toggle ${
+                      customDataKind === "insertion"
+                        ? "insertion"
+                        : customDataKind === "operon"
+                          ? "operon"
+                          : "user data"
+                    } column menu`}
                   >
                     <ChevronDown className="h-3.5 w-3.5" />
                   </button>

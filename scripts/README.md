@@ -35,6 +35,7 @@ All `.mjs` scripts use `process.cwd()` as the project root; paths are written re
 | File | npm | Role |
 |------|-----|------|
 | `split_coords_into_assemblies.py` | _(run with Python; not wired in `package.json`)_ | Splits a single large operon/coordinate TSV into **one TSV per assembly** using a mapping file (`assembly`, `genome_id` where `genome_id` matches contig IDs in the main file). Intended output layout matches `public/operon_coords/` used by `build-gene-profiles-index.mjs`. The `main` block at the bottom contains **author-specific absolute paths**; edit those (or import `split_main_tsv_by_assembly` from another driver) before running. Requires `pandas`. |
+| `operon-insertions/build-insertion-neighbor-associations.mjs` | `npm run build:operon-insertions -- --reference <flagellar.tsv-or-directory> --insertions <insertions.tsv> --max-distance 500` | Two coordinate datasets containing `gene_name`, `gene_id`, `genome_id`, `start`, `stop`, and `strand`; the reference may be one TSV or a directory of TSVs | `public/operon-insertions/insertion-neighbor-associations.json` | Finds the nearest reference feature on each genomic side of every insertion, converts sides to transcriptional upstream/downstream using insertion strand, and summarizes counts and distance statistics for the experimental `/operon-insertions` page. |
 
 ---
 

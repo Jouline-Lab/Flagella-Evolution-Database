@@ -1,0 +1,2835 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-07-07T04:10:42.803Z",
+  "occurrenceDefinition": "unique genome_id + gene_id",
+  "sourceFiles": {
+    "kegg": "flagellar_gene_neighbors_top100_domain_proteins_coordinates.tsv",
+    "pfam": "pfam-top100-merged90-coordinates.tsv",
+    "pfamReport": "pfam-domain-overlap-groups.json"
+  },
+  "threshold": 0.7,
+  "thresholdMetric": "maxCoverage",
+  "thresholdRule": "merged reciprocal-coverage Pfam groups are retained when KO coverage by Pfam or Pfam coverage by KO is at least threshold",
+  "summary": {
+    "keggRows": 135817,
+    "keggOccurrenceRowsUsed": 135817,
+    "keggGroups": 100,
+    "pfamRows": 375046,
+    "pfamOccurrenceRowsUsed": 375046,
+    "pfamGroups": 71,
+    "matchedKeggGroups": 41,
+    "matchedPairs": 63
+  },
+  "pfamByKo": {
+    "K00278": [
+      {
+        "koId": "K00278",
+        "pfamRepresentative": "PF00890",
+        "pfamMembers": [
+          "PF00890"
+        ],
+        "koCount": 557,
+        "pfamCount": 2371,
+        "intersection": 557,
+        "union": 2371,
+        "jaccard": 0.2349219738506959,
+        "coverageKoByPfam": 1,
+        "coveragePfamByKo": 0.2349219738506959,
+        "maxCoverage": 1
+      }
+    ],
+    "K00575": [
+      {
+        "koId": "K00575",
+        "pfamRepresentative": "PF01739",
+        "pfamMembers": [
+          "PF01739",
+          "PF03705"
+        ],
+        "koCount": 2742,
+        "pfamCount": 2926,
+        "intersection": 2731,
+        "union": 2937,
+        "jaccard": 0.9298604017705141,
+        "coverageKoByPfam": 0.9959883296863603,
+        "coveragePfamByKo": 0.9333561175666438,
+        "maxCoverage": 0.9959883296863603
+      },
+      {
+        "koId": "K00575",
+        "pfamRepresentative": "PF08241",
+        "pfamMembers": [
+          "PF08241",
+          "PF13649"
+        ],
+        "koCount": 2742,
+        "pfamCount": 6401,
+        "intersection": 2255,
+        "union": 6888,
+        "jaccard": 0.3273809523809524,
+        "coverageKoByPfam": 0.8223924142961342,
+        "coveragePfamByKo": 0.35228870488986097,
+        "maxCoverage": 0.8223924142961342
+      }
+    ],
+    "K00928": [
+      {
+        "koId": "K00928",
+        "pfamRepresentative": "PF22468",
+        "pfamMembers": [
+          "PF22468",
+          "PF13840",
+          "PF00696",
+          "PF01842"
+        ],
+        "koCount": 4137,
+        "pfamCount": 5131,
+        "intersection": 4135,
+        "union": 5133,
+        "jaccard": 0.8055717903759985,
+        "coverageKoByPfam": 0.9995165578921924,
+        "coveragePfamByKo": 0.8058857922432274,
+        "maxCoverage": 0.9995165578921924
+      }
+    ],
+    "K01872": [
+      {
+        "koId": "K01872",
+        "pfamRepresentative": "PF01411",
+        "pfamMembers": [
+          "PF01411",
+          "PF07973",
+          "PF02272"
+        ],
+        "koCount": 2802,
+        "pfamCount": 3374,
+        "intersection": 2798,
+        "union": 3378,
+        "jaccard": 0.8283007696862048,
+        "coverageKoByPfam": 0.9985724482512491,
+        "coveragePfamByKo": 0.8292827504445762,
+        "maxCoverage": 0.9985724482512491
+      }
+    ],
+    "K02242": [
+      {
+        "koId": "K02242",
+        "pfamRepresentative": "PF00156",
+        "pfamMembers": [
+          "PF00156"
+        ],
+        "koCount": 2194,
+        "pfamCount": 3632,
+        "intersection": 1581,
+        "union": 4245,
+        "jaccard": 0.3724381625441696,
+        "coverageKoByPfam": 0.7206016408386509,
+        "coveragePfamByKo": 0.4352973568281938,
+        "maxCoverage": 0.7206016408386509
+      }
+    ],
+    "K02341": [
+      {
+        "koId": "K02341",
+        "pfamRepresentative": "PF13177",
+        "pfamMembers": [
+          "PF13177"
+        ],
+        "koCount": 3431,
+        "pfamCount": 3736,
+        "intersection": 3426,
+        "union": 3741,
+        "jaccard": 0.9157979149959904,
+        "coverageKoByPfam": 0.9985426989215972,
+        "coveragePfamByKo": 0.9170235546038544,
+        "maxCoverage": 0.9985426989215972
+      }
+    ],
+    "K02390": [
+      {
+        "koId": "K02390",
+        "pfamRepresentative": "PF06429",
+        "pfamMembers": [
+          "PF06429"
+        ],
+        "koCount": 783,
+        "pfamCount": 5489,
+        "intersection": 667,
+        "union": 5605,
+        "jaccard": 0.11900089206066013,
+        "coverageKoByPfam": 0.8518518518518519,
+        "coveragePfamByKo": 0.12151575879030789,
+        "maxCoverage": 0.8518518518518519
+      }
+    ],
+    "K02391": [
+      {
+        "koId": "K02391",
+        "pfamRepresentative": "PF22692",
+        "pfamMembers": [
+          "PF22692"
+        ],
+        "koCount": 2667,
+        "pfamCount": 5174,
+        "intersection": 2381,
+        "union": 5460,
+        "jaccard": 0.4360805860805861,
+        "coverageKoByPfam": 0.8927634045744282,
+        "coveragePfamByKo": 0.46018554310011595,
+        "maxCoverage": 0.8927634045744282
+      },
+      {
+        "koId": "K02391",
+        "pfamRepresentative": "PF06429",
+        "pfamMembers": [
+          "PF06429"
+        ],
+        "koCount": 2667,
+        "pfamCount": 5489,
+        "intersection": 2116,
+        "union": 6040,
+        "jaccard": 0.35033112582781456,
+        "coverageKoByPfam": 0.7934008248968879,
+        "coveragePfamByKo": 0.3854982692658043,
+        "maxCoverage": 0.7934008248968879
+      }
+    ],
+    "K02622": [
+      {
+        "koId": "K02622",
+        "pfamRepresentative": "PF02518",
+        "pfamMembers": [
+          "PF02518"
+        ],
+        "koCount": 546,
+        "pfamCount": 20541,
+        "intersection": 541,
+        "union": 20546,
+        "jaccard": 0.026331159349751776,
+        "coverageKoByPfam": 0.9908424908424909,
+        "coveragePfamByKo": 0.026337568764909208,
+        "maxCoverage": 0.9908424908424909
+      }
+    ],
+    "K03088": [
+      {
+        "koId": "K03088",
+        "pfamRepresentative": "PF04542",
+        "pfamMembers": [
+          "PF04542"
+        ],
+        "koCount": 1070,
+        "pfamCount": 2668,
+        "intersection": 1027,
+        "union": 2711,
+        "jaccard": 0.3788270011066027,
+        "coverageKoByPfam": 0.9598130841121495,
+        "coveragePfamByKo": 0.3849325337331334,
+        "maxCoverage": 0.9598130841121495
+      },
+      {
+        "koId": "K03088",
+        "pfamRepresentative": "PF08281",
+        "pfamMembers": [
+          "PF08281"
+        ],
+        "koCount": 1070,
+        "pfamCount": 2921,
+        "intersection": 1021,
+        "union": 2970,
+        "jaccard": 0.3437710437710438,
+        "coverageKoByPfam": 0.9542056074766355,
+        "coveragePfamByKo": 0.34953782951044166,
+        "maxCoverage": 0.9542056074766355
+      }
+    ],
+    "K03406": [
+      {
+        "koId": "K03406",
+        "pfamRepresentative": "PF00015",
+        "pfamMembers": [
+          "PF00015"
+        ],
+        "koCount": 4846,
+        "pfamCount": 4238,
+        "intersection": 3402,
+        "union": 5682,
+        "jaccard": 0.5987328405491025,
+        "coverageKoByPfam": 0.7020222864217912,
+        "coveragePfamByKo": 0.802737140160453,
+        "maxCoverage": 0.802737140160453
+      }
+    ],
+    "K03407": [
+      {
+        "koId": "K03407",
+        "pfamRepresentative": "PF02518",
+        "pfamMembers": [
+          "PF02518"
+        ],
+        "koCount": 2437,
+        "pfamCount": 20541,
+        "intersection": 2421,
+        "union": 20557,
+        "jaccard": 0.117770102641436,
+        "coverageKoByPfam": 0.993434550677062,
+        "coveragePfamByKo": 0.11786183730100774,
+        "maxCoverage": 0.993434550677062
+      },
+      {
+        "koId": "K03407",
+        "pfamRepresentative": "PF01627",
+        "pfamMembers": [
+          "PF01627"
+        ],
+        "koCount": 2437,
+        "pfamCount": 4475,
+        "intersection": 2410,
+        "union": 4502,
+        "jaccard": 0.5353176366059529,
+        "coverageKoByPfam": 0.988920804267542,
+        "coveragePfamByKo": 0.5385474860335195,
+        "maxCoverage": 0.988920804267542
+      },
+      {
+        "koId": "K03407",
+        "pfamRepresentative": "PF02895",
+        "pfamMembers": [
+          "PF02895"
+        ],
+        "koCount": 2437,
+        "pfamCount": 2457,
+        "intersection": 2387,
+        "union": 2507,
+        "jaccard": 0.9521340247307539,
+        "coverageKoByPfam": 0.9794829708658186,
+        "coveragePfamByKo": 0.9715099715099715,
+        "maxCoverage": 0.9794829708658186
+      },
+      {
+        "koId": "K03407",
+        "pfamRepresentative": "PF01584",
+        "pfamMembers": [
+          "PF01584"
+        ],
+        "koCount": 2437,
+        "pfamCount": 7469,
+        "intersection": 2385,
+        "union": 7521,
+        "jaccard": 0.31711208615875547,
+        "coverageKoByPfam": 0.9786622897004513,
+        "coveragePfamByKo": 0.31931985540232966,
+        "maxCoverage": 0.9786622897004513
+      }
+    ],
+    "K03408": [
+      {
+        "koId": "K03408",
+        "pfamRepresentative": "PF01584",
+        "pfamMembers": [
+          "PF01584"
+        ],
+        "koCount": 1365,
+        "pfamCount": 7469,
+        "intersection": 1353,
+        "union": 7481,
+        "jaccard": 0.18085817404090362,
+        "coverageKoByPfam": 0.9912087912087912,
+        "coveragePfamByKo": 0.18114874815905743,
+        "maxCoverage": 0.9912087912087912
+      }
+    ],
+    "K03412": [
+      {
+        "koId": "K03412",
+        "pfamRepresentative": "PF01339",
+        "pfamMembers": [
+          "PF01339"
+        ],
+        "koCount": 6135,
+        "pfamCount": 6318,
+        "intersection": 6128,
+        "union": 6325,
+        "jaccard": 0.9688537549407115,
+        "coverageKoByPfam": 0.9988590057049714,
+        "coveragePfamByKo": 0.9699271921494144,
+        "maxCoverage": 0.9988590057049714
+      },
+      {
+        "koId": "K03412",
+        "pfamRepresentative": "PF00072",
+        "pfamMembers": [
+          "PF00072"
+        ],
+        "koCount": 6135,
+        "pfamCount": 38663,
+        "intersection": 5736,
+        "union": 39062,
+        "jaccard": 0.14684347959653885,
+        "coverageKoByPfam": 0.9349633251833741,
+        "coveragePfamByKo": 0.1483588961022166,
+        "maxCoverage": 0.9349633251833741
+      }
+    ],
+    "K03413": [
+      {
+        "koId": "K03413",
+        "pfamRepresentative": "PF00072",
+        "pfamMembers": [
+          "PF00072"
+        ],
+        "koCount": 11521,
+        "pfamCount": 38663,
+        "intersection": 11516,
+        "union": 38668,
+        "jaccard": 0.29781731664425365,
+        "coverageKoByPfam": 0.9995660098949743,
+        "coveragePfamByKo": 0.29785583115640274,
+        "maxCoverage": 0.9995660098949743
+      }
+    ],
+    "K03415": [
+      {
+        "koId": "K03415",
+        "pfamRepresentative": "PF01584",
+        "pfamMembers": [
+          "PF01584"
+        ],
+        "koCount": 3380,
+        "pfamCount": 7469,
+        "intersection": 3379,
+        "union": 7470,
+        "jaccard": 0.45234270414993305,
+        "coverageKoByPfam": 0.9997041420118343,
+        "coveragePfamByKo": 0.45240326683625653,
+        "maxCoverage": 0.9997041420118343
+      },
+      {
+        "koId": "K03415",
+        "pfamRepresentative": "PF00072",
+        "pfamMembers": [
+          "PF00072"
+        ],
+        "koCount": 3380,
+        "pfamCount": 38663,
+        "intersection": 3378,
+        "union": 38665,
+        "jaccard": 0.08736583473425578,
+        "coverageKoByPfam": 0.9994082840236687,
+        "coveragePfamByKo": 0.0873703540853012,
+        "maxCoverage": 0.9994082840236687
+      }
+    ],
+    "K03496": [
+      {
+        "koId": "K03496",
+        "pfamRepresentative": "PF13614",
+        "pfamMembers": [
+          "PF13614",
+          "PF09140",
+          "PF06564",
+          "PF02374",
+          "PF10609",
+          "PF01656"
+        ],
+        "koCount": 3079,
+        "pfamCount": 3980,
+        "intersection": 3079,
+        "union": 3980,
+        "jaccard": 0.7736180904522613,
+        "coverageKoByPfam": 1,
+        "coveragePfamByKo": 0.7736180904522613,
+        "maxCoverage": 1
+      }
+    ],
+    "K03529": [
+      {
+        "koId": "K03529",
+        "pfamRepresentative": "PF13304",
+        "pfamMembers": [
+          "PF13304"
+        ],
+        "koCount": 757,
+        "pfamCount": 3743,
+        "intersection": 752,
+        "union": 3748,
+        "jaccard": 0.2006403415154749,
+        "coverageKoByPfam": 0.9933949801849405,
+        "coveragePfamByKo": 0.200908362276249,
+        "maxCoverage": 0.9933949801849405
+      }
+    ],
+    "K03569": [
+      {
+        "koId": "K03569",
+        "pfamRepresentative": "PF00012",
+        "pfamMembers": [
+          "PF00012",
+          "PF00022",
+          "PF14450",
+          "PF06723"
+        ],
+        "koCount": 3682,
+        "pfamCount": 4120,
+        "intersection": 3679,
+        "union": 4123,
+        "jaccard": 0.8923114237205918,
+        "coverageKoByPfam": 0.9991852254209669,
+        "coveragePfamByKo": 0.8929611650485437,
+        "maxCoverage": 0.9991852254209669
+      }
+    ],
+    "K03581": [
+      {
+        "koId": "K03581",
+        "pfamRepresentative": "PF13245",
+        "pfamMembers": [
+          "PF13245"
+        ],
+        "koCount": 1311,
+        "pfamCount": 2346,
+        "intersection": 1311,
+        "union": 2346,
+        "jaccard": 0.5588235294117647,
+        "coverageKoByPfam": 1,
+        "coveragePfamByKo": 0.5588235294117647,
+        "maxCoverage": 1
+      }
+    ],
+    "K03657": [
+      {
+        "koId": "K03657",
+        "pfamRepresentative": "PF13245",
+        "pfamMembers": [
+          "PF13245"
+        ],
+        "koCount": 468,
+        "pfamCount": 2346,
+        "intersection": 466,
+        "union": 2348,
+        "jaccard": 0.19846678023850084,
+        "coverageKoByPfam": 0.9957264957264957,
+        "coveragePfamByKo": 0.19863597612958228,
+        "maxCoverage": 0.9957264957264957
+      }
+    ],
+    "K03667": [
+      {
+        "koId": "K03667",
+        "pfamRepresentative": "PF00004",
+        "pfamMembers": [
+          "PF00004"
+        ],
+        "koCount": 781,
+        "pfamCount": 5757,
+        "intersection": 781,
+        "union": 5757,
+        "jaccard": 0.1356609345145041,
+        "coverageKoByPfam": 1,
+        "coveragePfamByKo": 0.1356609345145041,
+        "maxCoverage": 1
+      },
+      {
+        "koId": "K03667",
+        "pfamRepresentative": "PF07728",
+        "pfamMembers": [
+          "PF07728"
+        ],
+        "koCount": 781,
+        "pfamCount": 5072,
+        "intersection": 780,
+        "union": 5073,
+        "jaccard": 0.1537551744529864,
+        "coverageKoByPfam": 0.998719590268886,
+        "coveragePfamByKo": 0.15378548895899052,
+        "maxCoverage": 0.998719590268886
+      }
+    ],
+    "K03702": [
+      {
+        "koId": "K03702",
+        "pfamRepresentative": "PF00271",
+        "pfamMembers": [
+          "PF00271",
+          "PF00270",
+          "PF04851"
+        ],
+        "koCount": 619,
+        "pfamCount": 2934,
+        "intersection": 619,
+        "union": 2934,
+        "jaccard": 0.21097477845944104,
+        "coverageKoByPfam": 1,
+        "coveragePfamByKo": 0.21097477845944104,
+        "maxCoverage": 1
+      }
+    ],
+    "K03706": [
+      {
+        "koId": "K03706",
+        "pfamRepresentative": "PF08222",
+        "pfamMembers": [
+          "PF08222",
+          "PF06018"
+        ],
+        "koCount": 2954,
+        "pfamCount": 3031,
+        "intersection": 2954,
+        "union": 3031,
+        "jaccard": 0.9745958429561201,
+        "coverageKoByPfam": 1,
+        "coveragePfamByKo": 0.9745958429561201,
+        "maxCoverage": 1
+      }
+    ],
+    "K03723": [
+      {
+        "koId": "K03723",
+        "pfamRepresentative": "PF00271",
+        "pfamMembers": [
+          "PF00271",
+          "PF00270",
+          "PF04851"
+        ],
+        "koCount": 520,
+        "pfamCount": 2934,
+        "intersection": 520,
+        "union": 2934,
+        "jaccard": 0.17723244717109748,
+        "coverageKoByPfam": 1,
+        "coveragePfamByKo": 0.17723244717109748,
+        "maxCoverage": 1
+      }
+    ],
+    "K03733": [
+      {
+        "koId": "K03733",
+        "pfamRepresentative": "PF00589",
+        "pfamMembers": [
+          "PF00589"
+        ],
+        "koCount": 955,
+        "pfamCount": 2609,
+        "intersection": 943,
+        "union": 2621,
+        "jaccard": 0.35978634109118657,
+        "coverageKoByPfam": 0.987434554973822,
+        "coveragePfamByKo": 0.3614411651973936,
+        "maxCoverage": 0.987434554973822
+      }
+    ],
+    "K04060": [
+      {
+        "koId": "K04060",
+        "pfamRepresentative": "PF13428",
+        "pfamMembers": [
+          "PF13428",
+          "PF14559"
+        ],
+        "koCount": 471,
+        "pfamCount": 13465,
+        "intersection": 404,
+        "union": 13532,
+        "jaccard": 0.029855158143659473,
+        "coverageKoByPfam": 0.8577494692144374,
+        "coveragePfamByKo": 0.03000371333085778,
+        "maxCoverage": 0.8577494692144374
+      }
+    ],
+    "K04061": [
+      {
+        "koId": "K04061",
+        "pfamRepresentative": "PF01312",
+        "pfamMembers": [
+          "PF01312"
+        ],
+        "koCount": 4441,
+        "pfamCount": 5165,
+        "intersection": 4397,
+        "union": 5209,
+        "jaccard": 0.8441159531579958,
+        "coverageKoByPfam": 0.9900923215492007,
+        "coveragePfamByKo": 0.8513068731848984,
+        "maxCoverage": 0.9900923215492007
+      }
+    ],
+    "K06168": [
+      {
+        "koId": "K06168",
+        "pfamRepresentative": "PF04055",
+        "pfamMembers": [
+          "PF04055"
+        ],
+        "koCount": 526,
+        "pfamCount": 2848,
+        "intersection": 526,
+        "union": 2848,
+        "jaccard": 0.18469101123595505,
+        "coverageKoByPfam": 1,
+        "coveragePfamByKo": 0.18469101123595505,
+        "maxCoverage": 1
+      }
+    ],
+    "K06213": [
+      {
+        "koId": "K06213",
+        "pfamRepresentative": "PF00571",
+        "pfamMembers": [
+          "PF00571"
+        ],
+        "koCount": 737,
+        "pfamCount": 2795,
+        "intersection": 736,
+        "union": 2796,
+        "jaccard": 0.2632331902718169,
+        "coverageKoByPfam": 0.9986431478968792,
+        "coveragePfamByKo": 0.2633273703041145,
+        "maxCoverage": 0.9986431478968792
+      }
+    ],
+    "K06949": [
+      {
+        "koId": "K06949",
+        "pfamRepresentative": "PF01926",
+        "pfamMembers": [
+          "PF01926"
+        ],
+        "koCount": 948,
+        "pfamCount": 3179,
+        "intersection": 929,
+        "union": 3198,
+        "jaccard": 0.2904940587867417,
+        "coverageKoByPfam": 0.979957805907173,
+        "coveragePfamByKo": 0.29223026108839256,
+        "maxCoverage": 0.979957805907173
+      }
+    ],
+    "K07814": [
+      {
+        "koId": "K07814",
+        "pfamRepresentative": "PF13487",
+        "pfamMembers": [
+          "PF13487"
+        ],
+        "koCount": 575,
+        "pfamCount": 2693,
+        "intersection": 575,
+        "union": 2693,
+        "jaccard": 0.21351652432231713,
+        "coverageKoByPfam": 1,
+        "coveragePfamByKo": 0.21351652432231713,
+        "maxCoverage": 1
+      },
+      {
+        "koId": "K07814",
+        "pfamRepresentative": "PF01966",
+        "pfamMembers": [
+          "PF01966"
+        ],
+        "koCount": 575,
+        "pfamCount": 4394,
+        "intersection": 564,
+        "union": 4405,
+        "jaccard": 0.12803632236095347,
+        "coverageKoByPfam": 0.9808695652173913,
+        "coveragePfamByKo": 0.12835685025034138,
+        "maxCoverage": 0.9808695652173913
+      },
+      {
+        "koId": "K07814",
+        "pfamRepresentative": "PF00072",
+        "pfamMembers": [
+          "PF00072"
+        ],
+        "koCount": 575,
+        "pfamCount": 38663,
+        "intersection": 512,
+        "union": 38726,
+        "jaccard": 0.013221091772969065,
+        "coverageKoByPfam": 0.8904347826086957,
+        "coveragePfamByKo": 0.013242635077464242,
+        "maxCoverage": 0.8904347826086957
+      }
+    ],
+    "K09667": [
+      {
+        "koId": "K09667",
+        "pfamRepresentative": "PF00515",
+        "pfamMembers": [
+          "PF00515",
+          "PF13181",
+          "PF07719"
+        ],
+        "koCount": 909,
+        "pfamCount": 12762,
+        "intersection": 822,
+        "union": 12849,
+        "jaccard": 0.06397385010506654,
+        "coverageKoByPfam": 0.9042904290429042,
+        "coveragePfamByKo": 0.06440996708979783,
+        "maxCoverage": 0.9042904290429042
+      },
+      {
+        "koId": "K09667",
+        "pfamRepresentative": "PF13428",
+        "pfamMembers": [
+          "PF13428",
+          "PF14559"
+        ],
+        "koCount": 909,
+        "pfamCount": 13465,
+        "intersection": 818,
+        "union": 13556,
+        "jaccard": 0.06034228385954559,
+        "coverageKoByPfam": 0.8998899889988999,
+        "coveragePfamByKo": 0.060750092833271443,
+        "maxCoverage": 0.8998899889988999
+      },
+      {
+        "koId": "K09667",
+        "pfamRepresentative": "PF13431",
+        "pfamMembers": [
+          "PF13431",
+          "PF13414"
+        ],
+        "koCount": 909,
+        "pfamCount": 8743,
+        "intersection": 778,
+        "union": 8874,
+        "jaccard": 0.08767185034933514,
+        "coverageKoByPfam": 0.8558855885588559,
+        "coveragePfamByKo": 0.08898547409356056,
+        "maxCoverage": 0.8558855885588559
+      },
+      {
+        "koId": "K09667",
+        "pfamRepresentative": "PF13432",
+        "pfamMembers": [
+          "PF13432",
+          "PF13424"
+        ],
+        "koCount": 909,
+        "pfamCount": 9840,
+        "intersection": 771,
+        "union": 9978,
+        "jaccard": 0.0772699939867709,
+        "coverageKoByPfam": 0.8481848184818482,
+        "coveragePfamByKo": 0.07835365853658537,
+        "maxCoverage": 0.8481848184818482
+      }
+    ],
+    "K10942": [
+      {
+        "koId": "K10942",
+        "pfamRepresentative": "PF02518",
+        "pfamMembers": [
+          "PF02518"
+        ],
+        "koCount": 3189,
+        "pfamCount": 20541,
+        "intersection": 3189,
+        "union": 20541,
+        "jaccard": 0.15525047466043523,
+        "coverageKoByPfam": 1,
+        "coveragePfamByKo": 0.15525047466043523,
+        "maxCoverage": 1
+      },
+      {
+        "koId": "K10942",
+        "pfamRepresentative": "PF00512",
+        "pfamMembers": [
+          "PF00512"
+        ],
+        "koCount": 3189,
+        "pfamCount": 14439,
+        "intersection": 3182,
+        "union": 14446,
+        "jaccard": 0.2202685864599197,
+        "coverageKoByPfam": 0.997804954531201,
+        "coveragePfamByKo": 0.22037537225569637,
+        "maxCoverage": 0.997804954531201
+      },
+      {
+        "koId": "K10942",
+        "pfamRepresentative": "PF13188",
+        "pfamMembers": [
+          "PF13188",
+          "PF00989"
+        ],
+        "koCount": 3189,
+        "pfamCount": 10994,
+        "intersection": 2813,
+        "union": 11370,
+        "jaccard": 0.24740545294635005,
+        "coverageKoByPfam": 0.8820947005330825,
+        "coveragePfamByKo": 0.25586683645624886,
+        "maxCoverage": 0.8820947005330825
+      }
+    ],
+    "K13584": [
+      {
+        "koId": "K13584",
+        "pfamRepresentative": "PF00486",
+        "pfamMembers": [
+          "PF00486"
+        ],
+        "koCount": 3022,
+        "pfamCount": 5842,
+        "intersection": 3021,
+        "union": 5843,
+        "jaccard": 0.517028923498203,
+        "coverageKoByPfam": 0.999669093315685,
+        "coveragePfamByKo": 0.5171174255391989,
+        "maxCoverage": 0.999669093315685
+      },
+      {
+        "koId": "K13584",
+        "pfamRepresentative": "PF00072",
+        "pfamMembers": [
+          "PF00072"
+        ],
+        "koCount": 3022,
+        "pfamCount": 38663,
+        "intersection": 2894,
+        "union": 38791,
+        "jaccard": 0.0746049341342064,
+        "coverageKoByPfam": 0.9576439444076771,
+        "coveragePfamByKo": 0.07485192561363578,
+        "maxCoverage": 0.9576439444076771
+      }
+    ],
+    "K13587": [
+      {
+        "koId": "K13587",
+        "pfamRepresentative": "PF02518",
+        "pfamMembers": [
+          "PF02518"
+        ],
+        "koCount": 2163,
+        "pfamCount": 20541,
+        "intersection": 2163,
+        "union": 20541,
+        "jaccard": 0.10530159193807508,
+        "coverageKoByPfam": 1,
+        "coveragePfamByKo": 0.10530159193807508,
+        "maxCoverage": 1
+      },
+      {
+        "koId": "K13587",
+        "pfamRepresentative": "PF00072",
+        "pfamMembers": [
+          "PF00072"
+        ],
+        "koCount": 2163,
+        "pfamCount": 38663,
+        "intersection": 2163,
+        "union": 38663,
+        "jaccard": 0.05594496029795929,
+        "coverageKoByPfam": 1,
+        "coveragePfamByKo": 0.05594496029795929,
+        "maxCoverage": 1
+      },
+      {
+        "koId": "K13587",
+        "pfamRepresentative": "PF13188",
+        "pfamMembers": [
+          "PF13188",
+          "PF00989"
+        ],
+        "koCount": 2163,
+        "pfamCount": 10994,
+        "intersection": 2012,
+        "union": 11145,
+        "jaccard": 0.18052938537460744,
+        "coverageKoByPfam": 0.9301895515487748,
+        "coveragePfamByKo": 0.18300891395306532,
+        "maxCoverage": 0.9301895515487748
+      },
+      {
+        "koId": "K13587",
+        "pfamRepresentative": "PF08448",
+        "pfamMembers": [
+          "PF08448",
+          "PF13426"
+        ],
+        "koCount": 2163,
+        "pfamCount": 7868,
+        "intersection": 2009,
+        "union": 8022,
+        "jaccard": 0.25043630017452007,
+        "coverageKoByPfam": 0.9288025889967637,
+        "coveragePfamByKo": 0.25533807829181493,
+        "maxCoverage": 0.9288025889967637
+      },
+      {
+        "koId": "K13587",
+        "pfamRepresentative": "PF00512",
+        "pfamMembers": [
+          "PF00512"
+        ],
+        "koCount": 2163,
+        "pfamCount": 14439,
+        "intersection": 1982,
+        "union": 14620,
+        "jaccard": 0.13556771545827634,
+        "coverageKoByPfam": 0.9163199260286639,
+        "coveragePfamByKo": 0.13726712376203337,
+        "maxCoverage": 0.9163199260286639
+      }
+    ],
+    "K13590": [
+      {
+        "koId": "K13590",
+        "pfamRepresentative": "PF00990",
+        "pfamMembers": [
+          "PF00990"
+        ],
+        "koCount": 641,
+        "pfamCount": 6693,
+        "intersection": 641,
+        "union": 6693,
+        "jaccard": 0.09577170177797699,
+        "coverageKoByPfam": 1,
+        "coveragePfamByKo": 0.09577170177797699,
+        "maxCoverage": 1
+      }
+    ],
+    "K15894": [
+      {
+        "koId": "K15894",
+        "pfamRepresentative": "PF01370",
+        "pfamMembers": [
+          "PF01370"
+        ],
+        "koCount": 604,
+        "pfamCount": 3212,
+        "intersection": 604,
+        "union": 3212,
+        "jaccard": 0.18804483188044832,
+        "coverageKoByPfam": 1,
+        "coveragePfamByKo": 0.18804483188044832,
+        "maxCoverage": 1
+      },
+      {
+        "koId": "K15894",
+        "pfamRepresentative": "PF00106",
+        "pfamMembers": [
+          "PF00106",
+          "PF13561",
+          "PF08659"
+        ],
+        "koCount": 604,
+        "pfamCount": 3082,
+        "intersection": 459,
+        "union": 3227,
+        "jaccard": 0.14223737217229626,
+        "coverageKoByPfam": 0.7599337748344371,
+        "coveragePfamByKo": 0.14892926670992862,
+        "maxCoverage": 0.7599337748344371
+      }
+    ],
+    "K20976": [
+      {
+        "koId": "K20976",
+        "pfamRepresentative": "PF01627",
+        "pfamMembers": [
+          "PF01627"
+        ],
+        "koCount": 1030,
+        "pfamCount": 4475,
+        "intersection": 1029,
+        "union": 4476,
+        "jaccard": 0.22989276139410186,
+        "coverageKoByPfam": 0.9990291262135922,
+        "coveragePfamByKo": 0.2299441340782123,
+        "maxCoverage": 0.9990291262135922
+      }
+    ],
+    "K21087": [
+      {
+        "koId": "K21087",
+        "pfamRepresentative": "PF07238",
+        "pfamMembers": [
+          "PF07238"
+        ],
+        "koCount": 516,
+        "pfamCount": 3787,
+        "intersection": 455,
+        "union": 3848,
+        "jaccard": 0.11824324324324324,
+        "coverageKoByPfam": 0.8817829457364341,
+        "coveragePfamByKo": 0.12014787430683918,
+        "maxCoverage": 0.8817829457364341
+      }
+    ],
+    "K21603": [
+      {
+        "koId": "K21603",
+        "pfamRepresentative": "PF00486",
+        "pfamMembers": [
+          "PF00486"
+        ],
+        "koCount": 972,
+        "pfamCount": 5842,
+        "intersection": 972,
+        "union": 5842,
+        "jaccard": 0.16638137624101335,
+        "coverageKoByPfam": 1,
+        "coveragePfamByKo": 0.16638137624101335,
+        "maxCoverage": 1
+      }
+    ]
+  },
+  "combinedByKo": {
+    "K00278": {
+      "koId": "K00278",
+      "pfamRepresentatives": [
+        "PF00890"
+      ],
+      "pfamMembers": [
+        "PF00890"
+      ],
+      "koCount": 557,
+      "pfamCount": 2371,
+      "intersection": 557,
+      "union": 2371,
+      "jaccard": 0.2349219738506959,
+      "coverageKoByPfam": 1,
+      "coveragePfamByKo": 0.2349219738506959,
+      "maxCoverage": 1
+    },
+    "K00575": {
+      "koId": "K00575",
+      "pfamRepresentatives": [
+        "PF01739",
+        "PF08241"
+      ],
+      "pfamMembers": [
+        "PF01739",
+        "PF03705",
+        "PF08241",
+        "PF13649"
+      ],
+      "koCount": 2742,
+      "pfamCount": 7029,
+      "intersection": 2732,
+      "union": 7039,
+      "jaccard": 0.38812331297059244,
+      "coverageKoByPfam": 0.9963530269876003,
+      "coveragePfamByKo": 0.38867548726703655,
+      "maxCoverage": 0.9963530269876003
+    },
+    "K00928": {
+      "koId": "K00928",
+      "pfamRepresentatives": [
+        "PF22468"
+      ],
+      "pfamMembers": [
+        "PF22468",
+        "PF13840",
+        "PF00696",
+        "PF01842"
+      ],
+      "koCount": 4137,
+      "pfamCount": 5131,
+      "intersection": 4135,
+      "union": 5133,
+      "jaccard": 0.8055717903759985,
+      "coverageKoByPfam": 0.9995165578921924,
+      "coveragePfamByKo": 0.8058857922432274,
+      "maxCoverage": 0.9995165578921924
+    },
+    "K01872": {
+      "koId": "K01872",
+      "pfamRepresentatives": [
+        "PF01411"
+      ],
+      "pfamMembers": [
+        "PF01411",
+        "PF07973",
+        "PF02272"
+      ],
+      "koCount": 2802,
+      "pfamCount": 3374,
+      "intersection": 2798,
+      "union": 3378,
+      "jaccard": 0.8283007696862048,
+      "coverageKoByPfam": 0.9985724482512491,
+      "coveragePfamByKo": 0.8292827504445762,
+      "maxCoverage": 0.9985724482512491
+    },
+    "K02242": {
+      "koId": "K02242",
+      "pfamRepresentatives": [
+        "PF00156"
+      ],
+      "pfamMembers": [
+        "PF00156"
+      ],
+      "koCount": 2194,
+      "pfamCount": 3632,
+      "intersection": 1581,
+      "union": 4245,
+      "jaccard": 0.3724381625441696,
+      "coverageKoByPfam": 0.7206016408386509,
+      "coveragePfamByKo": 0.4352973568281938,
+      "maxCoverage": 0.7206016408386509
+    },
+    "K02341": {
+      "koId": "K02341",
+      "pfamRepresentatives": [
+        "PF13177"
+      ],
+      "pfamMembers": [
+        "PF13177"
+      ],
+      "koCount": 3431,
+      "pfamCount": 3736,
+      "intersection": 3426,
+      "union": 3741,
+      "jaccard": 0.9157979149959904,
+      "coverageKoByPfam": 0.9985426989215972,
+      "coveragePfamByKo": 0.9170235546038544,
+      "maxCoverage": 0.9985426989215972
+    },
+    "K02390": {
+      "koId": "K02390",
+      "pfamRepresentatives": [
+        "PF06429"
+      ],
+      "pfamMembers": [
+        "PF06429"
+      ],
+      "koCount": 783,
+      "pfamCount": 5489,
+      "intersection": 667,
+      "union": 5605,
+      "jaccard": 0.11900089206066013,
+      "coverageKoByPfam": 0.8518518518518519,
+      "coveragePfamByKo": 0.12151575879030789,
+      "maxCoverage": 0.8518518518518519
+    },
+    "K02391": {
+      "koId": "K02391",
+      "pfamRepresentatives": [
+        "PF22692",
+        "PF06429"
+      ],
+      "pfamMembers": [
+        "PF22692",
+        "PF06429"
+      ],
+      "koCount": 2667,
+      "pfamCount": 7421,
+      "intersection": 2641,
+      "union": 7447,
+      "jaccard": 0.35463945212837383,
+      "coverageKoByPfam": 0.9902512185976753,
+      "coveragePfamByKo": 0.35588195660962135,
+      "maxCoverage": 0.9902512185976753
+    },
+    "K02622": {
+      "koId": "K02622",
+      "pfamRepresentatives": [
+        "PF02518"
+      ],
+      "pfamMembers": [
+        "PF02518"
+      ],
+      "koCount": 546,
+      "pfamCount": 20541,
+      "intersection": 541,
+      "union": 20546,
+      "jaccard": 0.026331159349751776,
+      "coverageKoByPfam": 0.9908424908424909,
+      "coveragePfamByKo": 0.026337568764909208,
+      "maxCoverage": 0.9908424908424909
+    },
+    "K03088": {
+      "koId": "K03088",
+      "pfamRepresentatives": [
+        "PF04542",
+        "PF08281"
+      ],
+      "pfamMembers": [
+        "PF04542",
+        "PF08281"
+      ],
+      "koCount": 1070,
+      "pfamCount": 4041,
+      "intersection": 1053,
+      "union": 4058,
+      "jaccard": 0.25948743223262694,
+      "coverageKoByPfam": 0.9841121495327103,
+      "coveragePfamByKo": 0.26057906458797325,
+      "maxCoverage": 0.9841121495327103
+    },
+    "K03406": {
+      "koId": "K03406",
+      "pfamRepresentatives": [
+        "PF00015"
+      ],
+      "pfamMembers": [
+        "PF00015"
+      ],
+      "koCount": 4846,
+      "pfamCount": 4238,
+      "intersection": 3402,
+      "union": 5682,
+      "jaccard": 0.5987328405491025,
+      "coverageKoByPfam": 0.7020222864217912,
+      "coveragePfamByKo": 0.802737140160453,
+      "maxCoverage": 0.802737140160453
+    },
+    "K03407": {
+      "koId": "K03407",
+      "pfamRepresentatives": [
+        "PF02518",
+        "PF01627",
+        "PF02895",
+        "PF01584"
+      ],
+      "pfamMembers": [
+        "PF02518",
+        "PF01627",
+        "PF02895",
+        "PF01584"
+      ],
+      "koCount": 2437,
+      "pfamCount": 27265,
+      "intersection": 2432,
+      "union": 27270,
+      "jaccard": 0.08918225155848918,
+      "coverageKoByPfam": 0.9979482970865818,
+      "coveragePfamByKo": 0.089198606271777,
+      "maxCoverage": 0.9979482970865818
+    },
+    "K03408": {
+      "koId": "K03408",
+      "pfamRepresentatives": [
+        "PF01584"
+      ],
+      "pfamMembers": [
+        "PF01584"
+      ],
+      "koCount": 1365,
+      "pfamCount": 7469,
+      "intersection": 1353,
+      "union": 7481,
+      "jaccard": 0.18085817404090362,
+      "coverageKoByPfam": 0.9912087912087912,
+      "coveragePfamByKo": 0.18114874815905743,
+      "maxCoverage": 0.9912087912087912
+    },
+    "K03412": {
+      "koId": "K03412",
+      "pfamRepresentatives": [
+        "PF01339",
+        "PF00072"
+      ],
+      "pfamMembers": [
+        "PF01339",
+        "PF00072"
+      ],
+      "koCount": 6135,
+      "pfamCount": 39148,
+      "intersection": 6132,
+      "union": 39151,
+      "jaccard": 0.15662435186840692,
+      "coverageKoByPfam": 0.9995110024449878,
+      "coveragePfamByKo": 0.15663635434760395,
+      "maxCoverage": 0.9995110024449878
+    },
+    "K03413": {
+      "koId": "K03413",
+      "pfamRepresentatives": [
+        "PF00072"
+      ],
+      "pfamMembers": [
+        "PF00072"
+      ],
+      "koCount": 11521,
+      "pfamCount": 38663,
+      "intersection": 11516,
+      "union": 38668,
+      "jaccard": 0.29781731664425365,
+      "coverageKoByPfam": 0.9995660098949743,
+      "coveragePfamByKo": 0.29785583115640274,
+      "maxCoverage": 0.9995660098949743
+    },
+    "K03415": {
+      "koId": "K03415",
+      "pfamRepresentatives": [
+        "PF01584",
+        "PF00072"
+      ],
+      "pfamMembers": [
+        "PF01584",
+        "PF00072"
+      ],
+      "koCount": 3380,
+      "pfamCount": 42673,
+      "intersection": 3380,
+      "union": 42673,
+      "jaccard": 0.07920699271201931,
+      "coverageKoByPfam": 1,
+      "coveragePfamByKo": 0.07920699271201931,
+      "maxCoverage": 1
+    },
+    "K03496": {
+      "koId": "K03496",
+      "pfamRepresentatives": [
+        "PF13614"
+      ],
+      "pfamMembers": [
+        "PF13614",
+        "PF09140",
+        "PF06564",
+        "PF02374",
+        "PF10609",
+        "PF01656"
+      ],
+      "koCount": 3079,
+      "pfamCount": 3980,
+      "intersection": 3079,
+      "union": 3980,
+      "jaccard": 0.7736180904522613,
+      "coverageKoByPfam": 1,
+      "coveragePfamByKo": 0.7736180904522613,
+      "maxCoverage": 1
+    },
+    "K03529": {
+      "koId": "K03529",
+      "pfamRepresentatives": [
+        "PF13304"
+      ],
+      "pfamMembers": [
+        "PF13304"
+      ],
+      "koCount": 757,
+      "pfamCount": 3743,
+      "intersection": 752,
+      "union": 3748,
+      "jaccard": 0.2006403415154749,
+      "coverageKoByPfam": 0.9933949801849405,
+      "coveragePfamByKo": 0.200908362276249,
+      "maxCoverage": 0.9933949801849405
+    },
+    "K03569": {
+      "koId": "K03569",
+      "pfamRepresentatives": [
+        "PF00012"
+      ],
+      "pfamMembers": [
+        "PF00012",
+        "PF00022",
+        "PF14450",
+        "PF06723"
+      ],
+      "koCount": 3682,
+      "pfamCount": 4120,
+      "intersection": 3679,
+      "union": 4123,
+      "jaccard": 0.8923114237205918,
+      "coverageKoByPfam": 0.9991852254209669,
+      "coveragePfamByKo": 0.8929611650485437,
+      "maxCoverage": 0.9991852254209669
+    },
+    "K03581": {
+      "koId": "K03581",
+      "pfamRepresentatives": [
+        "PF13245"
+      ],
+      "pfamMembers": [
+        "PF13245"
+      ],
+      "koCount": 1311,
+      "pfamCount": 2346,
+      "intersection": 1311,
+      "union": 2346,
+      "jaccard": 0.5588235294117647,
+      "coverageKoByPfam": 1,
+      "coveragePfamByKo": 0.5588235294117647,
+      "maxCoverage": 1
+    },
+    "K03657": {
+      "koId": "K03657",
+      "pfamRepresentatives": [
+        "PF13245"
+      ],
+      "pfamMembers": [
+        "PF13245"
+      ],
+      "koCount": 468,
+      "pfamCount": 2346,
+      "intersection": 466,
+      "union": 2348,
+      "jaccard": 0.19846678023850084,
+      "coverageKoByPfam": 0.9957264957264957,
+      "coveragePfamByKo": 0.19863597612958228,
+      "maxCoverage": 0.9957264957264957
+    },
+    "K03667": {
+      "koId": "K03667",
+      "pfamRepresentatives": [
+        "PF00004",
+        "PF07728"
+      ],
+      "pfamMembers": [
+        "PF00004",
+        "PF07728"
+      ],
+      "koCount": 781,
+      "pfamCount": 7117,
+      "intersection": 781,
+      "union": 7117,
+      "jaccard": 0.10973724884080371,
+      "coverageKoByPfam": 1,
+      "coveragePfamByKo": 0.10973724884080371,
+      "maxCoverage": 1
+    },
+    "K03702": {
+      "koId": "K03702",
+      "pfamRepresentatives": [
+        "PF00271"
+      ],
+      "pfamMembers": [
+        "PF00271",
+        "PF00270",
+        "PF04851"
+      ],
+      "koCount": 619,
+      "pfamCount": 2934,
+      "intersection": 619,
+      "union": 2934,
+      "jaccard": 0.21097477845944104,
+      "coverageKoByPfam": 1,
+      "coveragePfamByKo": 0.21097477845944104,
+      "maxCoverage": 1
+    },
+    "K03706": {
+      "koId": "K03706",
+      "pfamRepresentatives": [
+        "PF08222"
+      ],
+      "pfamMembers": [
+        "PF08222",
+        "PF06018"
+      ],
+      "koCount": 2954,
+      "pfamCount": 3031,
+      "intersection": 2954,
+      "union": 3031,
+      "jaccard": 0.9745958429561201,
+      "coverageKoByPfam": 1,
+      "coveragePfamByKo": 0.9745958429561201,
+      "maxCoverage": 1
+    },
+    "K03723": {
+      "koId": "K03723",
+      "pfamRepresentatives": [
+        "PF00271"
+      ],
+      "pfamMembers": [
+        "PF00271",
+        "PF00270",
+        "PF04851"
+      ],
+      "koCount": 520,
+      "pfamCount": 2934,
+      "intersection": 520,
+      "union": 2934,
+      "jaccard": 0.17723244717109748,
+      "coverageKoByPfam": 1,
+      "coveragePfamByKo": 0.17723244717109748,
+      "maxCoverage": 1
+    },
+    "K03733": {
+      "koId": "K03733",
+      "pfamRepresentatives": [
+        "PF00589"
+      ],
+      "pfamMembers": [
+        "PF00589"
+      ],
+      "koCount": 955,
+      "pfamCount": 2609,
+      "intersection": 943,
+      "union": 2621,
+      "jaccard": 0.35978634109118657,
+      "coverageKoByPfam": 0.987434554973822,
+      "coveragePfamByKo": 0.3614411651973936,
+      "maxCoverage": 0.987434554973822
+    },
+    "K04060": {
+      "koId": "K04060",
+      "pfamRepresentatives": [
+        "PF13428"
+      ],
+      "pfamMembers": [
+        "PF13428",
+        "PF14559"
+      ],
+      "koCount": 471,
+      "pfamCount": 13465,
+      "intersection": 404,
+      "union": 13532,
+      "jaccard": 0.029855158143659473,
+      "coverageKoByPfam": 0.8577494692144374,
+      "coveragePfamByKo": 0.03000371333085778,
+      "maxCoverage": 0.8577494692144374
+    },
+    "K04061": {
+      "koId": "K04061",
+      "pfamRepresentatives": [
+        "PF01312"
+      ],
+      "pfamMembers": [
+        "PF01312"
+      ],
+      "koCount": 4441,
+      "pfamCount": 5165,
+      "intersection": 4397,
+      "union": 5209,
+      "jaccard": 0.8441159531579958,
+      "coverageKoByPfam": 0.9900923215492007,
+      "coveragePfamByKo": 0.8513068731848984,
+      "maxCoverage": 0.9900923215492007
+    },
+    "K06168": {
+      "koId": "K06168",
+      "pfamRepresentatives": [
+        "PF04055"
+      ],
+      "pfamMembers": [
+        "PF04055"
+      ],
+      "koCount": 526,
+      "pfamCount": 2848,
+      "intersection": 526,
+      "union": 2848,
+      "jaccard": 0.18469101123595505,
+      "coverageKoByPfam": 1,
+      "coveragePfamByKo": 0.18469101123595505,
+      "maxCoverage": 1
+    },
+    "K06213": {
+      "koId": "K06213",
+      "pfamRepresentatives": [
+        "PF00571"
+      ],
+      "pfamMembers": [
+        "PF00571"
+      ],
+      "koCount": 737,
+      "pfamCount": 2795,
+      "intersection": 736,
+      "union": 2796,
+      "jaccard": 0.2632331902718169,
+      "coverageKoByPfam": 0.9986431478968792,
+      "coveragePfamByKo": 0.2633273703041145,
+      "maxCoverage": 0.9986431478968792
+    },
+    "K06949": {
+      "koId": "K06949",
+      "pfamRepresentatives": [
+        "PF01926"
+      ],
+      "pfamMembers": [
+        "PF01926"
+      ],
+      "koCount": 948,
+      "pfamCount": 3179,
+      "intersection": 929,
+      "union": 3198,
+      "jaccard": 0.2904940587867417,
+      "coverageKoByPfam": 0.979957805907173,
+      "coveragePfamByKo": 0.29223026108839256,
+      "maxCoverage": 0.979957805907173
+    },
+    "K07814": {
+      "koId": "K07814",
+      "pfamRepresentatives": [
+        "PF13487",
+        "PF01966",
+        "PF00072"
+      ],
+      "pfamMembers": [
+        "PF13487",
+        "PF01966",
+        "PF00072"
+      ],
+      "koCount": 575,
+      "pfamCount": 42185,
+      "intersection": 575,
+      "union": 42185,
+      "jaccard": 0.01363043735925092,
+      "coverageKoByPfam": 1,
+      "coveragePfamByKo": 0.01363043735925092,
+      "maxCoverage": 1
+    },
+    "K09667": {
+      "koId": "K09667",
+      "pfamRepresentatives": [
+        "PF00515",
+        "PF13428",
+        "PF13431",
+        "PF13432"
+      ],
+      "pfamMembers": [
+        "PF00515",
+        "PF13181",
+        "PF07719",
+        "PF13428",
+        "PF14559",
+        "PF13431",
+        "PF13414",
+        "PF13432",
+        "PF13424"
+      ],
+      "koCount": 909,
+      "pfamCount": 15351,
+      "intersection": 839,
+      "union": 15421,
+      "jaccard": 0.0544063290318397,
+      "coverageKoByPfam": 0.922992299229923,
+      "coveragePfamByKo": 0.054654419907497885,
+      "maxCoverage": 0.922992299229923
+    },
+    "K10942": {
+      "koId": "K10942",
+      "pfamRepresentatives": [
+        "PF02518",
+        "PF00512",
+        "PF13188"
+      ],
+      "pfamMembers": [
+        "PF02518",
+        "PF00512",
+        "PF13188",
+        "PF00989"
+      ],
+      "koCount": 3189,
+      "pfamCount": 23263,
+      "intersection": 3189,
+      "union": 23263,
+      "jaccard": 0.1370846408459786,
+      "coverageKoByPfam": 1,
+      "coveragePfamByKo": 0.1370846408459786,
+      "maxCoverage": 1
+    },
+    "K13584": {
+      "koId": "K13584",
+      "pfamRepresentatives": [
+        "PF00486",
+        "PF00072"
+      ],
+      "pfamMembers": [
+        "PF00486",
+        "PF00072"
+      ],
+      "koCount": 3022,
+      "pfamCount": 40254,
+      "intersection": 3022,
+      "union": 40254,
+      "jaccard": 0.07507328464252,
+      "coverageKoByPfam": 1,
+      "coveragePfamByKo": 0.07507328464252,
+      "maxCoverage": 1
+    },
+    "K13587": {
+      "koId": "K13587",
+      "pfamRepresentatives": [
+        "PF02518",
+        "PF00072",
+        "PF13188",
+        "PF08448",
+        "PF00512"
+      ],
+      "pfamMembers": [
+        "PF02518",
+        "PF00072",
+        "PF13188",
+        "PF00989",
+        "PF08448",
+        "PF13426",
+        "PF00512"
+      ],
+      "koCount": 2163,
+      "pfamCount": 56545,
+      "intersection": 2163,
+      "union": 56545,
+      "jaccard": 0.03825271907330445,
+      "coverageKoByPfam": 1,
+      "coveragePfamByKo": 0.03825271907330445,
+      "maxCoverage": 1
+    },
+    "K13590": {
+      "koId": "K13590",
+      "pfamRepresentatives": [
+        "PF00990"
+      ],
+      "pfamMembers": [
+        "PF00990"
+      ],
+      "koCount": 641,
+      "pfamCount": 6693,
+      "intersection": 641,
+      "union": 6693,
+      "jaccard": 0.09577170177797699,
+      "coverageKoByPfam": 1,
+      "coveragePfamByKo": 0.09577170177797699,
+      "maxCoverage": 1
+    },
+    "K15894": {
+      "koId": "K15894",
+      "pfamRepresentatives": [
+        "PF01370",
+        "PF00106"
+      ],
+      "pfamMembers": [
+        "PF01370",
+        "PF00106",
+        "PF13561",
+        "PF08659"
+      ],
+      "koCount": 604,
+      "pfamCount": 4808,
+      "intersection": 604,
+      "union": 4808,
+      "jaccard": 0.12562396006655574,
+      "coverageKoByPfam": 1,
+      "coveragePfamByKo": 0.12562396006655574,
+      "maxCoverage": 1
+    },
+    "K20976": {
+      "koId": "K20976",
+      "pfamRepresentatives": [
+        "PF01627"
+      ],
+      "pfamMembers": [
+        "PF01627"
+      ],
+      "koCount": 1030,
+      "pfamCount": 4475,
+      "intersection": 1029,
+      "union": 4476,
+      "jaccard": 0.22989276139410186,
+      "coverageKoByPfam": 0.9990291262135922,
+      "coveragePfamByKo": 0.2299441340782123,
+      "maxCoverage": 0.9990291262135922
+    },
+    "K21087": {
+      "koId": "K21087",
+      "pfamRepresentatives": [
+        "PF07238"
+      ],
+      "pfamMembers": [
+        "PF07238"
+      ],
+      "koCount": 516,
+      "pfamCount": 3787,
+      "intersection": 455,
+      "union": 3848,
+      "jaccard": 0.11824324324324324,
+      "coverageKoByPfam": 0.8817829457364341,
+      "coveragePfamByKo": 0.12014787430683918,
+      "maxCoverage": 0.8817829457364341
+    },
+    "K21603": {
+      "koId": "K21603",
+      "pfamRepresentatives": [
+        "PF00486"
+      ],
+      "pfamMembers": [
+        "PF00486"
+      ],
+      "koCount": 972,
+      "pfamCount": 5842,
+      "intersection": 972,
+      "union": 5842,
+      "jaccard": 0.16638137624101335,
+      "coverageKoByPfam": 1,
+      "coveragePfamByKo": 0.16638137624101335,
+      "maxCoverage": 1
+    }
+  },
+  "pairs": [
+    {
+      "koId": "K00278",
+      "pfamRepresentative": "PF00890",
+      "pfamMembers": [
+        "PF00890"
+      ],
+      "koCount": 557,
+      "pfamCount": 2371,
+      "intersection": 557,
+      "union": 2371,
+      "jaccard": 0.2349219738506959,
+      "coverageKoByPfam": 1,
+      "coveragePfamByKo": 0.2349219738506959,
+      "maxCoverage": 1
+    },
+    {
+      "koId": "K00575",
+      "pfamRepresentative": "PF01739",
+      "pfamMembers": [
+        "PF01739",
+        "PF03705"
+      ],
+      "koCount": 2742,
+      "pfamCount": 2926,
+      "intersection": 2731,
+      "union": 2937,
+      "jaccard": 0.9298604017705141,
+      "coverageKoByPfam": 0.9959883296863603,
+      "coveragePfamByKo": 0.9333561175666438,
+      "maxCoverage": 0.9959883296863603
+    },
+    {
+      "koId": "K00575",
+      "pfamRepresentative": "PF08241",
+      "pfamMembers": [
+        "PF08241",
+        "PF13649"
+      ],
+      "koCount": 2742,
+      "pfamCount": 6401,
+      "intersection": 2255,
+      "union": 6888,
+      "jaccard": 0.3273809523809524,
+      "coverageKoByPfam": 0.8223924142961342,
+      "coveragePfamByKo": 0.35228870488986097,
+      "maxCoverage": 0.8223924142961342
+    },
+    {
+      "koId": "K00928",
+      "pfamRepresentative": "PF22468",
+      "pfamMembers": [
+        "PF22468",
+        "PF13840",
+        "PF00696",
+        "PF01842"
+      ],
+      "koCount": 4137,
+      "pfamCount": 5131,
+      "intersection": 4135,
+      "union": 5133,
+      "jaccard": 0.8055717903759985,
+      "coverageKoByPfam": 0.9995165578921924,
+      "coveragePfamByKo": 0.8058857922432274,
+      "maxCoverage": 0.9995165578921924
+    },
+    {
+      "koId": "K01872",
+      "pfamRepresentative": "PF01411",
+      "pfamMembers": [
+        "PF01411",
+        "PF07973",
+        "PF02272"
+      ],
+      "koCount": 2802,
+      "pfamCount": 3374,
+      "intersection": 2798,
+      "union": 3378,
+      "jaccard": 0.8283007696862048,
+      "coverageKoByPfam": 0.9985724482512491,
+      "coveragePfamByKo": 0.8292827504445762,
+      "maxCoverage": 0.9985724482512491
+    },
+    {
+      "koId": "K02242",
+      "pfamRepresentative": "PF00156",
+      "pfamMembers": [
+        "PF00156"
+      ],
+      "koCount": 2194,
+      "pfamCount": 3632,
+      "intersection": 1581,
+      "union": 4245,
+      "jaccard": 0.3724381625441696,
+      "coverageKoByPfam": 0.7206016408386509,
+      "coveragePfamByKo": 0.4352973568281938,
+      "maxCoverage": 0.7206016408386509
+    },
+    {
+      "koId": "K02341",
+      "pfamRepresentative": "PF13177",
+      "pfamMembers": [
+        "PF13177"
+      ],
+      "koCount": 3431,
+      "pfamCount": 3736,
+      "intersection": 3426,
+      "union": 3741,
+      "jaccard": 0.9157979149959904,
+      "coverageKoByPfam": 0.9985426989215972,
+      "coveragePfamByKo": 0.9170235546038544,
+      "maxCoverage": 0.9985426989215972
+    },
+    {
+      "koId": "K02390",
+      "pfamRepresentative": "PF06429",
+      "pfamMembers": [
+        "PF06429"
+      ],
+      "koCount": 783,
+      "pfamCount": 5489,
+      "intersection": 667,
+      "union": 5605,
+      "jaccard": 0.11900089206066013,
+      "coverageKoByPfam": 0.8518518518518519,
+      "coveragePfamByKo": 0.12151575879030789,
+      "maxCoverage": 0.8518518518518519
+    },
+    {
+      "koId": "K02391",
+      "pfamRepresentative": "PF22692",
+      "pfamMembers": [
+        "PF22692"
+      ],
+      "koCount": 2667,
+      "pfamCount": 5174,
+      "intersection": 2381,
+      "union": 5460,
+      "jaccard": 0.4360805860805861,
+      "coverageKoByPfam": 0.8927634045744282,
+      "coveragePfamByKo": 0.46018554310011595,
+      "maxCoverage": 0.8927634045744282
+    },
+    {
+      "koId": "K02391",
+      "pfamRepresentative": "PF06429",
+      "pfamMembers": [
+        "PF06429"
+      ],
+      "koCount": 2667,
+      "pfamCount": 5489,
+      "intersection": 2116,
+      "union": 6040,
+      "jaccard": 0.35033112582781456,
+      "coverageKoByPfam": 0.7934008248968879,
+      "coveragePfamByKo": 0.3854982692658043,
+      "maxCoverage": 0.7934008248968879
+    },
+    {
+      "koId": "K02622",
+      "pfamRepresentative": "PF02518",
+      "pfamMembers": [
+        "PF02518"
+      ],
+      "koCount": 546,
+      "pfamCount": 20541,
+      "intersection": 541,
+      "union": 20546,
+      "jaccard": 0.026331159349751776,
+      "coverageKoByPfam": 0.9908424908424909,
+      "coveragePfamByKo": 0.026337568764909208,
+      "maxCoverage": 0.9908424908424909
+    },
+    {
+      "koId": "K03088",
+      "pfamRepresentative": "PF04542",
+      "pfamMembers": [
+        "PF04542"
+      ],
+      "koCount": 1070,
+      "pfamCount": 2668,
+      "intersection": 1027,
+      "union": 2711,
+      "jaccard": 0.3788270011066027,
+      "coverageKoByPfam": 0.9598130841121495,
+      "coveragePfamByKo": 0.3849325337331334,
+      "maxCoverage": 0.9598130841121495
+    },
+    {
+      "koId": "K03088",
+      "pfamRepresentative": "PF08281",
+      "pfamMembers": [
+        "PF08281"
+      ],
+      "koCount": 1070,
+      "pfamCount": 2921,
+      "intersection": 1021,
+      "union": 2970,
+      "jaccard": 0.3437710437710438,
+      "coverageKoByPfam": 0.9542056074766355,
+      "coveragePfamByKo": 0.34953782951044166,
+      "maxCoverage": 0.9542056074766355
+    },
+    {
+      "koId": "K03406",
+      "pfamRepresentative": "PF00015",
+      "pfamMembers": [
+        "PF00015"
+      ],
+      "koCount": 4846,
+      "pfamCount": 4238,
+      "intersection": 3402,
+      "union": 5682,
+      "jaccard": 0.5987328405491025,
+      "coverageKoByPfam": 0.7020222864217912,
+      "coveragePfamByKo": 0.802737140160453,
+      "maxCoverage": 0.802737140160453
+    },
+    {
+      "koId": "K03407",
+      "pfamRepresentative": "PF02518",
+      "pfamMembers": [
+        "PF02518"
+      ],
+      "koCount": 2437,
+      "pfamCount": 20541,
+      "intersection": 2421,
+      "union": 20557,
+      "jaccard": 0.117770102641436,
+      "coverageKoByPfam": 0.993434550677062,
+      "coveragePfamByKo": 0.11786183730100774,
+      "maxCoverage": 0.993434550677062
+    },
+    {
+      "koId": "K03407",
+      "pfamRepresentative": "PF01627",
+      "pfamMembers": [
+        "PF01627"
+      ],
+      "koCount": 2437,
+      "pfamCount": 4475,
+      "intersection": 2410,
+      "union": 4502,
+      "jaccard": 0.5353176366059529,
+      "coverageKoByPfam": 0.988920804267542,
+      "coveragePfamByKo": 0.5385474860335195,
+      "maxCoverage": 0.988920804267542
+    },
+    {
+      "koId": "K03407",
+      "pfamRepresentative": "PF02895",
+      "pfamMembers": [
+        "PF02895"
+      ],
+      "koCount": 2437,
+      "pfamCount": 2457,
+      "intersection": 2387,
+      "union": 2507,
+      "jaccard": 0.9521340247307539,
+      "coverageKoByPfam": 0.9794829708658186,
+      "coveragePfamByKo": 0.9715099715099715,
+      "maxCoverage": 0.9794829708658186
+    },
+    {
+      "koId": "K03407",
+      "pfamRepresentative": "PF01584",
+      "pfamMembers": [
+        "PF01584"
+      ],
+      "koCount": 2437,
+      "pfamCount": 7469,
+      "intersection": 2385,
+      "union": 7521,
+      "jaccard": 0.31711208615875547,
+      "coverageKoByPfam": 0.9786622897004513,
+      "coveragePfamByKo": 0.31931985540232966,
+      "maxCoverage": 0.9786622897004513
+    },
+    {
+      "koId": "K03408",
+      "pfamRepresentative": "PF01584",
+      "pfamMembers": [
+        "PF01584"
+      ],
+      "koCount": 1365,
+      "pfamCount": 7469,
+      "intersection": 1353,
+      "union": 7481,
+      "jaccard": 0.18085817404090362,
+      "coverageKoByPfam": 0.9912087912087912,
+      "coveragePfamByKo": 0.18114874815905743,
+      "maxCoverage": 0.9912087912087912
+    },
+    {
+      "koId": "K03412",
+      "pfamRepresentative": "PF01339",
+      "pfamMembers": [
+        "PF01339"
+      ],
+      "koCount": 6135,
+      "pfamCount": 6318,
+      "intersection": 6128,
+      "union": 6325,
+      "jaccard": 0.9688537549407115,
+      "coverageKoByPfam": 0.9988590057049714,
+      "coveragePfamByKo": 0.9699271921494144,
+      "maxCoverage": 0.9988590057049714
+    },
+    {
+      "koId": "K03412",
+      "pfamRepresentative": "PF00072",
+      "pfamMembers": [
+        "PF00072"
+      ],
+      "koCount": 6135,
+      "pfamCount": 38663,
+      "intersection": 5736,
+      "union": 39062,
+      "jaccard": 0.14684347959653885,
+      "coverageKoByPfam": 0.9349633251833741,
+      "coveragePfamByKo": 0.1483588961022166,
+      "maxCoverage": 0.9349633251833741
+    },
+    {
+      "koId": "K03413",
+      "pfamRepresentative": "PF00072",
+      "pfamMembers": [
+        "PF00072"
+      ],
+      "koCount": 11521,
+      "pfamCount": 38663,
+      "intersection": 11516,
+      "union": 38668,
+      "jaccard": 0.29781731664425365,
+      "coverageKoByPfam": 0.9995660098949743,
+      "coveragePfamByKo": 0.29785583115640274,
+      "maxCoverage": 0.9995660098949743
+    },
+    {
+      "koId": "K03415",
+      "pfamRepresentative": "PF01584",
+      "pfamMembers": [
+        "PF01584"
+      ],
+      "koCount": 3380,
+      "pfamCount": 7469,
+      "intersection": 3379,
+      "union": 7470,
+      "jaccard": 0.45234270414993305,
+      "coverageKoByPfam": 0.9997041420118343,
+      "coveragePfamByKo": 0.45240326683625653,
+      "maxCoverage": 0.9997041420118343
+    },
+    {
+      "koId": "K03415",
+      "pfamRepresentative": "PF00072",
+      "pfamMembers": [
+        "PF00072"
+      ],
+      "koCount": 3380,
+      "pfamCount": 38663,
+      "intersection": 3378,
+      "union": 38665,
+      "jaccard": 0.08736583473425578,
+      "coverageKoByPfam": 0.9994082840236687,
+      "coveragePfamByKo": 0.0873703540853012,
+      "maxCoverage": 0.9994082840236687
+    },
+    {
+      "koId": "K03496",
+      "pfamRepresentative": "PF13614",
+      "pfamMembers": [
+        "PF13614",
+        "PF09140",
+        "PF06564",
+        "PF02374",
+        "PF10609",
+        "PF01656"
+      ],
+      "koCount": 3079,
+      "pfamCount": 3980,
+      "intersection": 3079,
+      "union": 3980,
+      "jaccard": 0.7736180904522613,
+      "coverageKoByPfam": 1,
+      "coveragePfamByKo": 0.7736180904522613,
+      "maxCoverage": 1
+    },
+    {
+      "koId": "K03529",
+      "pfamRepresentative": "PF13304",
+      "pfamMembers": [
+        "PF13304"
+      ],
+      "koCount": 757,
+      "pfamCount": 3743,
+      "intersection": 752,
+      "union": 3748,
+      "jaccard": 0.2006403415154749,
+      "coverageKoByPfam": 0.9933949801849405,
+      "coveragePfamByKo": 0.200908362276249,
+      "maxCoverage": 0.9933949801849405
+    },
+    {
+      "koId": "K03569",
+      "pfamRepresentative": "PF00012",
+      "pfamMembers": [
+        "PF00012",
+        "PF00022",
+        "PF14450",
+        "PF06723"
+      ],
+      "koCount": 3682,
+      "pfamCount": 4120,
+      "intersection": 3679,
+      "union": 4123,
+      "jaccard": 0.8923114237205918,
+      "coverageKoByPfam": 0.9991852254209669,
+      "coveragePfamByKo": 0.8929611650485437,
+      "maxCoverage": 0.9991852254209669
+    },
+    {
+      "koId": "K03581",
+      "pfamRepresentative": "PF13245",
+      "pfamMembers": [
+        "PF13245"
+      ],
+      "koCount": 1311,
+      "pfamCount": 2346,
+      "intersection": 1311,
+      "union": 2346,
+      "jaccard": 0.5588235294117647,
+      "coverageKoByPfam": 1,
+      "coveragePfamByKo": 0.5588235294117647,
+      "maxCoverage": 1
+    },
+    {
+      "koId": "K03657",
+      "pfamRepresentative": "PF13245",
+      "pfamMembers": [
+        "PF13245"
+      ],
+      "koCount": 468,
+      "pfamCount": 2346,
+      "intersection": 466,
+      "union": 2348,
+      "jaccard": 0.19846678023850084,
+      "coverageKoByPfam": 0.9957264957264957,
+      "coveragePfamByKo": 0.19863597612958228,
+      "maxCoverage": 0.9957264957264957
+    },
+    {
+      "koId": "K03667",
+      "pfamRepresentative": "PF00004",
+      "pfamMembers": [
+        "PF00004"
+      ],
+      "koCount": 781,
+      "pfamCount": 5757,
+      "intersection": 781,
+      "union": 5757,
+      "jaccard": 0.1356609345145041,
+      "coverageKoByPfam": 1,
+      "coveragePfamByKo": 0.1356609345145041,
+      "maxCoverage": 1
+    },
+    {
+      "koId": "K03667",
+      "pfamRepresentative": "PF07728",
+      "pfamMembers": [
+        "PF07728"
+      ],
+      "koCount": 781,
+      "pfamCount": 5072,
+      "intersection": 780,
+      "union": 5073,
+      "jaccard": 0.1537551744529864,
+      "coverageKoByPfam": 0.998719590268886,
+      "coveragePfamByKo": 0.15378548895899052,
+      "maxCoverage": 0.998719590268886
+    },
+    {
+      "koId": "K03702",
+      "pfamRepresentative": "PF00271",
+      "pfamMembers": [
+        "PF00271",
+        "PF00270",
+        "PF04851"
+      ],
+      "koCount": 619,
+      "pfamCount": 2934,
+      "intersection": 619,
+      "union": 2934,
+      "jaccard": 0.21097477845944104,
+      "coverageKoByPfam": 1,
+      "coveragePfamByKo": 0.21097477845944104,
+      "maxCoverage": 1
+    },
+    {
+      "koId": "K03706",
+      "pfamRepresentative": "PF08222",
+      "pfamMembers": [
+        "PF08222",
+        "PF06018"
+      ],
+      "koCount": 2954,
+      "pfamCount": 3031,
+      "intersection": 2954,
+      "union": 3031,
+      "jaccard": 0.9745958429561201,
+      "coverageKoByPfam": 1,
+      "coveragePfamByKo": 0.9745958429561201,
+      "maxCoverage": 1
+    },
+    {
+      "koId": "K03723",
+      "pfamRepresentative": "PF00271",
+      "pfamMembers": [
+        "PF00271",
+        "PF00270",
+        "PF04851"
+      ],
+      "koCount": 520,
+      "pfamCount": 2934,
+      "intersection": 520,
+      "union": 2934,
+      "jaccard": 0.17723244717109748,
+      "coverageKoByPfam": 1,
+      "coveragePfamByKo": 0.17723244717109748,
+      "maxCoverage": 1
+    },
+    {
+      "koId": "K03733",
+      "pfamRepresentative": "PF00589",
+      "pfamMembers": [
+        "PF00589"
+      ],
+      "koCount": 955,
+      "pfamCount": 2609,
+      "intersection": 943,
+      "union": 2621,
+      "jaccard": 0.35978634109118657,
+      "coverageKoByPfam": 0.987434554973822,
+      "coveragePfamByKo": 0.3614411651973936,
+      "maxCoverage": 0.987434554973822
+    },
+    {
+      "koId": "K04060",
+      "pfamRepresentative": "PF13428",
+      "pfamMembers": [
+        "PF13428",
+        "PF14559"
+      ],
+      "koCount": 471,
+      "pfamCount": 13465,
+      "intersection": 404,
+      "union": 13532,
+      "jaccard": 0.029855158143659473,
+      "coverageKoByPfam": 0.8577494692144374,
+      "coveragePfamByKo": 0.03000371333085778,
+      "maxCoverage": 0.8577494692144374
+    },
+    {
+      "koId": "K04061",
+      "pfamRepresentative": "PF01312",
+      "pfamMembers": [
+        "PF01312"
+      ],
+      "koCount": 4441,
+      "pfamCount": 5165,
+      "intersection": 4397,
+      "union": 5209,
+      "jaccard": 0.8441159531579958,
+      "coverageKoByPfam": 0.9900923215492007,
+      "coveragePfamByKo": 0.8513068731848984,
+      "maxCoverage": 0.9900923215492007
+    },
+    {
+      "koId": "K06168",
+      "pfamRepresentative": "PF04055",
+      "pfamMembers": [
+        "PF04055"
+      ],
+      "koCount": 526,
+      "pfamCount": 2848,
+      "intersection": 526,
+      "union": 2848,
+      "jaccard": 0.18469101123595505,
+      "coverageKoByPfam": 1,
+      "coveragePfamByKo": 0.18469101123595505,
+      "maxCoverage": 1
+    },
+    {
+      "koId": "K06213",
+      "pfamRepresentative": "PF00571",
+      "pfamMembers": [
+        "PF00571"
+      ],
+      "koCount": 737,
+      "pfamCount": 2795,
+      "intersection": 736,
+      "union": 2796,
+      "jaccard": 0.2632331902718169,
+      "coverageKoByPfam": 0.9986431478968792,
+      "coveragePfamByKo": 0.2633273703041145,
+      "maxCoverage": 0.9986431478968792
+    },
+    {
+      "koId": "K06949",
+      "pfamRepresentative": "PF01926",
+      "pfamMembers": [
+        "PF01926"
+      ],
+      "koCount": 948,
+      "pfamCount": 3179,
+      "intersection": 929,
+      "union": 3198,
+      "jaccard": 0.2904940587867417,
+      "coverageKoByPfam": 0.979957805907173,
+      "coveragePfamByKo": 0.29223026108839256,
+      "maxCoverage": 0.979957805907173
+    },
+    {
+      "koId": "K07814",
+      "pfamRepresentative": "PF13487",
+      "pfamMembers": [
+        "PF13487"
+      ],
+      "koCount": 575,
+      "pfamCount": 2693,
+      "intersection": 575,
+      "union": 2693,
+      "jaccard": 0.21351652432231713,
+      "coverageKoByPfam": 1,
+      "coveragePfamByKo": 0.21351652432231713,
+      "maxCoverage": 1
+    },
+    {
+      "koId": "K07814",
+      "pfamRepresentative": "PF01966",
+      "pfamMembers": [
+        "PF01966"
+      ],
+      "koCount": 575,
+      "pfamCount": 4394,
+      "intersection": 564,
+      "union": 4405,
+      "jaccard": 0.12803632236095347,
+      "coverageKoByPfam": 0.9808695652173913,
+      "coveragePfamByKo": 0.12835685025034138,
+      "maxCoverage": 0.9808695652173913
+    },
+    {
+      "koId": "K07814",
+      "pfamRepresentative": "PF00072",
+      "pfamMembers": [
+        "PF00072"
+      ],
+      "koCount": 575,
+      "pfamCount": 38663,
+      "intersection": 512,
+      "union": 38726,
+      "jaccard": 0.013221091772969065,
+      "coverageKoByPfam": 0.8904347826086957,
+      "coveragePfamByKo": 0.013242635077464242,
+      "maxCoverage": 0.8904347826086957
+    },
+    {
+      "koId": "K09667",
+      "pfamRepresentative": "PF00515",
+      "pfamMembers": [
+        "PF00515",
+        "PF13181",
+        "PF07719"
+      ],
+      "koCount": 909,
+      "pfamCount": 12762,
+      "intersection": 822,
+      "union": 12849,
+      "jaccard": 0.06397385010506654,
+      "coverageKoByPfam": 0.9042904290429042,
+      "coveragePfamByKo": 0.06440996708979783,
+      "maxCoverage": 0.9042904290429042
+    },
+    {
+      "koId": "K09667",
+      "pfamRepresentative": "PF13428",
+      "pfamMembers": [
+        "PF13428",
+        "PF14559"
+      ],
+      "koCount": 909,
+      "pfamCount": 13465,
+      "intersection": 818,
+      "union": 13556,
+      "jaccard": 0.06034228385954559,
+      "coverageKoByPfam": 0.8998899889988999,
+      "coveragePfamByKo": 0.060750092833271443,
+      "maxCoverage": 0.8998899889988999
+    },
+    {
+      "koId": "K09667",
+      "pfamRepresentative": "PF13431",
+      "pfamMembers": [
+        "PF13431",
+        "PF13414"
+      ],
+      "koCount": 909,
+      "pfamCount": 8743,
+      "intersection": 778,
+      "union": 8874,
+      "jaccard": 0.08767185034933514,
+      "coverageKoByPfam": 0.8558855885588559,
+      "coveragePfamByKo": 0.08898547409356056,
+      "maxCoverage": 0.8558855885588559
+    },
+    {
+      "koId": "K09667",
+      "pfamRepresentative": "PF13432",
+      "pfamMembers": [
+        "PF13432",
+        "PF13424"
+      ],
+      "koCount": 909,
+      "pfamCount": 9840,
+      "intersection": 771,
+      "union": 9978,
+      "jaccard": 0.0772699939867709,
+      "coverageKoByPfam": 0.8481848184818482,
+      "coveragePfamByKo": 0.07835365853658537,
+      "maxCoverage": 0.8481848184818482
+    },
+    {
+      "koId": "K10942",
+      "pfamRepresentative": "PF02518",
+      "pfamMembers": [
+        "PF02518"
+      ],
+      "koCount": 3189,
+      "pfamCount": 20541,
+      "intersection": 3189,
+      "union": 20541,
+      "jaccard": 0.15525047466043523,
+      "coverageKoByPfam": 1,
+      "coveragePfamByKo": 0.15525047466043523,
+      "maxCoverage": 1
+    },
+    {
+      "koId": "K10942",
+      "pfamRepresentative": "PF00512",
+      "pfamMembers": [
+        "PF00512"
+      ],
+      "koCount": 3189,
+      "pfamCount": 14439,
+      "intersection": 3182,
+      "union": 14446,
+      "jaccard": 0.2202685864599197,
+      "coverageKoByPfam": 0.997804954531201,
+      "coveragePfamByKo": 0.22037537225569637,
+      "maxCoverage": 0.997804954531201
+    },
+    {
+      "koId": "K10942",
+      "pfamRepresentative": "PF13188",
+      "pfamMembers": [
+        "PF13188",
+        "PF00989"
+      ],
+      "koCount": 3189,
+      "pfamCount": 10994,
+      "intersection": 2813,
+      "union": 11370,
+      "jaccard": 0.24740545294635005,
+      "coverageKoByPfam": 0.8820947005330825,
+      "coveragePfamByKo": 0.25586683645624886,
+      "maxCoverage": 0.8820947005330825
+    },
+    {
+      "koId": "K13584",
+      "pfamRepresentative": "PF00486",
+      "pfamMembers": [
+        "PF00486"
+      ],
+      "koCount": 3022,
+      "pfamCount": 5842,
+      "intersection": 3021,
+      "union": 5843,
+      "jaccard": 0.517028923498203,
+      "coverageKoByPfam": 0.999669093315685,
+      "coveragePfamByKo": 0.5171174255391989,
+      "maxCoverage": 0.999669093315685
+    },
+    {
+      "koId": "K13584",
+      "pfamRepresentative": "PF00072",
+      "pfamMembers": [
+        "PF00072"
+      ],
+      "koCount": 3022,
+      "pfamCount": 38663,
+      "intersection": 2894,
+      "union": 38791,
+      "jaccard": 0.0746049341342064,
+      "coverageKoByPfam": 0.9576439444076771,
+      "coveragePfamByKo": 0.07485192561363578,
+      "maxCoverage": 0.9576439444076771
+    },
+    {
+      "koId": "K13587",
+      "pfamRepresentative": "PF02518",
+      "pfamMembers": [
+        "PF02518"
+      ],
+      "koCount": 2163,
+      "pfamCount": 20541,
+      "intersection": 2163,
+      "union": 20541,
+      "jaccard": 0.10530159193807508,
+      "coverageKoByPfam": 1,
+      "coveragePfamByKo": 0.10530159193807508,
+      "maxCoverage": 1
+    },
+    {
+      "koId": "K13587",
+      "pfamRepresentative": "PF00072",
+      "pfamMembers": [
+        "PF00072"
+      ],
+      "koCount": 2163,
+      "pfamCount": 38663,
+      "intersection": 2163,
+      "union": 38663,
+      "jaccard": 0.05594496029795929,
+      "coverageKoByPfam": 1,
+      "coveragePfamByKo": 0.05594496029795929,
+      "maxCoverage": 1
+    },
+    {
+      "koId": "K13587",
+      "pfamRepresentative": "PF13188",
+      "pfamMembers": [
+        "PF13188",
+        "PF00989"
+      ],
+      "koCount": 2163,
+      "pfamCount": 10994,
+      "intersection": 2012,
+      "union": 11145,
+      "jaccard": 0.18052938537460744,
+      "coverageKoByPfam": 0.9301895515487748,
+      "coveragePfamByKo": 0.18300891395306532,
+      "maxCoverage": 0.9301895515487748
+    },
+    {
+      "koId": "K13587",
+      "pfamRepresentative": "PF08448",
+      "pfamMembers": [
+        "PF08448",
+        "PF13426"
+      ],
+      "koCount": 2163,
+      "pfamCount": 7868,
+      "intersection": 2009,
+      "union": 8022,
+      "jaccard": 0.25043630017452007,
+      "coverageKoByPfam": 0.9288025889967637,
+      "coveragePfamByKo": 0.25533807829181493,
+      "maxCoverage": 0.9288025889967637
+    },
+    {
+      "koId": "K13587",
+      "pfamRepresentative": "PF00512",
+      "pfamMembers": [
+        "PF00512"
+      ],
+      "koCount": 2163,
+      "pfamCount": 14439,
+      "intersection": 1982,
+      "union": 14620,
+      "jaccard": 0.13556771545827634,
+      "coverageKoByPfam": 0.9163199260286639,
+      "coveragePfamByKo": 0.13726712376203337,
+      "maxCoverage": 0.9163199260286639
+    },
+    {
+      "koId": "K13590",
+      "pfamRepresentative": "PF00990",
+      "pfamMembers": [
+        "PF00990"
+      ],
+      "koCount": 641,
+      "pfamCount": 6693,
+      "intersection": 641,
+      "union": 6693,
+      "jaccard": 0.09577170177797699,
+      "coverageKoByPfam": 1,
+      "coveragePfamByKo": 0.09577170177797699,
+      "maxCoverage": 1
+    },
+    {
+      "koId": "K15894",
+      "pfamRepresentative": "PF01370",
+      "pfamMembers": [
+        "PF01370"
+      ],
+      "koCount": 604,
+      "pfamCount": 3212,
+      "intersection": 604,
+      "union": 3212,
+      "jaccard": 0.18804483188044832,
+      "coverageKoByPfam": 1,
+      "coveragePfamByKo": 0.18804483188044832,
+      "maxCoverage": 1
+    },
+    {
+      "koId": "K15894",
+      "pfamRepresentative": "PF00106",
+      "pfamMembers": [
+        "PF00106",
+        "PF13561",
+        "PF08659"
+      ],
+      "koCount": 604,
+      "pfamCount": 3082,
+      "intersection": 459,
+      "union": 3227,
+      "jaccard": 0.14223737217229626,
+      "coverageKoByPfam": 0.7599337748344371,
+      "coveragePfamByKo": 0.14892926670992862,
+      "maxCoverage": 0.7599337748344371
+    },
+    {
+      "koId": "K20976",
+      "pfamRepresentative": "PF01627",
+      "pfamMembers": [
+        "PF01627"
+      ],
+      "koCount": 1030,
+      "pfamCount": 4475,
+      "intersection": 1029,
+      "union": 4476,
+      "jaccard": 0.22989276139410186,
+      "coverageKoByPfam": 0.9990291262135922,
+      "coveragePfamByKo": 0.2299441340782123,
+      "maxCoverage": 0.9990291262135922
+    },
+    {
+      "koId": "K21087",
+      "pfamRepresentative": "PF07238",
+      "pfamMembers": [
+        "PF07238"
+      ],
+      "koCount": 516,
+      "pfamCount": 3787,
+      "intersection": 455,
+      "union": 3848,
+      "jaccard": 0.11824324324324324,
+      "coverageKoByPfam": 0.8817829457364341,
+      "coveragePfamByKo": 0.12014787430683918,
+      "maxCoverage": 0.8817829457364341
+    },
+    {
+      "koId": "K21603",
+      "pfamRepresentative": "PF00486",
+      "pfamMembers": [
+        "PF00486"
+      ],
+      "koCount": 972,
+      "pfamCount": 5842,
+      "intersection": 972,
+      "union": 5842,
+      "jaccard": 0.16638137624101335,
+      "coverageKoByPfam": 1,
+      "coveragePfamByKo": 0.16638137624101335,
+      "maxCoverage": 1
+    }
+  ]
+}

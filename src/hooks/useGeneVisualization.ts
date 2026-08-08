@@ -4,7 +4,6 @@ import LineageAutocomplete from "@/components/LineageAutocomplete";
 import { withBasePath } from "@/lib/assetPaths";
 import {
   ALL_LEVELS,
-  sortGenesByCustomRowOrder,
   DATASETS,
   DATASET_LABELS,
   DEFAULT_DATASET,
@@ -515,7 +514,8 @@ export function useGeneVisualization() {
 
   const toggleGeneGroupSelection = useCallback((genes: string[]) => {
     setState((prev) => {
-      const group = genes.filter((gene) => prev.geneIndex.has(gene));
+      const requestedGenes = new Set(genes);
+      const group = prev.geneNames.filter((gene) => requestedGenes.has(gene));
       if (group.length === 0) return prev;
       const groupSet = new Set(group);
       const activeSet = new Set(prev.activeGenes);
@@ -536,7 +536,7 @@ export function useGeneVisualization() {
     setTimeout(() => {
       setState((prev) => ({
         ...prev,
-        activeGenes: prev.activeGenes.length > 0 ? [] : sortGenesByCustomRowOrder(prev.geneNames),
+        activeGenes: prev.activeGenes.length > 0 ? [] : [...prev.geneNames],
         isLoading: false,
         loadingMessage: ""
       }));

@@ -41,6 +41,11 @@ type RugTooltipStats = {
   target: string;
   role: "backbone" | "alternative";
   mainTarget?: string;
+  direction?: string;
+  sourceType?: "kegg" | "pfam";
+  count?: number;
+  occurrencePercent?: number;
+  meanDistanceBp?: number;
   cladeAveragePercent: number;
   genePresentAveragePercent: number;
   missingMainTargetAlternativeCount?: number;
@@ -120,6 +125,26 @@ function formatTooltipPercent(value?: number): string {
 }
 
 function formatRugTooltipLabel(stats: RugTooltipStats): string {
+  if (stats.sourceType) {
+    const sourceLabel = stats.sourceType === "kegg" ? "KEGG" : "Pfam";
+    const lines = [
+      `${sourceLabel} insertion association`,
+      `${stats.source} -> ${stats.target}`
+    ];
+    if (stats.count != null) {
+      lines.push(`Occurrences: ${stats.count.toLocaleString()}`);
+    }
+    if (stats.occurrencePercent != null) {
+      lines.push(`Insertion occurrence: ${formatTooltipPercent(stats.occurrencePercent)}`);
+    }
+    if (stats.meanDistanceBp != null) {
+      lines.push(
+        `Mean gap: ${stats.meanDistanceBp.toLocaleString(undefined, { maximumFractionDigits: 1 })} bp`
+      );
+    }
+    return lines.join("\n");
+  }
+
   const lines = [
     `${stats.role === "backbone" ? "Backbone" : "Alternative"} association`,
     `Avg phylum % (>=25 genes): ${formatTooltipPercent(stats.cladeAveragePercent)}`,
@@ -159,6 +184,16 @@ interface TooltipProps {
   label?: string;
 }
 
+type CanvasTooltipState = {
+  isVisible: boolean;
+  x: number;
+  y: number;
+  level: string;
+  category: string;
+  count: number;
+  label?: string;
+};
+
 function Tooltip({ isVisible, x, y, category, count, containerWidth, containerHeight, label }: TooltipProps) {
   if (!isVisible) return null;
   const labelLines = label?.split("\n").filter(Boolean) ?? [];
@@ -190,8 +225,6 @@ export const VisualizationCanvas = forwardRef<VisualizationCanvasHandle, Visuali
   matrix,
   coordMap,
   widthMap,
-  asmIndex,
-  geneIndex,
   countMap,
   customRugGenes = [],
   backboneRugGenes = [],
@@ -217,6 +250,8 @@ ref
   const [containerWidth, setContainerWidth] = useState(1200);
   const [lastSvgHeight, setLastSvgHeight] = useState(0);
   const prevCanvasMetaRef = useRef<CanvasRenderMeta | null>(null);
+  const previousHighlightedRugRowIndexRef = useRef<number | null>(null);
+  const highlightedRugRowIndexRef = useRef<number | null>(null);
 
   const downloadSVG = useCallback(() => {
     if (!svgRef.current) return;
@@ -256,15 +291,7 @@ ref
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
   }, [containerWidth, lastSvgHeight]);
-  const [tooltip, setTooltip] = useState<{
-    isVisible: boolean;
-    x: number;
-    y: number;
-    level: string;
-    category: string;
-    count: number;
-    label?: string;
-  }>({
+  const [tooltip, setTooltip] = useState<CanvasTooltipState>({
     isVisible: false,
     x: 0,
     y: 0,
@@ -279,6 +306,14 @@ ref
     width: number;
     height: number;
   } | null>(null);
+  const [highlightedRugRowIndex, setHighlightedRugRowIndex] = useState<number | null>(null);
+  const setRugRowHighlightState = useCallback((rowIndex: number | null) => {
+    if (highlightedRugRowIndexRef.current === rowIndex) {
+      return;
+    }
+    highlightedRugRowIndexRef.current = rowIndex;
+    setHighlightedRugRowIndex(rowIndex);
+  }, []);
 
   const EXTRA_BOTTOM_PADDING = 50;
   const TREE_PANEL_HEIGHT = 230;
@@ -638,8 +673,8 @@ ref
         .style('fill', 'var(--viz-label)');
     });
 
-    plot.append('g').attr('class', 'rug-labels');
     plot.append('g').attr('class', 'highlight-layer');
+    plot.append('g').attr('class', 'rug-labels');
 
   }, [data, selectedLevels, coordMap, widthMap, onLineageClick, getColorScale, containerWidth, onDomainClick, topTreeOffset, parsedTree, treeLayoutMode, tipExtensionMode]);
 
@@ -669,6 +704,9 @@ ref
     const customRugGeneSet = new Set(customRugGenes);
     const backboneRugGeneSet = new Set(backboneRugGenes);
     const alternativeRugGeneSet = new Set(alternativeRugGenes);
+    const setRugRowHighlight = (geneIdx: number) => {
+      setRugRowHighlightState(geneIdx);
+    };
 
     const labelSelection = rugLabels
       .selectAll<SVGTextElement, string>('text.rug-label')
@@ -696,6 +734,10 @@ ref
       })
       .style('cursor', (gene) => rugTooltipStats[gene] ? 'pointer' : 'default')
       .on('mouseenter', (event: MouseEvent, gene) => {
+        const geneIdx = activeGenes.indexOf(gene);
+        if (geneIdx >= 0) {
+          setRugRowHighlight(geneIdx);
+        }
         const stats = rugTooltipStats[gene];
         if (!stats || !containerRef.current) return;
         event.stopPropagation();
@@ -705,12 +747,16 @@ ref
           x: event.clientX - rect.left,
           y: event.clientY - rect.top,
           level: 'Operon association',
-          category: `${stats.source}→${stats.target}`,
+          category: `${stats.source}->${stats.target}`,
           count: -1,
           label: formatRugTooltipLabel(stats),
         });
       })
       .on('mousemove', (event: MouseEvent, gene) => {
+        const geneIdx = activeGenes.indexOf(gene);
+        if (geneIdx >= 0) {
+          setRugRowHighlight(geneIdx);
+        }
         const stats = rugTooltipStats[gene];
         if (!stats || !containerRef.current) return;
         event.stopPropagation();
@@ -724,6 +770,7 @@ ref
       })
       .on('mouseleave', (event: MouseEvent) => {
         event.stopPropagation();
+        setRugRowHighlightState(null);
         setTooltip((current) => ({ ...current, isVisible: false }));
       });
 
@@ -750,10 +797,15 @@ ref
         event.stopPropagation();
         onRemoveGene?.(gene);
       })
-      .on('mouseover', function() {
+      .on('mouseover', function(_event: MouseEvent, gene) {
+        const geneIdx = activeGenes.indexOf(gene);
+        if (geneIdx >= 0) {
+          setRugRowHighlight(geneIdx);
+        }
         d3.select(this).selectAll('line').attr('stroke', '#dc2626');
       })
       .on('mouseout', function() {
+        setRugRowHighlightState(null);
         d3.select(this).selectAll('line').attr('stroke', '#111827');
       });
 
@@ -792,7 +844,8 @@ ref
     customRugGenes,
     backboneRugGenes,
     alternativeRugGenes,
-    rugTooltipStats
+    rugTooltipStats,
+    setRugRowHighlightState
   ]);
 
   useEffect(() => {
@@ -872,7 +925,6 @@ ref
 
     const assemblies = data.map(d => d.assembly);
     const baseY = MARGINS.top + (selectedLevels.length + 1) * LEVEL_HEIGHT + BASE_GAP;
-
     const drawGeneRow = (gene: string, geneIdx: number, maxCount: number) => {
       const y = baseY + geneIdx * (RUG_HEIGHT + RUG_PAD);
       assemblies.forEach((assembly) => {
@@ -922,7 +974,103 @@ ref
       svgHeight,
     };
 
-  }, [data, selectedLevels, activeGenes, matrix, coordMap, widthMap, asmIndex, geneIndex, containerWidth, countMap, rugMode, topTreeOffset]);
+  }, [data, selectedLevels, activeGenes, matrix, coordMap, widthMap, containerWidth, countMap, rugMode, topTreeOffset]);
+
+  useEffect(() => {
+    const previousIndex = previousHighlightedRugRowIndexRef.current;
+    if (!canvasRef.current || !matrix || activeGenes.length === 0 || containerWidth <= 0) {
+      previousHighlightedRugRowIndexRef.current = highlightedRugRowIndex;
+      return;
+    }
+
+    const rowIndexes = Array.from(
+      new Set([previousIndex, highlightedRugRowIndex].filter((value): value is number => value != null))
+    ).filter((value) => value >= 0 && value < activeGenes.length);
+    if (rowIndexes.length === 0) {
+      previousHighlightedRugRowIndexRef.current = highlightedRugRowIndex;
+      return;
+    }
+
+    const canvas = canvasRef.current;
+    const context = canvas.getContext('2d');
+    if (!context) {
+      previousHighlightedRugRowIndexRef.current = highlightedRugRowIndex;
+      return;
+    }
+
+    const dpr = window.devicePixelRatio || 1;
+    const anyContext = context as unknown as { setTransform?: (a: number, b: number, c: number, d: number, e: number, f: number) => void };
+    if (typeof anyContext.setTransform === 'function') {
+      anyContext.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+
+    const MARGINS = { top: 20 + topTreeOffset, right: 16, bottom: 24 + EXTRA_BOTTOM_PADDING, left: 100 };
+    const LEVEL_HEIGHT = 21;
+    const RUG_HEIGHT = 10;
+    const RUG_PAD = 3;
+    const BASE_GAP = 15;
+    const assemblies = data.map(d => d.assembly);
+    const baseY = MARGINS.top + (selectedLevels.length + 1) * LEVEL_HEIGHT + BASE_GAP;
+    const rugRowHighlightColor =
+      containerRef.current
+        ? getComputedStyle(containerRef.current)
+            .getPropertyValue('--viz-rug-row-highlight-bg')
+            .trim() || '#e5e7eb'
+        : '#e5e7eb';
+
+    const maxCountForGene = (gene: string) => {
+      let maxCount = 0;
+      assemblies.forEach((assembly) => {
+        const cm = countMap.get(assembly);
+        const cnt = cm ? (cm[gene] || 0) : 0;
+        if (cnt > maxCount) maxCount = cnt;
+      });
+      return maxCount;
+    };
+
+    const redrawRow = (geneIdx: number) => {
+      const gene = activeGenes[geneIdx];
+      if (!gene) return;
+      const y = baseY + geneIdx * (RUG_HEIGHT + RUG_PAD);
+      const isHighlightedRow = highlightedRugRowIndex === geneIdx;
+      const maxCount = rugMode === 'normalized' ? maxCountForGene(gene) : 0;
+
+      context.clearRect(MARGINS.left, y - 1.5, containerWidth - MARGINS.left - MARGINS.right, RUG_HEIGHT + RUG_PAD);
+      if (isHighlightedRow) {
+        context.fillStyle = rugRowHighlightColor;
+        context.globalAlpha = 1.0;
+        context.fillRect(MARGINS.left, y - 1.5, containerWidth - MARGINS.left - MARGINS.right, RUG_HEIGHT + RUG_PAD);
+      }
+
+      assemblies.forEach((assembly) => {
+        const cm = countMap.get(assembly);
+        const count = cm ? (cm[gene] || 0) : 0;
+        if (isHighlightedRow && count <= 0) {
+          return;
+        }
+        const x = (coordMap.get(assembly) || 0) + MARGINS.left;
+        const width = widthMap.get(assembly) || 0;
+        context.fillStyle = getRugColor(gene, count, maxCount, rugMode);
+        context.globalAlpha = 1.0;
+        context.fillRect(x, y, width, RUG_HEIGHT);
+      });
+    };
+
+    rowIndexes.forEach(redrawRow);
+    previousHighlightedRugRowIndexRef.current = highlightedRugRowIndex;
+  }, [
+    highlightedRugRowIndex,
+    activeGenes,
+    matrix,
+    data,
+    selectedLevels,
+    coordMap,
+    widthMap,
+    containerWidth,
+    countMap,
+    rugMode,
+    topTreeOffset
+  ]);
 
   useImperativeHandle(ref, () => ({
     downloadSVG,
@@ -937,55 +1085,124 @@ ref
     const RUG_HEIGHT = 10;
     const RUG_PAD = 3;
     const BASE_GAP = 15;
+    const assemblies = data.map(d => d.assembly);
+    const assemblyRanges = assemblies
+      .map((assembly) => {
+        const start = (coordMap.get(assembly) || 0) + MARGINS.left;
+        const width = widthMap.get(assembly) || 0;
+        return { assembly, start, end: start + width };
+      })
+      .filter((range) => range.end > range.start)
+      .sort((a, b) => a.start - b.start);
+    const findAssemblyAtX = (x: number): string | null => {
+      let low = 0;
+      let high = assemblyRanges.length - 1;
+      while (low <= high) {
+        const mid = Math.floor((low + high) / 2);
+        const range = assemblyRanges[mid];
+        if (x < range.start) {
+          high = mid - 1;
+        } else if (x > range.end) {
+          low = mid + 1;
+        } else {
+          return range.assembly;
+        }
+      }
+      return null;
+    };
+
+    let pendingTooltip: CanvasTooltipState | null = null;
+    let tooltipFrame: number | null = null;
+    let canvasTooltipVisible = false;
+    const sameTooltip = (left: CanvasTooltipState, right: CanvasTooltipState) =>
+      left.isVisible === right.isVisible &&
+      left.x === right.x &&
+      left.y === right.y &&
+      left.level === right.level &&
+      left.category === right.category &&
+      left.count === right.count &&
+      left.label === right.label;
+    const flushTooltip = () => {
+      tooltipFrame = null;
+      const nextTooltip = pendingTooltip;
+      pendingTooltip = null;
+      if (!nextTooltip) {
+        return;
+      }
+      canvasTooltipVisible = nextTooltip.isVisible;
+      setTooltip((current) => (sameTooltip(current, nextTooltip) ? current : nextTooltip));
+    };
+    const showTooltip = (nextTooltip: CanvasTooltipState) => {
+      pendingTooltip = nextTooltip;
+      if (tooltipFrame == null) {
+        tooltipFrame = window.requestAnimationFrame(flushTooltip);
+      }
+    };
+    const hideTooltip = () => {
+      const hadCanvasTooltip = canvasTooltipVisible || tooltipFrame != null;
+      pendingTooltip = null;
+      if (tooltipFrame != null) {
+        window.cancelAnimationFrame(tooltipFrame);
+        tooltipFrame = null;
+      }
+      if (!hadCanvasTooltip) {
+        return;
+      }
+      canvasTooltipVisible = false;
+      setTooltip((current) => (current.isVisible ? { ...current, isVisible: false } : current));
+    };
 
     const handleMouseMove = (event: MouseEvent) => {
       const rect = container.getBoundingClientRect();
       const x = event.clientX - rect.left;
       const y = event.clientY - rect.top;
 
-      const baseY = MARGINS.top + (selectedLevels.length + 1) * LEVEL_HEIGHT + BASE_GAP;
+      const rugBaseY = MARGINS.top + (selectedLevels.length + 1) * LEVEL_HEIGHT + BASE_GAP;
       const lineageAreaMaxY = MARGINS.top + (selectedLevels.length + 1) * LEVEL_HEIGHT;
 
       if (y < lineageAreaMaxY) {
+        setRugRowHighlightState(null);
         return;
       }
 
       let hoveredGene: string | null = null;
       let hoveredAssembly: string | null = null;
+      const rowStride = RUG_HEIGHT + RUG_PAD;
+      const relativeRugY = y - rugBaseY;
+      const candidateRowIndex = Math.floor((relativeRugY + RUG_PAD / 2) / rowStride);
+      const candidateRowY = candidateRowIndex * rowStride;
+      const hoveredRugRowIndex =
+        candidateRowIndex >= 0 &&
+        candidateRowIndex < activeGenes.length &&
+        relativeRugY >= candidateRowY - RUG_PAD / 2 &&
+        relativeRugY <= candidateRowY + RUG_HEIGHT + RUG_PAD / 2
+          ? candidateRowIndex
+          : -1;
 
-      for (let geneIdx = 0; geneIdx < activeGenes.length; geneIdx++) {
-        const gene = activeGenes[geneIdx];
-        const rugY = baseY + geneIdx * (RUG_HEIGHT + RUG_PAD);
-
-        if (y >= rugY && y <= rugY + RUG_HEIGHT) {
-          const assemblies = data.map(d => d.assembly);
-          for (const assembly of assemblies) {
-            const asmX = (coordMap.get(assembly) || 0) + MARGINS.left;
-            const asmWidth = widthMap.get(assembly) || 0;
-
-            if (x >= asmX && x <= asmX + asmWidth) {
-              const geneIndexValue = geneIndex.get(gene);
-              const asmIndexValue = asmIndex.get(assembly);
-
-              if (geneIndexValue !== undefined && asmIndexValue !== undefined) {
-                const cm = countMap.get(assembly);
-                const present = (cm ? (cm[gene] || 0) : 0) > 0;
-                if (!present) continue;
-                hoveredGene = gene;
-                hoveredAssembly = assembly;
-                break;
-              }
-            }
+      if (hoveredRugRowIndex >= 0) {
+        const gene = activeGenes[hoveredRugRowIndex];
+        const assembly = x >= MARGINS.left && x <= containerWidth - MARGINS.right ? findAssemblyAtX(x) : null;
+        if (gene && assembly) {
+          const cm = countMap.get(assembly);
+          const present = (cm ? (cm[gene] || 0) : 0) > 0;
+          if (present) {
+            hoveredGene = gene;
+            hoveredAssembly = assembly;
           }
-          break;
         }
+      }
+
+      if (hoveredRugRowIndex >= 0) {
+        setRugRowHighlightState(hoveredRugRowIndex);
+      } else {
+        setRugRowHighlightState(null);
       }
 
       if (hoveredGene && hoveredAssembly) {
         const assemblyData = countMap.get(hoveredAssembly);
         const actualCount = assemblyData?.[hoveredGene] || 0;
         const label: string | undefined = undefined;
-        setTooltip({
+        showTooltip({
           isVisible: true,
           x: event.clientX - rect.left,
           y: event.clientY - rect.top,
@@ -995,12 +1212,13 @@ ref
           label,
         });
       } else {
-        setTooltip(prev => ({ ...prev, isVisible: false }));
+        hideTooltip();
       }
     };
 
     const handleMouseLeave = () => {
-      setTooltip(prev => ({ ...prev, isVisible: false }));
+      setRugRowHighlightState(null);
+      hideTooltip();
     };
 
     container.addEventListener('mousemove', handleMouseMove);
@@ -1009,8 +1227,11 @@ ref
     return () => {
       container.removeEventListener('mousemove', handleMouseMove);
       container.removeEventListener('mouseleave', handleMouseLeave);
+      if (tooltipFrame != null) {
+        window.cancelAnimationFrame(tooltipFrame);
+      }
     };
-  }, [activeGenes, matrix, data, selectedLevels, coordMap, widthMap, asmIndex, geneIndex, countMap, rugMode, topTreeOffset]);
+  }, [activeGenes, data, selectedLevels, coordMap, widthMap, countMap, topTreeOffset, containerWidth, setRugRowHighlightState]);
 
   useEffect(() => {
     if (!svgRef.current) return;

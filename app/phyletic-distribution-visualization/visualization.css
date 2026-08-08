@@ -43,6 +43,7 @@
   --viz-domain-stroke: var(--table-border-color);
   --viz-label: var(--text-soft);
   --viz-highlight-stroke: color-mix(in srgb, var(--text) 70%, transparent);
+  --viz-rug-row-highlight-bg: #e5e7eb;
   --viz-status-a: color-mix(in srgb, var(--primary) 70%, #2ea44f 30%);
   --viz-status-b: color-mix(in srgb, var(--primary) 82%, #2563eb 18%);
   --viz-status-c: color-mix(in srgb, var(--primary) 68%, #7c3aed 32%);
@@ -74,11 +75,17 @@
   --viz-domain-stroke: var(--table-border-color);
   --viz-label: var(--text-soft);
   --viz-highlight-stroke: color-mix(in srgb, var(--text) 70%, transparent);
+  --viz-rug-row-highlight-bg: #e5e7eb;
   --viz-status-a: color-mix(in srgb, var(--primary) 70%, #2ea44f 30%);
   --viz-status-b: color-mix(in srgb, var(--primary) 82%, #2563eb 18%);
   --viz-status-c: color-mix(in srgb, var(--primary) 68%, #7c3aed 32%);
   --viz-hover-contrast-bg: color-mix(in srgb, white 90%, var(--primary) 10%);
   --viz-hover-contrast-text: #122447;
+}
+
+html[data-theme="dark"] .min-h-screen,
+html[data-theme="dark"] .viz-theme {
+  --viz-rug-row-highlight-bg: #4b5563;
 }
 
 .min-h-screen [data-slot="select-trigger"] {
