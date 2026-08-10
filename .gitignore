@@ -24,4 +24,3 @@ pnpm-debug.log*
 # large generated/public data files over GitHub's 100 MB limit
 /public/gzip_MSA/FliC_homologs_db_FAMSA.fasta.gz
 /public/operon-summary/operon_phyletic_distribution.tsv
-/public/operon-insertions/insertion-neighbor-associations.json
