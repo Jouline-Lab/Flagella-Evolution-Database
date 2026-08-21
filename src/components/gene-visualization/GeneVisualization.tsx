@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useGeneVisualization } from "@/hooks/useGeneVisualization";
 import { withBasePath } from "@/lib/assetPaths";
 import { DATASET_TREE_FILE } from "@/lib/visualization/config";
@@ -279,10 +279,12 @@ function LoadingOverlay({
 export function GeneVisualization() {
   const [customDataKind, setCustomDataKind] = useState<"user" | "operon" | "insertion">("user");
   const [showSidebar, setShowSidebar] = useState(true);
+  const [showDomain, setShowDomain] = useState(true);
   const [showTopTree, setShowTopTree] = useState(false);
   const [treeLayoutMode, setTreeLayoutMode] = useState<'phlogram' | 'cladogram'>('phlogram');
   const [tipExtensionMode, setTipExtensionMode] = useState<'none' | 'solid' | 'dashed'>('none');
   const [treeNewick, setTreeNewick] = useState<string | null>(null);
+  const [colorBySupport, setColorBySupport] = useState(false);
   const [operonTransferHandled, setOperonTransferHandled] = useState(false);
   const [operonBackboneGenes, setOperonBackboneGenes] = useState<string[]>([]);
   const [operonAlternativeGenes, setOperonAlternativeGenes] = useState<string[]>([]);
@@ -315,6 +317,10 @@ export function GeneVisualization() {
   } = useGeneVisualization();
   const treeFile = DATASET_TREE_FILE[dataset] ?? null;
   const canShowTopTree = Boolean(treeFile);
+  const canColorBySupport = useMemo(
+    () => Boolean(treeNewick && /\)\s*\d+(?:\.\d+)?\s*[,:);]/.test(treeNewick)),
+    [treeNewick]
+  );
 
   const handleFileUpload = () => {
     const input = document.createElement("input");
@@ -497,6 +503,10 @@ export function GeneVisualization() {
     };
   }, [canShowTopTree, treeFile]);
 
+  useEffect(() => {
+    if (!canColorBySupport) setColorBySupport(false);
+  }, [canColorBySupport]);
+
   return (
     <div className="min-h-screen viz-theme bg-gray-50 text-gray-900">
       <div className="bg-white border-b border-gray-200 shadow-sm px-3 sm:px-5 lg:px-6 py-2.5">
@@ -504,6 +514,8 @@ export function GeneVisualization() {
           onLoadTSV={handleFileUpload}
           selectedLevels={state.selectedLevels}
           onSelectedLevelsChange={setSelectedLevels}
+          showDomain={showDomain}
+          onShowDomainChange={setShowDomain}
           onResetFilter={resetFilters}
           geneNames={state.geneNames}
           onAddDifference={(gene1, gene2, useCounts) =>
@@ -529,6 +541,9 @@ export function GeneVisualization() {
           onTreeLayoutModeChange={setTreeLayoutMode}
           tipExtensionMode={tipExtensionMode}
           onTipExtensionModeChange={setTipExtensionMode}
+          colorBySupport={colorBySupport}
+          onColorBySupportChange={setColorBySupport}
+          canColorBySupport={canColorBySupport}
         />
       </div>
 
@@ -600,6 +615,7 @@ export function GeneVisualization() {
                   <VisualizationCanvas
                     data={state.raw}
                     selectedLevels={state.selectedLevels}
+                    showDomain={showDomain}
                     activeGenes={state.activeGenes}
                     matrix={state.matrix}
                     coordMap={state.coordMap}
@@ -622,6 +638,7 @@ export function GeneVisualization() {
                     treeNewick={treeNewick}
                     treeLayoutMode={treeLayoutMode}
                     tipExtensionMode={tipExtensionMode}
+                    colorBySupport={colorBySupport && canColorBySupport}
                   />
                 )}
               </div>

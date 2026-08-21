@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox'
 import { RefreshCw, ChevronDown, Info } from 'lucide-react'
 import type { TaxonomicLevel } from '@/types/gene-visualization'
+import { SUPPORT_COLOR_TIERS } from '@/lib/visualization/config'
 
 /** ~18rem max width; keep tooltips on-screen when the info icon is near an edge. */
 const VIZ_HINT_MAX_W_PX = 288
@@ -110,6 +111,8 @@ interface ControlPanelProps {
   onLoadTSV: () => void
   selectedLevels: TaxonomicLevel[]
   onSelectedLevelsChange: (levels: TaxonomicLevel[]) => void
+  showDomain: boolean
+  onShowDomainChange: (show: boolean) => void
   onResetFilter: () => void
   geneNames: string[]
   onAddDifference: (gene1: string, gene2: string, useCounts: boolean) => void
@@ -139,6 +142,9 @@ interface ControlPanelProps {
   onTreeLayoutModeChange: (mode: 'phlogram' | 'cladogram') => void
   tipExtensionMode: 'none' | 'solid' | 'dashed'
   onTipExtensionModeChange: (mode: 'none' | 'solid' | 'dashed') => void
+  colorBySupport: boolean
+  onColorBySupportChange: (show: boolean) => void
+  canColorBySupport: boolean
 }
 
 const allLevels: TaxonomicLevel[] = ['phylum', 'class', 'order', 'family', 'genus', 'species']
@@ -147,6 +153,8 @@ export function ControlPanel({
   onLoadTSV,
   selectedLevels,
   onSelectedLevelsChange,
+  showDomain,
+  onShowDomainChange,
   onResetFilter,
   geneNames,
   onAddDifference,
@@ -169,6 +177,9 @@ export function ControlPanel({
   onTreeLayoutModeChange,
   tipExtensionMode,
   onTipExtensionModeChange,
+  colorBySupport,
+  onColorBySupportChange,
+  canColorBySupport,
 }: ControlPanelProps) {
   const [diffGene1, setDiffGene1] = useState('')
   const [diffGene2, setDiffGene2] = useState('')
@@ -423,8 +434,8 @@ export function ControlPanel({
         <div className="flex items-center gap-0.5 leading-none">
           <span className="text-[11px] font-semibold uppercase tracking-wide text-gray-800">Choose Taxonomy</span>
           <VizControlHint id="viz-cp-hint-dataset" label="About Choose Taxonomy">
-            Choose <span className="font-semibold">GTDB r214</span> to visualize along the standard GTDB taxonomic backbone, or{' '}
-            <span className="font-semibold">Flagella Phylogeny</span> to use the custom flagella-based ordering.
+            Choose <span className="font-semibold">GTDB r214</span> to visualize along the standard GTDB taxonomic backbone, or one of the{' '}
+            <span className="font-semibold">Flagella Phylogeny</span> datasets to use the custom flagella-based ordering at that taxonomic resolution (family, order, class, or phylum).
           </VizControlHint>
         </div>
         <div className="flex items-center gap-1">
@@ -462,7 +473,7 @@ export function ControlPanel({
             onClick={() => setLevelsOpen(v => !v)}
             ref={levelsButtonRef}
           >
-            <span>{selectedLevels.length > 0 ? `${selectedLevels.length} selected` : 'Select levels'}</span>
+            <span>{selectedLevels.length + (showDomain ? 1 : 0) > 0 ? `${selectedLevels.length + (showDomain ? 1 : 0)} selected` : 'Select levels'}</span>
             <ChevronDown className="w-3 h-3 ml-1" />
           </Button>
 
@@ -475,6 +486,13 @@ export function ControlPanel({
               style={{ top: levelsMenuPos.top, left: levelsMenuPos.left, width: Math.max(180, levelsMenuPos.width) }}
             >
               <div className="flex flex-col gap-1">
+                <label className="flex items-center gap-2 text-xs text-gray-900 cursor-pointer px-1 py-0.5 rounded hover:bg-gray-100">
+                  <Checkbox
+                    checked={showDomain}
+                    onCheckedChange={(checked) => onShowDomainChange(checked as boolean)}
+                  />
+                  <span className="capitalize">Domain</span>
+                </label>
                 {(['phylum', 'class', 'order', 'family', 'genus', 'species'] as TaxonomicLevel[]).map(level => (
                   <label key={level} className="flex items-center gap-2 text-xs text-gray-900 cursor-pointer px-1 py-0.5 rounded hover:bg-gray-100">
                     <Checkbox
@@ -609,12 +627,44 @@ export function ControlPanel({
                 <span className="text-gray-800">Show Tree</span>
                 <label
                   className={`flex items-center gap-2 text-xs ${canShowTopTree ? 'text-gray-900 cursor-pointer' : 'text-gray-500 cursor-not-allowed'}`}
-                  title={canShowTopTree ? 'Show phylogenetic tree above bars' : 'Available for GTDB r214 dataset'}
+                  title={canShowTopTree ? 'Show phylogenetic tree above bars' : 'Available when the selected taxonomy has a paired tree'}
                 >
                   <Checkbox
                     checked={showTopTree}
                     disabled={!canShowTopTree}
                     onCheckedChange={(checked) => onShowTopTreeChange(Boolean(checked))}
+                  />
+                </label>
+              </div>
+              <div className="flex items-center justify-between gap-2">
+                <span className="flex items-center gap-0.5 leading-none text-gray-800">
+                  Color by Support
+                  <VizControlHint id="viz-cp-hint-support" label="About Color by Support" tooltipMaxWidthPx={220}>
+                    <p className="mb-1.5">
+                      Colors internal branches by their TBE (Transfer Bootstrap Expectation) support value — darker means stronger support for that split.
+                    </p>
+                    <div className="flex flex-col gap-0.5">
+                      {SUPPORT_COLOR_TIERS.map((tier) => (
+                        <div key={tier.label} className="flex items-center gap-1.5">
+                          <span
+                            aria-hidden
+                            className="inline-block h-2.5 w-4 shrink-0 rounded-sm"
+                            style={{ backgroundColor: tier.color }}
+                          />
+                          <span>{tier.label}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </VizControlHint>
+                </span>
+                <label
+                  className={`flex items-center gap-2 text-xs ${canColorBySupport ? 'text-gray-900 cursor-pointer' : 'text-gray-500 cursor-not-allowed'}`}
+                  title={canColorBySupport ? 'Color branches by TBE support value' : 'Available when the tree has support values'}
+                >
+                  <Checkbox
+                    checked={colorBySupport}
+                    disabled={!canColorBySupport}
+                    onCheckedChange={(checked) => onColorBySupportChange(Boolean(checked))}
                   />
                 </label>
               </div>

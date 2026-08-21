@@ -30,11 +30,12 @@ All `.mjs` scripts use `process.cwd()` as the project root; paths are written re
 
 ---
 
-## Python script
+## Python scripts
 
 | File | npm | Role |
 |------|-----|------|
 | `split_coords_into_assemblies.py` | _(run with Python; not wired in `package.json`)_ | Splits a single large operon/coordinate TSV into **one TSV per assembly** using a mapping file (`assembly`, `genome_id` where `genome_id` matches contig IDs in the main file). Intended output layout matches `public/operon_coords/` used by `build-gene-profiles-index.mjs`. The `main` block at the bottom contains **author-specific absolute paths**; edit those (or import `split_main_tsv_by_assembly` from another driver) before running. Requires `pandas`. |
+| `build-flagella-phylogeny-json.py` | `python scripts/build-flagella-phylogeny-json.py` | Builds the **"Flagella Phylogeny"** dataset JSONs — one per taxonomic resolution (`family`, `order`, `class`, `phylum`) registered in `DATASETS`/`DATASET_TREE_FILE` (`src/lib/visualization/config.ts`) — keeping each one's row order in sync with its paired tree. For each resolution it parses `public/flagella_phylogeny_<level>_rooted_for_visualization.tree` (Newick, leaves named by that taxonomic rank, e.g. `o__Enterobacterales` for order, `p__Proteobacteria` for phylum) with Biopython, then filters `GTDB214_lineage_ordered.json` down to records whose matching rank field equals a leaf and sorts them into that leaf order, writing `public/flagella_phylogeny_<level>_rooted_for_visualization.json`. With no flags it (re)builds every resolution that has a tree file present in `public/`, skipping ones that don't; pass `--level family\|order\|class\|phylum` to build just one. Does **not** build the trees themselves — those come from an external phylogenetics pipeline (37-gene alignment → coverage/alpha filtering → neighbor-joining → rooting) that must drop the `.tree` file(s) into `public/` first, named per the convention above. **Rerun this whenever a `.tree` file is added or replaced**, or the paired dataset JSON's ordering will drift out of sync with the tree drawn above it. Flags: `--lineage-json`, `--level`. Requires `biopython`. |
 | `operon-insertions/build-insertion-neighbor-associations.mjs` | `npm run build:operon-insertions -- --reference <flagellar.tsv-or-directory> --insertions <insertions.tsv> --max-distance 500` | Two coordinate datasets containing `gene_name`, `gene_id`, `genome_id`, `start`, `stop`, and `strand`; the reference may be one TSV or a directory of TSVs | `public/operon-insertions/insertion-neighbor-associations.json` | Finds the nearest reference feature on each genomic side of every insertion, converts sides to transcriptional upstream/downstream using insertion strand, and summarizes counts and distance statistics for the experimental `/operon-insertions` page. |
 
 ---
@@ -44,6 +45,7 @@ All `.mjs` scripts use `process.cwd()` as the project root; paths are written re
 - **Gene pages** read `gene-profiles.json`, `alignments-index.json`, optional `precomputed-logos/{slug}.json`, and fetch alignment FASTA only when the user requests species rows (streaming match by GTDB ID in headers).
 - **Species / taxonomy** views consume `species-flagella-index.json` and `taxonomy-index.json`.
 - **Homepage stats** read `home-stats.json` (build with `npm run build:home-stats` after updating the main phyletic TSV).
-- After you change TSVs, SVG sources, or alignment files, rerun the relevant scripts and commit the updated `public/*.json` (and any new FASTA parts or precompute JSON) so production stays in sync.
+- **Phyletic distribution page** (`src/components/gene-visualization`) reads dataset JSON/`.tree` pairs registered in `DATASETS`/`DATASET_TREE_FILE` (`src/lib/visualization/config.ts`); the four "Flagella Phylogeny" datasets (family/order/class/phylum resolution) have their JSON built with `build-flagella-phylogeny-json.py`.
+- After you change TSVs, SVG sources, alignment files, or swap in a new `.tree` file, rerun the relevant scripts and commit the updated `public/*.json` (and any new FASTA parts or precompute JSON) so production stays in sync.
 
 If you introduce new file formats or column layouts, update both the affected script(s) and any matching logic in `src/lib/` (for example `browserGenes.ts`, `sequenceLogoMath.ts`, or parsers in components).

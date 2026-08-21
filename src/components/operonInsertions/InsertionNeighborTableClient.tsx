@@ -1,7 +1,7 @@
 "use client";
 
 import { createPortal } from "react-dom";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ExternalLink } from "lucide-react";
 import { withBasePath } from "@/lib/assetPaths";
 import { cn } from "@/lib/utils";
@@ -674,6 +674,59 @@ function downloadCombinedRows(
   );
 }
 
+async function copyRenderedTableForWord(table: HTMLTableElement): Promise<void> {
+  const clonedTable = table.cloneNode(true) as HTMLTableElement;
+  const sourceElements = [table, ...Array.from(table.querySelectorAll<HTMLElement>("*"))];
+  const clonedElements = [
+    clonedTable,
+    ...Array.from(clonedTable.querySelectorAll<HTMLElement>("*"))
+  ];
+
+  sourceElements.forEach((source, index) => {
+    const target = clonedElements[index];
+    if (!target) return;
+    const computedStyle = window.getComputedStyle(source);
+    for (let propertyIndex = 0; propertyIndex < computedStyle.length; propertyIndex += 1) {
+      const property = computedStyle.item(propertyIndex);
+      target.style.setProperty(property, computedStyle.getPropertyValue(property));
+    }
+    target.style.fontSize = "8pt";
+
+    if (target instanceof HTMLTableCellElement) {
+      const textAlign = computedStyle.textAlign;
+      const verticalAlign = computedStyle.verticalAlign;
+      target.style.textAlign = textAlign;
+      target.style.verticalAlign = verticalAlign;
+      target.style.padding = computedStyle.padding;
+      target.style.lineHeight = computedStyle.lineHeight;
+      target.setAttribute("align", textAlign === "center" ? "center" : "left");
+      target.setAttribute("valign", verticalAlign === "middle" ? "middle" : "top");
+    }
+  });
+
+  clonedTable.style.borderCollapse = "collapse";
+  clonedTable.style.borderSpacing = "0";
+  clonedTable.setAttribute("cellspacing", "0");
+  clonedTable.setAttribute("cellpadding", "0");
+
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"></head><body>${clonedTable.outerHTML}</body></html>`;
+  const plainText = table.innerText;
+  if (navigator.clipboard?.write && typeof ClipboardItem !== "undefined") {
+    await navigator.clipboard.write([
+      new ClipboardItem({
+        "text/html": new Blob([html], { type: "text/html" }),
+        "text/plain": new Blob([plainText], { type: "text/plain" })
+      })
+    ]);
+    return;
+  }
+  if (navigator.clipboard?.writeText) {
+    await navigator.clipboard.writeText(plainText);
+    return;
+  }
+  throw new Error("Clipboard access is not available in this browser.");
+}
+
 function keggDisplayName(id: string | null, names: Record<string, string>): string {
   if (!id) return "-";
   const shortName = keggShortName(names[id.toUpperCase()]);
@@ -1128,6 +1181,8 @@ export default function InsertionNeighborTableClient() {
   const [hoveredAnnotationGroupKey, setHoveredAnnotationGroupKey] = useState<string | null>(
     null
   );
+  const [wordCopyStatus, setWordCopyStatus] = useState<string | null>(null);
+  const tableForWordRef = useRef<HTMLTableElement>(null);
 
   const showAnnotationTooltip = (
     clientX: number,
@@ -2090,6 +2145,18 @@ export default function InsertionNeighborTableClient() {
             <button
               type="button"
               className="rounded-md border border-[var(--input-border)] px-3 py-2 font-semibold text-[var(--text)] hover:bg-[var(--surface-muted)]"
+              onClick={() => {
+                if (!tableForWordRef.current) return;
+                void copyRenderedTableForWord(tableForWordRef.current)
+                  .then(() => setWordCopyStatus("Copied — paste directly into Word."))
+                  .catch(() => setWordCopyStatus("Could not access the clipboard."));
+              }}
+            >
+              Copy table for Word
+            </button>
+            <button
+              type="button"
+              className="rounded-md border border-[var(--input-border)] px-3 py-2 font-semibold text-[var(--text)] hover:bg-[var(--surface-muted)]"
               onClick={() =>
                 annotationTable === "combined"
                   ? downloadCombinedRows(combinedRows, keggNames, pfamEntries)
@@ -2123,6 +2190,11 @@ export default function InsertionNeighborTableClient() {
             </button>
           </div>
         </div>
+        {wordCopyStatus ? (
+          <p className="m-0 mt-2 text-xs text-[var(--text-soft)]" role="status">
+            {wordCopyStatus}
+          </p>
+        ) : null}
       </section>
 
       <section className="rounded-lg border border-[var(--input-border)] bg-[var(--surface)] p-4">
@@ -2165,6 +2237,7 @@ export default function InsertionNeighborTableClient() {
       <section className="mx-auto w-fit max-w-full overflow-hidden rounded-lg border border-[var(--input-border)] bg-[var(--surface)]">
         <div className="max-w-full overflow-x-auto">
           <table
+            ref={tableForWordRef}
             className="mx-auto border-collapse text-left text-xs leading-none"
             style={{
               tableLayout: "fixed",
@@ -2476,6 +2549,7 @@ export default function InsertionNeighborTableClient() {
       <section className="mx-auto w-fit max-w-full overflow-hidden rounded-lg border border-[var(--input-border)] bg-[var(--surface)]">
         <div className="max-w-full overflow-x-auto">
           <table
+            ref={tableForWordRef}
             className="mx-auto border-collapse text-left text-sm"
             style={{
               tableLayout: "fixed",

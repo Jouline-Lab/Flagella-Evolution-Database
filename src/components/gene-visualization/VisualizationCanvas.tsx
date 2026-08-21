@@ -8,10 +8,12 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import type { GTDBRecord, TaxonomicLevel } from '@/types/gene-visualization';
+import { colorForSupport, SUPPORT_COLOR_TIERS } from '@/lib/visualization/config';
 
 interface VisualizationCanvasProps {
   data: GTDBRecord[];
   selectedLevels: TaxonomicLevel[];
+  showDomain?: boolean;
   activeGenes: string[];
   matrix: Uint8Array | null;
   coordMap: Map<string, number>;
@@ -34,6 +36,7 @@ interface VisualizationCanvasProps {
   treeNewick?: string | null;
   treeLayoutMode?: 'phlogram' | 'cladogram';
   tipExtensionMode?: 'none' | 'solid' | 'dashed';
+  colorBySupport?: boolean;
 }
 
 type RugTooltipStats = {
@@ -69,6 +72,7 @@ const HEAT_BLACK = '#000000';
 type RugMode = 'binary' | 'normalized' | 'heatmap';
 type TreeLayoutMode = 'phlogram' | 'cladogram';
 const TREE_MATCH_LEVELS: TaxonomicLevel[] = ['order', 'species', 'genus', 'family', 'class', 'phylum'];
+const DEFAULT_BRANCH_COLOR = '#36454F';
 
 type CanvasRenderMeta = {
   activeGenes: string[];
@@ -221,6 +225,7 @@ export const VisualizationCanvas = forwardRef<VisualizationCanvasHandle, Visuali
 {
   data,
   selectedLevels,
+  showDomain = true,
   activeGenes,
   matrix,
   coordMap,
@@ -241,6 +246,7 @@ export const VisualizationCanvas = forwardRef<VisualizationCanvasHandle, Visuali
   treeNewick = null,
   treeLayoutMode = 'phlogram',
   tipExtensionMode = 'none',
+  colorBySupport = false,
 }: VisualizationCanvasProps,
 ref
 ) {
@@ -426,7 +432,7 @@ ref
     const RUG_PAD = 3;
     const BASE_GAP = 15;
 
-    const totalLevels = selectedLevels.length + 1;
+    const totalLevels = selectedLevels.length + (showDomain ? 1 : 0);
     const svgHeight = MARGINS.top + totalLevels * LEVEL_HEIGHT + MARGINS.bottom;
 
     svg.attr('width', containerWidth)
@@ -459,8 +465,17 @@ ref
     };
 
     if (parsedTree) {
+      // When the legend is shown, reserve a header strip above the tree for
+      // it (title tight against its swatch row, then a clear gap before the
+      // tree itself starts, so the root branch doesn't read as attached to
+      // the legend) by starting the tree lower; the bottom edge (and
+      // therefore every other effect's layout) is untouched, so this stays
+      // a local adjustment. Keep in sync with the legend layout constants
+      // (LEGEND_TITLE_Y / LEGEND_ROW_Y / LEGEND_SWATCH) drawn below.
+      const LEGEND_ROW_BOTTOM = 16 + 14; // LEGEND_ROW_Y + LEGEND_SWATCH
+      const LEGEND_TO_TREE_GAP = 14;
       const treeBottomY = MARGINS.top - 2;
-      const treeTopY = 10;
+      const treeTopY = colorBySupport ? LEGEND_ROW_BOTTOM + LEGEND_TO_TREE_GAP : 10;
       const treeHeight = treeBottomY - treeTopY;
       if (treeHeight > 12) {
         const treeGroup = svg.append('g')
@@ -475,11 +490,82 @@ ref
           treeHeight,
           treeLayoutMode,
           tipExtensionMode,
+          colorBySupport,
+          onBranchHover: (support, event) => {
+            const containerRect = containerRef.current?.getBoundingClientRect();
+            if (!containerRect) return;
+            const rounded = Math.round(support * 10) / 10;
+            setTooltip({
+              isVisible: true,
+              x: event.clientX - containerRect.left,
+              y: event.clientY - containerRect.top,
+              level: 'branch-support',
+              category: `TBE Support: ${rounded}`,
+              count: -1,
+            });
+          },
+          onBranchHoverEnd: () => {
+            setTooltip((prev) => ({ ...prev, isVisible: false }));
+          },
         });
+
+        // A persistent legend at the top of the tree, centered over it, so
+        // the tier colors don't rely on hovering the control-panel hint to
+        // be readable: the title on its own line, all three swatches side
+        // by side on one row below it.
+        if (colorBySupport) {
+          const legendCenterX = MARGINS.left + AVAILABLE_WIDTH / 2;
+          const legend = svg.append('g').attr('class', 'support-legend');
+
+          const LEGEND_FONT_SIZE = 13;
+          const LEGEND_TITLE_Y = 10;
+          const LEGEND_ROW_Y = 16; // kept in sync with treeTopY's LEGEND_ROW_BOTTOM above
+          const SWATCH = 14; // kept in sync with treeTopY's LEGEND_ROW_BOTTOM above
+          const SWATCH_GAP = 6;
+          const ITEM_GAP = 16;
+          // No real text measurement available at draw time (SVG text hasn't
+          // laid out yet), so estimate widths from character count -- same
+          // heuristic already used elsewhere in this file for text fit
+          // checks -- to center the title and the swatch row on one axis.
+          const APPROX_CHAR_WIDTH = LEGEND_FONT_SIZE * 0.58;
+          const titleText = 'TBE Support';
+
+          legend.append('text')
+            .attr('x', legendCenterX)
+            .attr('y', LEGEND_TITLE_Y)
+            .attr('text-anchor', 'middle')
+            .style('font-size', `${LEGEND_FONT_SIZE}px`)
+            .style('font-weight', '600')
+            .style('fill', 'var(--viz-label)')
+            .text(titleText);
+
+          const itemWidths = SUPPORT_COLOR_TIERS.map(
+            (tier) => SWATCH + SWATCH_GAP + tier.label.length * APPROX_CHAR_WIDTH
+          );
+          const rowWidth = itemWidths.reduce((sum, w) => sum + w, 0) + ITEM_GAP * (itemWidths.length - 1);
+          const rowY = LEGEND_ROW_Y;
+          let cursorX = legendCenterX - rowWidth / 2;
+          SUPPORT_COLOR_TIERS.forEach((tier, i) => {
+            const item = legend.append('g').attr('transform', `translate(${cursorX}, ${rowY})`);
+            item.append('rect')
+              .attr('width', SWATCH)
+              .attr('height', SWATCH)
+              .attr('rx', 3)
+              .attr('fill', tier.color);
+            item.append('text')
+              .attr('x', SWATCH + SWATCH_GAP)
+              .attr('y', SWATCH / 2)
+              .attr('dy', '.35em')
+              .style('font-size', `${LEGEND_FONT_SIZE}px`)
+              .style('fill', 'var(--viz-label)')
+              .text(tier.label);
+            cursorX += itemWidths[i] + ITEM_GAP;
+          });
+        }
       }
     }
 
-    {
+    if (showDomain) {
       const y = 0;
       const g = plot.append('g')
         .attr('class', 'level domain')
@@ -553,8 +639,9 @@ ref
         .style('fill', 'var(--viz-label)');
     }
 
+    const domainRowOffset = showDomain ? 1 : 0;
     selectedLevels.forEach((level, i) => {
-      const y = (i + 1) * LEVEL_HEIGHT;
+      const y = (i + domainRowOffset) * LEVEL_HEIGHT;
       const g = plot.append('g')
         .attr('class', 'level')
         .attr('transform', `translate(0,${y})`);
@@ -676,7 +763,7 @@ ref
     plot.append('g').attr('class', 'highlight-layer');
     plot.append('g').attr('class', 'rug-labels');
 
-  }, [data, selectedLevels, coordMap, widthMap, onLineageClick, getColorScale, containerWidth, onDomainClick, topTreeOffset, parsedTree, treeLayoutMode, tipExtensionMode]);
+  }, [data, selectedLevels, showDomain, coordMap, widthMap, onLineageClick, getColorScale, containerWidth, onDomainClick, topTreeOffset, parsedTree, treeLayoutMode, tipExtensionMode, colorBySupport]);
 
   useEffect(() => {
     if (!svgRef.current || !data.length || containerWidth <= 0) return;
@@ -689,7 +776,7 @@ ref
     const RUG_HEIGHT = 10;
     const RUG_PAD = 3;
     const BASE_GAP = 15;
-    const totalLevels = selectedLevels.length + 1;
+    const totalLevels = selectedLevels.length + (showDomain ? 1 : 0);
     const svgHeight = MARGINS.top +
                       totalLevels * LEVEL_HEIGHT +
                       (activeGenes.length ? BASE_GAP + activeGenes.length * (RUG_HEIGHT + RUG_PAD) : 0) +
@@ -699,7 +786,7 @@ ref
       .attr('height', svgHeight);
     setLastSvgHeight(svgHeight);
 
-    const baseY = (selectedLevels.length + 1) * LEVEL_HEIGHT + BASE_GAP;
+    const baseY = (selectedLevels.length + (showDomain ? 1 : 0)) * LEVEL_HEIGHT + BASE_GAP;
     const rugLabels = plot.select('g.rug-labels');
     const customRugGeneSet = new Set(customRugGenes);
     const backboneRugGeneSet = new Set(backboneRugGenes);
@@ -835,6 +922,7 @@ ref
   }, [
     data,
     selectedLevels,
+    showDomain,
     activeGenes,
     coordMap,
     widthMap,
@@ -864,7 +952,7 @@ ref
     const BASE_GAP = 15;
 
     const svgHeight = MARGINS.top +
-                      (selectedLevels.length + 1) * LEVEL_HEIGHT +
+                      (selectedLevels.length + (showDomain ? 1 : 0)) * LEVEL_HEIGHT +
                       (activeGenes.length ? BASE_GAP + activeGenes.length * (RUG_HEIGHT + RUG_PAD) : 0) +
                       MARGINS.bottom;
 
@@ -924,7 +1012,7 @@ ref
     }
 
     const assemblies = data.map(d => d.assembly);
-    const baseY = MARGINS.top + (selectedLevels.length + 1) * LEVEL_HEIGHT + BASE_GAP;
+    const baseY = MARGINS.top + (selectedLevels.length + (showDomain ? 1 : 0)) * LEVEL_HEIGHT + BASE_GAP;
     const drawGeneRow = (gene: string, geneIdx: number, maxCount: number) => {
       const y = baseY + geneIdx * (RUG_HEIGHT + RUG_PAD);
       assemblies.forEach((assembly) => {
@@ -974,7 +1062,7 @@ ref
       svgHeight,
     };
 
-  }, [data, selectedLevels, activeGenes, matrix, coordMap, widthMap, containerWidth, countMap, rugMode, topTreeOffset]);
+  }, [data, selectedLevels, showDomain, activeGenes, matrix, coordMap, widthMap, containerWidth, countMap, rugMode, topTreeOffset]);
 
   useEffect(() => {
     const previousIndex = previousHighlightedRugRowIndexRef.current;
@@ -1010,7 +1098,7 @@ ref
     const RUG_PAD = 3;
     const BASE_GAP = 15;
     const assemblies = data.map(d => d.assembly);
-    const baseY = MARGINS.top + (selectedLevels.length + 1) * LEVEL_HEIGHT + BASE_GAP;
+    const baseY = MARGINS.top + (selectedLevels.length + (showDomain ? 1 : 0)) * LEVEL_HEIGHT + BASE_GAP;
     const rugRowHighlightColor =
       containerRef.current
         ? getComputedStyle(containerRef.current)
@@ -1064,6 +1152,7 @@ ref
     matrix,
     data,
     selectedLevels,
+    showDomain,
     coordMap,
     widthMap,
     containerWidth,
@@ -1157,8 +1246,8 @@ ref
       const x = event.clientX - rect.left;
       const y = event.clientY - rect.top;
 
-      const rugBaseY = MARGINS.top + (selectedLevels.length + 1) * LEVEL_HEIGHT + BASE_GAP;
-      const lineageAreaMaxY = MARGINS.top + (selectedLevels.length + 1) * LEVEL_HEIGHT;
+      const rugBaseY = MARGINS.top + (selectedLevels.length + (showDomain ? 1 : 0)) * LEVEL_HEIGHT + BASE_GAP;
+      const lineageAreaMaxY = MARGINS.top + (selectedLevels.length + (showDomain ? 1 : 0)) * LEVEL_HEIGHT;
 
       if (y < lineageAreaMaxY) {
         setRugRowHighlightState(null);
@@ -1231,7 +1320,7 @@ ref
         window.cancelAnimationFrame(tooltipFrame);
       }
     };
-  }, [activeGenes, data, selectedLevels, coordMap, widthMap, countMap, topTreeOffset, containerWidth, setRugRowHighlightState]);
+  }, [activeGenes, data, selectedLevels, showDomain, coordMap, widthMap, countMap, topTreeOffset, containerWidth, setRugRowHighlightState]);
 
   useEffect(() => {
     if (!svgRef.current) return;
@@ -1358,6 +1447,8 @@ ref
 type NewickNode = {
   name?: string;
   length?: number;
+  /** TBE support value for the branch leading to this node from its parent (internal nodes only). */
+  support?: number;
   children: NewickNode[];
   x?: number;
   dist?: number;
@@ -1412,7 +1503,13 @@ function parseNewick(newickString: string): NewickNode {
         }
       }
       if (/[^,:);]/.test(s[i] || '')) {
-        parseName();
+        const label = parseName();
+        const numeric = Number(label);
+        if (label !== '' && Number.isFinite(numeric)) {
+          node.support = numeric;
+        } else if (label !== '') {
+          node.name = label;
+        }
       }
       return node;
     }
@@ -1435,7 +1532,21 @@ function cloneAndPruneTree(node: NewickNode, keep: Set<string>): NewickNode | nu
     if (pruned) nextChildren.push(pruned);
   }
   if (!nextChildren.length) return null;
-  return { name: node.name, length: node.length ?? 0, children: nextChildren };
+  if (nextChildren.length === 1) {
+    // Pruning away every leaf on one side of a split leaves this node with a
+    // single surviving child -- a degenerate "unifurcation" that no longer
+    // represents a real branch point. Collapse it into that child, summing
+    // branch lengths so root-to-tip distance stays correct, and keep the
+    // child's own support rather than this node's: this node's label no
+    // longer corresponds to a split that's actually drawn. Without this, a
+    // filtered view shows a chain of these collapsed segments stacked on top
+    // of each other near the root, each independently colored by whatever
+    // support its now-invisible original split happened to have -- a messy
+    // multicolor stack where a viewer expects to see one plain branch.
+    const only = nextChildren[0];
+    return { ...only, length: (only.length ?? 0) + (node.length ?? 0) };
+  }
+  return { name: node.name, length: node.length ?? 0, support: node.support, children: nextChildren };
 }
 
 function assignPhlogramDistances(root: NewickNode): number {
@@ -1564,6 +1675,9 @@ function drawTopTree({
   treeHeight,
   treeLayoutMode,
   tipExtensionMode,
+  colorBySupport,
+  onBranchHover,
+  onBranchHoverEnd,
 }: {
   group: any;
   root: NewickNode;
@@ -1573,6 +1687,9 @@ function drawTopTree({
   treeHeight: number;
   treeLayoutMode: TreeLayoutMode;
   tipExtensionMode: 'none' | 'solid' | 'dashed';
+  colorBySupport: boolean;
+  onBranchHover?: (support: number, event: MouseEvent) => void;
+  onBranchHoverEnd?: () => void;
 }) {
   const leafCenterX = buildLeafCenterXMap(data, coordMap, widthMap, root);
   if (!leafCenterX.size) return;
@@ -1594,18 +1711,53 @@ function drawTopTree({
 
   const branches = group.append('g')
     .attr('fill', 'none')
-    .attr('stroke', '#36454F')
+    .attr('stroke', DEFAULT_BRANCH_COLOR)
     .attr('stroke-width', 1);
+
+  // A node's own support colors both the vertical stem leading into it (drawn
+  // by its parent, below) and the horizontal bar capping that stem (drawn
+  // here) -- together they read as one continuous colored branch instead of
+  // a thin colored sliver under a long neutral bar. Leaf tips (and any
+  // internal node the source tree left unlabeled, e.g. an unscored root
+  // split) have no confidence value at all -- treat them the same as the
+  // weakest tier so they recede like low support instead of rendering as
+  // the darkest lines in the tree, which is what DEFAULT_BRANCH_COLOR would
+  // do against this palette.
+  const NO_SUPPORT_COLOR = SUPPORT_COLOR_TIERS[SUPPORT_COLOR_TIERS.length - 1].color;
+  const branchColorForNode = (node: NewickNode) => {
+    if (!colorBySupport) return DEFAULT_BRANCH_COLOR;
+    if (node.children.length > 0 && typeof node.support === 'number') {
+      return colorForSupport(node.support);
+    }
+    return NO_SUPPORT_COLOR;
+  };
+
+  // Segments whose branch carries a real TBE value, collected while drawing
+  // so a wider invisible hit-line can be layered on top of everything at the
+  // end (thin 1px strokes are hard to hover precisely; z-order matters for
+  // that overlay, so it's added last regardless of when each segment here
+  // was recorded).
+  type HoverSegment = { x1: number; x2: number; y1: number; y2: number; support: number };
+  const hoverSegments: HoverSegment[] = [];
+  const recordHoverSegment = (node: NewickNode, x1: number, x2: number, y1: number, y2: number) => {
+    if (node.children.length > 0 && typeof node.support === 'number') {
+      hoverSegments.push({ x1, x2, y1, y2, support: node.support });
+    }
+  };
 
   const walk = (node: NewickNode) => {
     if (!node.children.length) return;
     const parentY = (node.dist || 0) * yScale;
     const childXs = node.children.map((child) => child.x || 0);
+    const barX1 = d3.min(childXs) ?? 0;
+    const barX2 = d3.max(childXs) ?? 0;
     branches.append('line')
-      .attr('x1', d3.min(childXs) ?? 0)
-      .attr('x2', d3.max(childXs) ?? 0)
+      .attr('x1', barX1)
+      .attr('x2', barX2)
       .attr('y1', parentY)
-      .attr('y2', parentY);
+      .attr('y2', parentY)
+      .attr('stroke', branchColorForNode(node));
+    recordHoverSegment(node, barX1, barX2, parentY, parentY);
 
     node.children.forEach((child) => {
       const childY = (child.dist || 0) * yScale;
@@ -1613,18 +1765,33 @@ function drawTopTree({
         .attr('x1', child.x || 0)
         .attr('x2', child.x || 0)
         .attr('y1', parentY)
-        .attr('y2', childY);
+        .attr('y2', childY)
+        .attr('stroke', branchColorForNode(child));
+      recordHoverSegment(child, child.x || 0, child.x || 0, parentY, childY);
       walk(child);
     });
   };
   walk(pruned);
+
+  // Root stub: a short branch above the root itself (which otherwise has no
+  // incoming branch drawn), colored by the root's own support value when the
+  // source tree happens to label it.
+  const ROOT_STUB_LENGTH = 8;
+  const rootY = (pruned.dist || 0) * yScale;
+  branches.append('line')
+    .attr('x1', pruned.x || 0)
+    .attr('x2', pruned.x || 0)
+    .attr('y1', rootY - ROOT_STUB_LENGTH)
+    .attr('y2', rootY)
+    .attr('stroke', branchColorForNode(pruned));
+  recordHoverSegment(pruned, pruned.x || 0, pruned.x || 0, rootY - ROOT_STUB_LENGTH, rootY);
 
   if (tipExtensionMode !== 'none') {
     const leaves: NewickNode[] = [];
     collectLeaves(pruned, leaves);
     const tipExtensions = group.append('g')
       .attr('fill', 'none')
-      .attr('stroke', '#36454F')
+      .attr('stroke', DEFAULT_BRANCH_COLOR)
       .attr('stroke-width', 1);
     if (tipExtensionMode === 'dashed') {
       tipExtensions.attr('stroke-dasharray', '2 2');
@@ -1639,6 +1806,25 @@ function drawTopTree({
           .attr('y1', y)
           .attr('y2', tipY);
       }
+    });
+  }
+
+  if (onBranchHover && hoverSegments.length) {
+    const HOVER_HIT_WIDTH = 6;
+    const hitLayer = group.append('g')
+      .attr('fill', 'none')
+      .attr('stroke', 'transparent')
+      .attr('stroke-width', HOVER_HIT_WIDTH);
+    hoverSegments.forEach((segment) => {
+      hitLayer.append('line')
+        .attr('x1', segment.x1)
+        .attr('x2', segment.x2)
+        .attr('y1', segment.y1)
+        .attr('y2', segment.y2)
+        .style('pointer-events', 'stroke')
+        .on('mouseenter', (event: MouseEvent) => onBranchHover(segment.support, event))
+        .on('mousemove', (event: MouseEvent) => onBranchHover(segment.support, event))
+        .on('mouseleave', () => onBranchHoverEnd?.());
     });
   }
 }
