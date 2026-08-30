@@ -7,11 +7,11 @@ import { withBasePath } from "@/lib/assetPaths";
 const DATA_URL = "/flagellar_genes_phyletic_distribution.tsv";
 const GENE_SUFFIX = "_count";
 const TAXON_COLUMNS = ["phylum", "class", "order", "family", "genus", "species"];
-const PANEL_C_EXCLUDED_GENES = new Set(["FlgH", "FlgI", "FlgA", "FlgJ"]);
+const DIDERM_SPECIFIC_GENES = new Set(["FlgH", "FlgI", "FlgA", "FlgJ"]);
 
 const CORE_FLAGELLAR_GENES = [
-  "FliB", "FlgO", "FlgP", "SwrB", "Putative", "FapA",
-  "SwrD", "Transglycosylase", "MotE", "FlbB", "FliT", "PilZ", "FliW", "FlaG",
+  "FlgP", "SwrB", "Putative", "FapA",
+  "SwrD", "Transglycosylase", "MotE", "FliT", "PilZ", "FliW", "FlaG",
   "CsrA", "FlhG", "FlhF", "FlgA", "FlgH", "FlgM", "FlgI", "FlgN",
   "FliD", "FliA", "FliS", "FlgJ", "FlgF", "FlgL", "FlgG", "FliL",
   "FliK", "FliJ", "FliO", "FlgE", "FliH", "MotB", "FliF", "FlgD",
@@ -438,6 +438,7 @@ export default function GeneRetentionAbsenceClient() {
   const [minLineageSize, setMinLineageSize] = useState(5);
   const [showLineageExtremes, setShowLineageExtremes] = useState(true);
   const [lineageDisplayCount, setLineageDisplayCount] = useState(20);
+  const [excludeDidermGenes, setExcludeDidermGenes] = useState(true);
   const [tooltip, setTooltip] = useState<TooltipState>(null);
 
   useEffect(() => {
@@ -529,9 +530,9 @@ export default function GeneRetentionAbsenceClient() {
       })
       .sort((a, b) => b.value - a.value);
 
-    const panelCGenes = selectedGeneIndexes.filter(
-      (index) => !PANEL_C_EXCLUDED_GENES.has(data.genes[index])
-    );
+    const panelCGenes = excludeDidermGenes
+      ? selectedGeneIndexes.filter((index) => !DIDERM_SPECIFIC_GENES.has(data.genes[index]))
+      : selectedGeneIndexes;
     const lineageGroups = new Map<string, typeof rows>();
     for (const row of rows) {
       const lineage = normalizeLineage(row.taxonomy, lineageLevel);
@@ -567,7 +568,7 @@ export default function GeneRetentionAbsenceClient() {
       panelC,
       lineageCount: panelC.length
     };
-  }, [data, lineageLevel, minGenesPresent, minLineageSize, selectedGeneIndexes]);
+  }, [data, excludeDidermGenes, lineageLevel, minGenesPresent, minLineageSize, selectedGeneIndexes]);
 
   const maxGenes = selectedGeneIndexes.length;
   const customGeneSet = useMemo(() => new Set(customGenes), [customGenes]);
@@ -744,6 +745,14 @@ export default function GeneRetentionAbsenceClient() {
                     onChange={(event) => setShowLineageExtremes(event.target.checked)}
                   />
                   <span>Show Extremes</span>
+                </label>
+                <label className="retention-checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={excludeDidermGenes}
+                    onChange={(event) => setExcludeDidermGenes(event.target.checked)}
+                  />
+                  <span>Exclude diderm-specific genes (FlgH, FlgI, FlgA, FlgJ)</span>
                 </label>
                 <label>
                   <span>Lineages per side</span>
